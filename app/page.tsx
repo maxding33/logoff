@@ -1,10 +1,10 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import BottomNav from "./BottomNav";
 import FeedPost from "./FeedPost";
 import UploadModal from "./UploadModal";
-import { Post } from "./types";
+import type { Comment, Post } from "./types";
 
 const starterPosts: Post[] = [
   {
@@ -15,6 +15,12 @@ const starterPosts: Post[] = [
       "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
     caption: "Morning air, little walk, head finally clear.",
     createdAt: "2h ago",
+    liked: false,
+    likes: 18,
+    comments: [
+      { id: 101, user: "Leo", text: "This looks so peaceful." },
+      { id: 102, user: "Nina", text: "Need this kind of morning." },
+    ],
   },
   {
     id: 2,
@@ -24,6 +30,9 @@ const starterPosts: Post[] = [
       "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
     caption: "Grass touched. Mission complete.",
     createdAt: "4h ago",
+    liked: false,
+    likes: 27,
+    comments: [{ id: 201, user: "Sami", text: "Mission definitely complete." }],
   },
   {
     id: 3,
@@ -33,14 +42,47 @@ const starterPosts: Post[] = [
       "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
     caption: "Golden light and an actually offline afternoon.",
     createdAt: "Today",
+    liked: false,
+    likes: 34,
+    comments: [
+      { id: 301, user: "Tara", text: "That light is unreal." },
+      { id: 302, user: "Milo", text: "Richmond Park never misses." },
+    ],
   },
 ];
 
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [posts, setPosts] = useState<Post[]>(starterPosts);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
+
+  // Load posts from localStorage on first load
+  useEffect(() => {
+    const storedPosts = localStorage.getItem("posts");
+
+    if (storedPosts) {
+      const parsedPosts = JSON.parse(storedPosts) as Post[];
+
+      const normalizedPosts = parsedPosts.map((post) => ({
+        ...post,
+        liked: post.liked ?? false,
+        likes: post.likes ?? 0,
+        comments: post.comments ?? [],
+      }));
+
+      setPosts(normalizedPosts);
+    } else {
+      setPosts(starterPosts);
+    }
+  }, []);
+
+  // Save posts whenever they change
+  useEffect(() => {
+    if (posts.length > 0) {
+      localStorage.setItem("posts", JSON.stringify(posts));
+    }
+  }, [posts]);
 
   const resetComposer = () => {
     setPreviewImage(null);
@@ -83,10 +125,52 @@ export default function Home() {
       image: previewImage,
       caption: caption.trim() || "Went outside today.",
       createdAt: "Just now",
+      liked: false,
+      likes: 0,
+      comments: [],
     };
 
     setPosts((currentPosts) => [newPost, ...currentPosts]);
     resetComposer();
+  };
+
+  const handleToggleLike = (postId: number) => {
+    setPosts((currentPosts) =>
+      currentPosts.map((post) => {
+        if (post.id !== postId) {
+          return post;
+        }
+
+        const nextLiked = !post.liked;
+
+        return {
+          ...post,
+          liked: nextLiked,
+          likes: nextLiked ? post.likes + 1 : Math.max(post.likes - 1, 0),
+        };
+      })
+    );
+  };
+
+  const handleAddComment = (postId: number, text: string) => {
+    const newComment: Comment = {
+      id: Date.now(),
+      user: "You",
+      text,
+    };
+
+    setPosts((currentPosts) =>
+      currentPosts.map((post) => {
+        if (post.id !== postId) {
+          return post;
+        }
+
+        return {
+          ...post,
+          comments: [...post.comments, newComment],
+        };
+      })
+    );
   };
 
   return (
@@ -152,7 +236,12 @@ export default function Home() {
           }}
         >
           {posts.map((post) => (
-            <FeedPost key={post.id} post={post} />
+            <FeedPost
+              key={post.id}
+              post={post}
+              onToggleLike={handleToggleLike}
+              onAddComment={handleAddComment}
+            />
           ))}
         </section>
       </div>

@@ -1,3 +1,9 @@
+export type Comment = {
+  id: number;
+  user: string;
+  text: string;
+};
+
 export type Post = {
   id: number;
   user: string;
@@ -5,4 +11,7 @@ export type Post = {
   image: string;
   caption: string;
   createdAt: string;
+  liked: boolean;
+  likes: number;
+  comments: Comment[];
 };

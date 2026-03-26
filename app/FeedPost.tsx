@@ -1,12 +1,31 @@
 "use client";
 
-import { Post } from "./types";
+import { useState } from "react";
+import type { Post } from "./types";
 
 type FeedPostProps = {
   post: Post;
+  onToggleLike: (postId: number) => void;
+  onAddComment: (postId: number, text: string) => void;
 };
 
-export default function FeedPost({ post }: FeedPostProps) {
+export default function FeedPost({
+  post,
+  onToggleLike,
+  onAddComment,
+}: FeedPostProps) {
+  const [commentText, setCommentText] = useState("");
+
+  const handleSubmitComment = () => {
+    const trimmedComment = commentText.trim();
+
+    if (!trimmedComment) {
+      return;
+    }
+
+    onAddComment(post.id, trimmedComment);
+    setCommentText("");
+  };
   return (
     <article
       style={{
@@ -89,16 +108,105 @@ export default function FeedPost({ post }: FeedPostProps) {
             gap: "14px",
             fontSize: "22px",
             marginBottom: "10px",
+            alignItems: "center",
           }}
-          aria-hidden="true"
         >
-          <span>♡</span>
-          <span>💬</span>
-          <span>✈️</span>
+          <button
+            type="button"
+            onClick={() => onToggleLike(post.id)}
+            aria-label={post.liked ? "Unlike post" : "Like post"}
+            style={{
+              border: "none",
+              background: "transparent",
+              padding: 0,
+              cursor: "pointer",
+              fontSize: "22px",
+              lineHeight: 1,
+            }}
+          >
+            {post.liked ? "❤️" : "🤍"}
+          </button>
+          <span aria-hidden="true">💬</span>
+          <span aria-hidden="true">✈️</span>
         </div>
-        <p style={{ margin: 0, color: "#0f172a", lineHeight: 1.5 }}>
+
+        <p
+          style={{
+            margin: "0 0 10px",
+            color: "#0f172a",
+            fontWeight: 700,
+            fontSize: "14px",
+          }}
+        >
+          {post.likes} {post.likes === 1 ? "like" : "likes"}
+        </p>
+
+        <p style={{ margin: "0 0 12px", color: "#0f172a", lineHeight: 1.5 }}>
           <span style={{ fontWeight: 700 }}>{post.user}</span> {post.caption}
         </p>
+
+        {post.comments.length > 0 && (
+          <div style={{ display: "grid", gap: "8px", marginBottom: "12px" }}>
+            {post.comments.map((comment) => (
+              <p
+                key={comment.id}
+                style={{
+                  margin: 0,
+                  color: "#0f172a",
+                  lineHeight: 1.45,
+                  fontSize: "14px",
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{comment.user}</span> {comment.text}
+              </p>
+            ))}
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+          }}
+        >
+          <input
+            type="text"
+            value={commentText}
+            onChange={(event) => setCommentText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                handleSubmitComment();
+              }
+            }}
+            placeholder="Add a comment..."
+            style={{
+              flex: 1,
+              borderRadius: "999px",
+              border: "1px solid #cbd5e1",
+              padding: "10px 14px",
+              fontSize: "14px",
+              outline: "none",
+              color: "#0f172a",
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleSubmitComment}
+            style={{
+              border: "none",
+              backgroundColor: "#22c55e",
+              color: "white",
+              borderRadius: "999px",
+              padding: "10px 14px",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Post
+          </button>
+        </div>
       </div>
     </article>
   );
