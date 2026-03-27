@@ -187,76 +187,42 @@ export default function Home() {
     <main
       style={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(180deg, #f8fafc 0%, #f1f5f9 45%, #e2e8f0 100%)",
-        padding: "24px 16px 110px",
+        background: "#ffffff",
+        padding: "0 0 80px",
       }}
     >
-      <div
+      <header style={{
+        padding: "16px",
+        borderBottom: "1px solid #e5e5e5",
+        textAlign: "center",
+      }}>
+        <p style={{
+          margin: 0,
+          fontSize: "13px",
+          fontWeight: 700,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          color: "#000000",
+        }}>
+          touchgrass
+        </p>
+      </header>
+
+      <section
         style={{
-          width: "100%",
-          maxWidth: "430px",
-          margin: "0 auto",
+          display: "grid",
+          gap: 0,
         }}
       >
-        <header
-          style={{
-            marginBottom: "20px",
-            padding: "4px 4px 10px",
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              color: "#16a34a",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              fontSize: "12px",
-            }}
-          >
-            go touch grass
-          </p>
-          <h1
-            style={{
-              margin: "8px 0 0",
-              color: "#0f172a",
-              fontSize: "32px",
-              lineHeight: 1.05,
-            }}
-          >
-            Photo feed
-          </h1>
-          <p
-            style={{
-              margin: "10px 0 0",
-              color: "#475569",
-              fontSize: "15px",
-              lineHeight: 1.5,
-            }}
-          >
-            An Instagram-style outdoor feed. Tap the green plus button to post a photo with a caption.
-          </p>
-        </header>
-
-        <section
-          style={{
-            display: "grid",
-            gap: "18px",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {posts.map((post) => (
-            <FeedPost
-              key={post.id}
-              post={post}
-              onToggleLike={handleToggleLike}
-              onAddComment={handleAddComment}
-            />
-          ))}
-        </section>
-      </div>
+        {posts.map((post) => (
+          <FeedPost
+            key={post.id}
+            post={post}
+            onToggleLike={handleToggleLike}
+            onAddComment={handleAddComment}
+          />
+        ))}
+      </section>
 
       <UploadModal
         preview={previewImage}

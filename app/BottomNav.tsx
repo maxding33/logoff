@@ -15,43 +15,36 @@ export default function BottomNav({
     <nav
       style={{
         position: "fixed",
-        bottom: "18px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "calc(100% - 32px)",
-        maxWidth: "398px",
-        backgroundColor: "rgba(24,24,27,0.96)",
-        color: "white",
-        borderRadius: "999px",
-        padding: "14px 20px",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: "#ffffff",
+        borderTop: "1px solid #e5e5e5",
+        padding: "10px 20px",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
-        backdropFilter: "blur(12px)",
         zIndex: 30,
       }}
     >
       <label
         htmlFor="photo-upload"
         style={{
-          fontSize: "26px",
-          color: "white",
-          cursor: "pointer",
-          lineHeight: 1,
-          display: "inline-flex",
+          display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          position: "relative",
-          width: "52px",
-          height: "52px",
-          borderRadius: "999px",
-          backgroundColor: "#22c55e",
-          fontWeight: 700,
+          width: "44px",
+          height: "44px",
+          borderRadius: "50%",
+          backgroundColor: "#000000",
+          color: "#ffffff",
+          fontSize: "24px",
+          cursor: "pointer",
+          lineHeight: 1,
         }}
         aria-label="Upload a photo"
       >
-        <span aria-hidden="true">＋</span>
+        <span aria-hidden="true">+</span>
         <input
           ref={fileInputRef}
           id="photo-upload"
@@ -61,8 +54,8 @@ export default function BottomNav({
           style={{
             position: "absolute",
             inset: 0,
-            width: "100%",
-            height: "100%",
+            width: "1px",
+            height: "1px",
             opacity: 0,
             cursor: "pointer",
           }}

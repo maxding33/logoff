@@ -18,101 +18,49 @@ export default function FeedPost({
 
   const handleSubmitComment = () => {
     const trimmedComment = commentText.trim();
-
-    if (!trimmedComment) {
-      return;
-    }
-
+    if (!trimmedComment) return;
     onAddComment(post.id, trimmedComment);
     setCommentText("");
   };
+
   return (
-    <article
-      style={{
-        backgroundColor: "#ffffff",
-        borderRadius: "24px",
-        overflow: "hidden",
-        boxShadow: "0 14px 30px rgba(15,23,42,0.08)",
-        border: "1px solid rgba(226,232,240,0.9)",
-        position: "relative",
-        zIndex: 1,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "14px 16px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "999px",
-              background: "linear-gradient(135deg, #22c55e, #16a34a)",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 700,
-              fontSize: "14px",
-              flexShrink: 0,
-            }}
-          >
-            {post.user.slice(0, 2).toUpperCase()}
-          </div>
-          <div>
-            <p style={{ margin: 0, fontWeight: 700, color: "#0f172a" }}>
-              {post.user}
-            </p>
-            <p
-              style={{
-                margin: "2px 0 0",
-                fontSize: "13px",
-                color: "#64748b",
-              }}
-            >
+    <article style={{ borderBottom: "1px solid #e5e5e5" }}>
+      {/* Header */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "10px 14px",
+      }}>
+        <div>
+          <span style={{ fontWeight: 700, fontSize: "14px", color: "#000" }}>
+            {post.user}
+          </span>
+          {post.location && (
+            <span style={{ fontSize: "13px", color: "#666", marginLeft: "6px" }}>
               {post.location}
-            </p>
-          </div>
+            </span>
+          )}
         </div>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "12px",
-            color: "#94a3b8",
-            fontWeight: 600,
-          }}
-        >
-          {post.createdAt}
-        </p>
+        <span style={{ fontSize: "12px", color: "#999" }}>{post.createdAt}</span>
       </div>
 
+      {/* Photo - full width, square */}
       <img
         src={post.image}
         alt={post.caption || `${post.user} post`}
         style={{
           display: "block",
           width: "100%",
-          aspectRatio: "4 / 5",
+          aspectRatio: "1 / 1",
           objectFit: "cover",
-          backgroundColor: "#e2e8f0",
+          backgroundColor: "#f0f0f0",
         }}
       />
 
-      <div style={{ padding: "14px 16px 18px" }}>
-        <div
-          style={{
-            display: "flex",
-            gap: "14px",
-            fontSize: "22px",
-            marginBottom: "10px",
-            alignItems: "center",
-          }}
-        >
+      {/* Actions */}
+      <div style={{ padding: "10px 14px 4px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "8px" }}>
           <button
             type="button"
             onClick={() => onToggleLike(post.id)}
@@ -120,81 +68,64 @@ export default function FeedPost({
             style={{
               border: "none",
               background: "transparent",
-              padding: "11px",
+              padding: "4px 0",
               cursor: "pointer",
-              fontSize: "22px",
+              fontSize: "20px",
               lineHeight: 1,
               touchAction: "manipulation",
               WebkitTapHighlightColor: "transparent",
-              position: "relative",
-              zIndex: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+              minHeight: "44px",
             }}
           >
-            {post.liked ? "❤️" : "🤍"}
+            <span>{post.liked ? "❤️" : "🤍"}</span>
+            <span style={{ fontSize: "13px", color: "#000", fontWeight: 600 }}>
+              {post.likes}
+            </span>
           </button>
-          <span aria-hidden="true">💬</span>
-          <span aria-hidden="true">✈️</span>
+          <span style={{ fontSize: "20px", lineHeight: 1 }} aria-hidden="true">💬</span>
         </div>
 
-        <p
-          style={{
-            margin: "0 0 10px",
-            color: "#0f172a",
-            fontWeight: 700,
-            fontSize: "14px",
-          }}
-        >
-          {post.likes} {post.likes === 1 ? "like" : "likes"}
-        </p>
+        {/* Caption */}
+        {post.caption && (
+          <p style={{ margin: "0 0 6px", fontSize: "14px", color: "#000", lineHeight: 1.4 }}>
+            <span style={{ fontWeight: 700 }}>{post.user}</span>{" "}{post.caption}
+          </p>
+        )}
 
-        <p style={{ margin: "0 0 12px", color: "#0f172a", lineHeight: 1.5 }}>
-          <span style={{ fontWeight: 700 }}>{post.user}</span> {post.caption}
-        </p>
-
+        {/* Comments */}
         {post.comments.length > 0 && (
-          <div style={{ display: "grid", gap: "8px", marginBottom: "12px" }}>
+          <div style={{ marginBottom: "8px" }}>
             {post.comments.map((comment) => (
-              <p
-                key={comment.id}
-                style={{
-                  margin: 0,
-                  color: "#0f172a",
-                  lineHeight: 1.45,
-                  fontSize: "14px",
-                }}
-              >
-                <span style={{ fontWeight: 700 }}>{comment.user}</span> {comment.text}
+              <p key={comment.id} style={{ margin: "0 0 3px", fontSize: "13px", color: "#000", lineHeight: 1.4 }}>
+                <span style={{ fontWeight: 700 }}>{comment.user}</span>{" "}{comment.text}
               </p>
             ))}
           </div>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            alignItems: "center",
-          }}
-        >
+        {/* Comment input */}
+        <div style={{ display: "flex", gap: "8px", alignItems: "center", paddingBottom: "10px", borderTop: "1px solid #f0f0f0", paddingTop: "10px" }}>
           <input
             type="text"
             value={commentText}
-            onChange={(event) => setCommentText(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
                 handleSubmitComment();
               }
             }}
-            placeholder="Add a comment..."
+            placeholder="add a comment..."
             style={{
               flex: 1,
-              borderRadius: "999px",
-              border: "1px solid #cbd5e1",
-              padding: "10px 14px",
-              fontSize: "14px",
+              border: "none",
               outline: "none",
-              color: "#0f172a",
+              fontSize: "13px",
+              color: "#000",
+              background: "transparent",
               minHeight: "44px",
             }}
           />
@@ -203,20 +134,18 @@ export default function FeedPost({
             onClick={handleSubmitComment}
             style={{
               border: "none",
-              backgroundColor: "#22c55e",
-              color: "white",
-              borderRadius: "999px",
-              padding: "10px 14px",
+              background: "transparent",
+              color: "#000",
               fontWeight: 700,
+              fontSize: "13px",
               cursor: "pointer",
-              minHeight: "44px",
+              padding: "4px 0",
               touchAction: "manipulation",
               WebkitTapHighlightColor: "transparent",
-              position: "relative",
-              zIndex: 2,
+              minHeight: "44px",
             }}
           >
-            Post
+            post
           </button>
         </div>
       </div>
