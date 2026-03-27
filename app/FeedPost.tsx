@@ -15,12 +15,14 @@ export default function FeedPost({
   onAddComment,
 }: FeedPostProps) {
   const [commentText, setCommentText] = useState("");
+  const [showCommentInput, setShowCommentInput] = useState(false);
 
   const handleSubmitComment = () => {
     const trimmedComment = commentText.trim();
     if (!trimmedComment) return;
     onAddComment(post.id, trimmedComment);
     setCommentText("");
+    setShowCommentInput(false);
   };
 
   return (
@@ -59,7 +61,7 @@ export default function FeedPost({
       />
 
       {/* Actions */}
-      <div style={{ padding: "10px 14px 4px" }}>
+      <div style={{ padding: "10px 14px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "8px" }}>
           <button
             type="button"
@@ -85,7 +87,24 @@ export default function FeedPost({
               {post.likes}
             </span>
           </button>
-          <span style={{ fontSize: "20px", lineHeight: 1 }} aria-hidden="true">💬</span>
+          <button
+            type="button"
+            onClick={() => setShowCommentInput((v) => !v)}
+            aria-label="Toggle comment input"
+            style={{
+              border: "none",
+              background: "transparent",
+              padding: "4px 0",
+              cursor: "pointer",
+              fontSize: "20px",
+              lineHeight: 1,
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
+              minHeight: "44px",
+            }}
+          >
+            💬
+          </button>
         </div>
 
         {/* Caption */}
@@ -97,7 +116,7 @@ export default function FeedPost({
 
         {/* Comments */}
         {post.comments.length > 0 && (
-          <div style={{ marginBottom: "8px" }}>
+          <div style={{ marginBottom: "6px" }}>
             {post.comments.map((comment) => (
               <p key={comment.id} style={{ margin: "0 0 3px", fontSize: "13px", color: "#000", lineHeight: 1.4 }}>
                 <span style={{ fontWeight: 700 }}>{comment.user}</span>{" "}{comment.text}
@@ -106,48 +125,51 @@ export default function FeedPost({
           </div>
         )}
 
-        {/* Comment input */}
-        <div style={{ display: "flex", gap: "8px", alignItems: "center", paddingBottom: "10px", borderTop: "1px solid #f0f0f0", paddingTop: "10px" }}>
-          <input
-            type="text"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSubmitComment();
-              }
-            }}
-            placeholder="add a comment..."
-            style={{
-              flex: 1,
-              border: "none",
-              outline: "none",
-              fontSize: "13px",
-              color: "#000",
-              background: "transparent",
-              minHeight: "44px",
-            }}
-          />
-          <button
-            type="button"
-            onClick={handleSubmitComment}
-            style={{
-              border: "none",
-              background: "transparent",
-              color: "#000",
-              fontWeight: 700,
-              fontSize: "13px",
-              cursor: "pointer",
-              padding: "4px 0",
-              touchAction: "manipulation",
-              WebkitTapHighlightColor: "transparent",
-              minHeight: "44px",
-            }}
-          >
-            post
-          </button>
-        </div>
+        {/* Comment input - only shown when toggled */}
+        {showCommentInput && (
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", borderTop: "1px solid #f0f0f0", paddingTop: "10px", marginTop: "6px" }}>
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSubmitComment();
+                }
+              }}
+              placeholder="add a comment..."
+              autoFocus
+              style={{
+                flex: 1,
+                border: "none",
+                outline: "none",
+                fontSize: "13px",
+                color: "#000",
+                background: "transparent",
+                minHeight: "44px",
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleSubmitComment}
+              style={{
+                border: "none",
+                background: "transparent",
+                color: "#000",
+                fontWeight: 700,
+                fontSize: "13px",
+                cursor: "pointer",
+                padding: "4px 0",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "transparent",
+                minHeight: "44px",
+              }}
+            >
+              post
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );
