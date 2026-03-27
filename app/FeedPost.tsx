@@ -34,6 +34,8 @@ export default function FeedPost({
         overflow: "hidden",
         boxShadow: "0 14px 30px rgba(15,23,42,0.08)",
         border: "1px solid rgba(226,232,240,0.9)",
+        position: "relative",
+        zIndex: 1,
       }}
     >
       <div
@@ -118,10 +120,14 @@ export default function FeedPost({
             style={{
               border: "none",
               background: "transparent",
-              padding: 0,
+              padding: "11px",
               cursor: "pointer",
               fontSize: "22px",
               lineHeight: 1,
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
+              position: "relative",
+              zIndex: 2,
             }}
           >
             {post.liked ? "❤️" : "🤍"}
@@ -189,6 +195,7 @@ export default function FeedPost({
               fontSize: "14px",
               outline: "none",
               color: "#0f172a",
+              minHeight: "44px",
             }}
           />
           <button
@@ -202,6 +209,11 @@ export default function FeedPost({
               padding: "10px 14px",
               fontWeight: 700,
               cursor: "pointer",
+              minHeight: "44px",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
+              position: "relative",
+              zIndex: 2,
             }}
           >
             Post

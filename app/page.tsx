@@ -53,15 +53,19 @@ const starterPosts: Post[] = [
 
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>(starterPosts);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
 
   // Load posts from localStorage on first load
   useEffect(() => {
-    const storedPosts = localStorage.getItem("posts");
+    try {
+      const storedPosts = localStorage.getItem("posts");
 
-    if (storedPosts) {
+      if (!storedPosts) {
+        return;
+      }
+
       const parsedPosts = JSON.parse(storedPosts) as Post[];
 
       const normalizedPosts = parsedPosts.map((post) => ({
@@ -72,15 +76,20 @@ export default function Home() {
       }));
 
       setPosts(normalizedPosts);
-    } else {
+    } catch (error) {
+      console.error("Failed to load posts from localStorage", error);
       setPosts(starterPosts);
     }
   }, []);
 
   // Save posts whenever they change
   useEffect(() => {
-    if (posts.length > 0) {
-      localStorage.setItem("posts", JSON.stringify(posts));
+    try {
+      if (posts.length > 0) {
+        localStorage.setItem("posts", JSON.stringify(posts));
+      }
+    } catch (error) {
+      console.error("Failed to save posts to localStorage", error);
     }
   }, [posts]);
 
@@ -132,6 +141,7 @@ export default function Home() {
 
     setPosts((currentPosts) => [newPost, ...currentPosts]);
     resetComposer();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleToggleLike = (postId: number) => {
@@ -233,6 +243,8 @@ export default function Home() {
           style={{
             display: "grid",
             gap: "18px",
+            position: "relative",
+            zIndex: 1,
           }}
         >
           {posts.map((post) => (

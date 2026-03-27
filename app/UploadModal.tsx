@@ -30,6 +30,7 @@ export default function UploadModal({
         justifyContent: "center",
         padding: "20px",
         zIndex: 40,
+        pointerEvents: "auto",
       }}
     >
       <div
@@ -68,6 +69,10 @@ export default function UploadModal({
               fontSize: "24px",
               cursor: "pointer",
               color: "#475569",
+              minHeight: "44px",
+              minWidth: "44px",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
             }}
             aria-label="Close upload modal"
           >
@@ -127,6 +132,9 @@ export default function UploadModal({
               padding: "12px 16px",
               fontWeight: 600,
               cursor: "pointer",
+              minHeight: "44px",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
             }}
           >
             Cancel
@@ -142,6 +150,9 @@ export default function UploadModal({
               padding: "12px 18px",
               fontWeight: 700,
               cursor: "pointer",
+              minHeight: "44px",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
             }}
           >
             Share
