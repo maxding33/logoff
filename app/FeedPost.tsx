@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Avatar from "./Avatar";
 import type { Post } from "./types";
 
 type FeedPostProps = {
@@ -34,15 +35,18 @@ export default function FeedPost({
         justifyContent: "space-between",
         padding: "10px 14px",
       }}>
-        <div>
-          <span style={{ fontWeight: 700, fontSize: "14px", color: "#000" }}>
-            {post.user}
-          </span>
-          {post.location && (
-            <span style={{ fontSize: "13px", color: "#666", marginLeft: "6px" }}>
-              {post.location}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Avatar name={post.user} />
+          <div>
+            <span style={{ fontWeight: 700, fontSize: "14px", color: "#000" }}>
+              {post.user}
             </span>
-          )}
+            {post.location && (
+              <span style={{ fontSize: "13px", color: "#666", marginLeft: "6px" }}>
+                {post.location}
+              </span>
+            )}
+          </div>
         </div>
         <span style={{ fontSize: "12px", color: "#999" }}>{post.createdAt}</span>
       </div>
