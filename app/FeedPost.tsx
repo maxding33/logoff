@@ -229,17 +229,10 @@ export default function FeedPost({
           }}
         />
         {/* Floating short comments */}
-        {(() => {
-          const seen = new Set<string>();
-          return post.comments
-            .filter((c) => {
-              if (c.text.trim().length > 20) return false;
-              if (seen.has(c.user)) return false;
-              seen.add(c.user);
-              return true;
-            })
-            .slice(0, 4);
-        })().map((comment, i) => (
+        {post.comments
+          .filter((c) => c.text.trim().length <= 20)
+          .slice(0, 4)
+          .map((comment, i) => (
             <div
               key={comment.id}
               style={{
