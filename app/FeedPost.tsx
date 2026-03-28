@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import Avatar from "./Avatar";
 import type { Post } from "./types";
 
@@ -53,7 +54,7 @@ export default function FeedPost({
         justifyContent: "space-between",
         padding: "10px 14px",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <Link href={`/user/${encodeURIComponent(post.user)}`} style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
           <Avatar name={post.user} />
           <div>
             <span style={{ fontWeight: 700, fontSize: "14px", color: "#000" }}>
@@ -65,7 +66,7 @@ export default function FeedPost({
               </span>
             )}
           </div>
-        </div>
+        </Link>
         <span style={{ fontSize: "12px", color: "#999" }}>{post.createdAt}</span>
       </div>
 
