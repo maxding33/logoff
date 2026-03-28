@@ -19,7 +19,9 @@ export default function FeedPost({
   const [commentText, setCommentText] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [bouncing, setBouncing] = useState(false);
+  const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
   const lastTapRef = useRef<number>(0);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const commentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -37,10 +39,24 @@ export default function FeedPost({
     };
   }, [showCommentInput]);
 
-  const handleDoubleTap = () => {
+  const handleDoubleTap = (e: React.TouchEvent | React.MouseEvent) => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
       if (!post.liked) handleLike();
+      const rect = imageRef.current?.getBoundingClientRect();
+      if (rect) {
+        let x: number, y: number;
+        if ("changedTouches" in e) {
+          const touch = e.changedTouches[0];
+          x = touch.clientX - rect.left;
+          y = touch.clientY - rect.top;
+        } else {
+          x = e.clientX - rect.left;
+          y = e.clientY - rect.top;
+        }
+        setFloatingHeart({ x, y, key: now });
+        setTimeout(() => setFloatingHeart(null), 800);
+      }
     }
     lastTapRef.current = now;
   };
@@ -87,19 +103,37 @@ export default function FeedPost({
       </div>
 
       {/* Photo - full width, square */}
-      <img
-        src={post.image}
-        alt={post.caption || `${post.user} post`}
-        onTouchEnd={handleDoubleTap}
-        onDoubleClick={handleDoubleTap}
-        style={{
-          display: "block",
-          width: "100%",
-          aspectRatio: "1 / 1",
-          objectFit: "cover",
-          backgroundColor: "#f0f0f0",
-        }}
-      />
+      <div style={{ position: "relative" }}>
+        <img
+          ref={imageRef}
+          src={post.image}
+          alt={post.caption || `${post.user} post`}
+          onTouchEnd={handleDoubleTap}
+          onDoubleClick={handleDoubleTap}
+          style={{
+            display: "block",
+            width: "100%",
+            aspectRatio: "1 / 1",
+            objectFit: "cover",
+            backgroundColor: "#f0f0f0",
+          }}
+        />
+        {floatingHeart && (
+          <svg
+            key={floatingHeart.key}
+            className="float-heart"
+            width="70" height="70" viewBox="0 0 24 24"
+            fill="#4a7c59" stroke="#4a7c59" strokeWidth="1.5"
+            style={{
+              position: "absolute",
+              left: floatingHeart.x,
+              top: floatingHeart.y,
+            }}
+          >
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        )}
+      </div>
 
       {/* Actions */}
       <div style={{ padding: "8px 16px 14px" }}>
