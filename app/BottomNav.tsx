@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, RefObject } from "react";
+import { ChangeEvent, RefObject, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,6 +11,12 @@ type BottomNavProps = {
 
 export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNavProps) {
   const pathname = usePathname();
+  const [tapped, setTapped] = useState<"home" | "profile" | null>(null);
+
+  const handleTap = (icon: "home" | "profile") => {
+    setTapped(icon);
+    setTimeout(() => setTapped(null), 400);
+  };
 
   return (
     <nav
@@ -29,8 +35,27 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
       }}
     >
       {/* Home */}
-      <Link href="/" style={{ color: pathname === "/" ? "#000" : "#aaa", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px", touchAction: "manipulation" }}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill={pathname === "/" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <Link
+        href="/"
+        onClick={() => handleTap("home")}
+        style={{
+          color: tapped === "home" ? "#4a7c59" : pathname === "/" ? "#000" : "#aaa",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minWidth: "44px",
+          minHeight: "44px",
+          touchAction: "manipulation",
+          transition: "color 0.15s ease",
+        }}
+      >
+        <svg
+          width="26" height="26" viewBox="0 0 24 24"
+          fill={pathname === "/" ? "currentColor" : "none"}
+          stroke="currentColor" strokeWidth="1.75"
+          strokeLinecap="round" strokeLinejoin="round"
+          className={tapped === "home" ? "nav-tap" : ""}
+        >
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
           <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
@@ -61,15 +86,32 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
           type="file"
           accept="image/*"
           onChange={handlePhotoChange}
-          style={{
-            display: "none",
-          }}
+          style={{ display: "none" }}
         />
       </label>
 
       {/* Profile */}
-      <Link href="/profile" style={{ color: pathname === "/profile" ? "#000" : "#aaa", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px", touchAction: "manipulation" }}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill={pathname === "/profile" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <Link
+        href="/profile"
+        onClick={() => handleTap("profile")}
+        style={{
+          color: tapped === "profile" ? "#4a7c59" : pathname === "/profile" ? "#000" : "#aaa",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minWidth: "44px",
+          minHeight: "44px",
+          touchAction: "manipulation",
+          transition: "color 0.15s ease",
+        }}
+      >
+        <svg
+          width="26" height="26" viewBox="0 0 24 24"
+          fill={pathname === "/profile" ? "currentColor" : "none"}
+          stroke="currentColor" strokeWidth="1.75"
+          strokeLinecap="round" strokeLinejoin="round"
+          className={tapped === "profile" ? "nav-tap" : ""}
+        >
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
