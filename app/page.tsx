@@ -190,6 +190,10 @@ export default function Home() {
     );
   };
 
+  const handleDeletePost = (postId: number) => {
+    setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
+  };
+
   return (
     <main
       style={{
@@ -245,6 +249,7 @@ export default function Home() {
             post={post}
             onToggleLike={handleToggleLike}
             onAddComment={handleAddComment}
+            onDeletePost={handleDeletePost}
           />
         ))}
       </section>

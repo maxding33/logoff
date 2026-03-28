@@ -9,20 +9,26 @@ type FeedPostProps = {
   post: Post;
   onToggleLike: (postId: number) => void;
   onAddComment: (postId: number, text: string) => void;
+  onDeletePost?: (postId: number) => void;
 };
 
 export default function FeedPost({
   post,
   onToggleLike,
   onAddComment,
+  onDeletePost,
 }: FeedPostProps) {
   const [commentText, setCommentText] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [bouncing, setBouncing] = useState(false);
   const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
   const lastTapRef = useRef<number>(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const commentRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const isOwnPost = post.user === "You";
 
   useEffect(() => {
     if (!showCommentInput) return;
@@ -38,6 +44,21 @@ export default function FeedPost({
       document.removeEventListener("touchstart", handler);
     };
   }, [showCommentInput]);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [showMenu]);
 
   const handleDoubleTap = (e: React.TouchEvent | React.MouseEvent) => {
     const now = Date.now();
@@ -99,7 +120,75 @@ export default function FeedPost({
             )}
           </div>
         </Link>
-        <span style={{ fontSize: "12px", color: "#999" }}>{post.createdAt}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "12px", color: "#999" }}>{post.createdAt}</span>
+          {isOwnPost && onDeletePost && (
+            <div ref={menuRef} style={{ position: "relative" }}>
+              <button
+                type="button"
+                onClick={() => setShowMenu((v) => !v)}
+                aria-label="Post options"
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  padding: "4px",
+                  minWidth: "44px",
+                  minHeight: "44px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#999",
+                  touchAction: "manipulation",
+                  WebkitTapHighlightColor: "transparent",
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                </svg>
+              </button>
+              {showMenu && (
+                <div style={{
+                  position: "absolute",
+                  right: 0,
+                  top: "100%",
+                  backgroundColor: "#fff",
+                  border: "1px solid #e5e5e5",
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                  zIndex: 50,
+                  minWidth: "140px",
+                  overflow: "hidden",
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onDeletePost(post.id);
+                    }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "14px 16px",
+                      border: "none",
+                      background: "transparent",
+                      textAlign: "left",
+                      fontSize: "14px",
+                      color: "#e53935",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      touchAction: "manipulation",
+                    }}
+                  >
+                    Delete post
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Photo - full width, square */}
