@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
 import type { Post } from "./types";
@@ -20,6 +20,22 @@ export default function FeedPost({
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [bouncing, setBouncing] = useState(false);
   const lastTapRef = useRef<number>(0);
+  const commentRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!showCommentInput) return;
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (commentRef.current && !commentRef.current.contains(e.target as Node)) {
+        setShowCommentInput(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [showCommentInput]);
 
   const handleDoubleTap = () => {
     const now = Date.now();
@@ -166,7 +182,7 @@ export default function FeedPost({
 
         {/* Comment input - only shown when toggled */}
         {showCommentInput && (
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", borderTop: "1px solid #f0f0f0", paddingTop: "10px", marginTop: "6px" }}>
+          <div ref={commentRef} style={{ display: "flex", gap: "8px", alignItems: "center", borderTop: "1px solid #f0f0f0", paddingTop: "10px", marginTop: "6px" }}>
             <input
               type="text"
               value={commentText}
