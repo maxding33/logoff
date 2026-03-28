@@ -63,6 +63,7 @@ export default function FeedPost({
   const lastTapRef = useRef<number>(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const commentRef = useRef<HTMLDivElement | null>(null);
+  const commentButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const isOwnPost = post.user === "You";
@@ -70,6 +71,7 @@ export default function FeedPost({
   useEffect(() => {
     if (!showCommentInput) return;
     const handler = (e: MouseEvent | TouchEvent) => {
+      if (commentButtonRef.current?.contains(e.target as Node)) return;
       if (commentRef.current && !commentRef.current.contains(e.target as Node)) {
         setShowCommentInput(false);
       }
@@ -348,6 +350,7 @@ export default function FeedPost({
             </span>
           </button>
           <button
+            ref={commentButtonRef}
             type="button"
             onClick={() => setShowCommentInput((v) => !v)}
             aria-label="Toggle comment input"
