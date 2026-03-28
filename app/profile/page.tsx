@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "../Avatar";
+import BottomNav from "../BottomNav";
+import UploadModal from "../UploadModal";
 import type { Post } from "../types";
 
 export default function ProfilePage() {
@@ -16,6 +18,9 @@ export default function ProfilePage() {
   const [bestStreak] = useState(0);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const bioInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [caption, setCaption] = useState("");
 
   useEffect(() => {
     try {
@@ -59,6 +64,41 @@ export default function ProfilePage() {
     setBio(value.trim());
     setEditingBio(false);
     try { localStorage.setItem("profile_bio", value.trim()); } catch {}
+  };
+
+  const resetComposer = () => {
+    setPreviewImage(null);
+    setCaption("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setPreviewImage(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitPost = () => {
+    if (!previewImage) return;
+    const newPost: Post = {
+      id: Date.now(),
+      user: "You",
+      location: "Outside",
+      image: previewImage,
+      caption: caption.trim() || "Went outside today.",
+      createdAt: "Just now",
+      liked: false,
+      likes: 0,
+      comments: [],
+    };
+    const updated = [newPost, ...posts];
+    setPosts(updated);
+    try { localStorage.setItem("posts", JSON.stringify(updated)); } catch {}
+    resetComposer();
   };
 
   const myPosts = posts.filter((p) => p.user === "You");
@@ -174,23 +214,15 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Bottom nav */}
-      <nav style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        backgroundColor: "#fff", borderTop: "1px solid #e5e5e5",
-        padding: "10px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 30,
-      }}>
-        <Link href="/" style={{ color: "#000", display: "flex", alignItems: "center" }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-        </Link>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#000" }}>
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      </nav>
+      <UploadModal
+        preview={previewImage}
+        caption={caption}
+        onCaptionChange={setCaption}
+        onClose={resetComposer}
+        onSubmit={handleSubmitPost}
+      />
+
+      <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
     </main>
   );
 }
