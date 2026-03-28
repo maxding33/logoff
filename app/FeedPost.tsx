@@ -19,12 +19,28 @@ function getAvatarColor(name: string): string {
   return `hsl(${Math.abs(hash) % 360}, 45%, 55%)`;
 }
 
-const BUBBLE_POSITIONS = [
-  { left: "5%",  top: "76%" },
-  { left: "5%",  top: "87%" },
-  { left: "42%", top: "78%" },
-  { left: "38%", top: "89%" },
+const BASE_POSITIONS = [
+  { left: "4%",  top: "75%" },
+  { left: "38%", top: "75%" },
+  { left: "4%",  top: "86%" },
+  { left: "38%", top: "86%" },
+  { left: "20%", top: "80%" },
+  { left: "52%", top: "80%" },
 ];
+
+function getShuffledPositions(seed: number) {
+  let s = seed === 0 ? 1 : Math.abs(seed);
+  const rand = () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+  const arr = [...BASE_POSITIONS];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 type FeedPostProps = {
   post: Post;
@@ -229,16 +245,19 @@ export default function FeedPost({
           }}
         />
         {/* Floating short comments */}
-        {post.comments
-          .filter((c) => c.text.trim().length <= 20)
-          .slice(0, 4)
-          .map((comment, i) => (
+        {(() => {
+          const positions = getShuffledPositions(post.id);
+          return post.comments
+            .filter((c) => c.text.trim().length <= 20)
+            .slice(0, 4)
+            .map((comment, i) => ({ comment, pos: positions[i] }));
+        })().map(({ comment, pos }, i) => (
             <div
               key={comment.id}
               style={{
                 position: "absolute",
-                left: BUBBLE_POSITIONS[i].left,
-                top: BUBBLE_POSITIONS[i].top,
+                left: pos.left,
+                top: pos.top,
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
