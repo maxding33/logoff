@@ -59,12 +59,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
           accept="image/*"
           onChange={handlePhotoChange}
           style={{
-            position: "absolute",
-            inset: 0,
-            width: "1px",
-            height: "1px",
-            opacity: 0,
-            cursor: "pointer",
+            display: "none",
           }}
         />
       </label>
