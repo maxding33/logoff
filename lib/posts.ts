@@ -37,13 +37,13 @@ export async function fetchPosts(currentUserId: string): Promise<Post[]> {
 
   return (data ?? []).map((post) => ({
     id: post.id as string,
-    user: (post.users as { username: string } | null)?.username ?? "Unknown",
+    user: (post.users as unknown as { username: string } | null)?.username ?? "Unknown",
     image: post.image_url as string,
     caption: post.caption as string,
     createdAt: formatTime(post.created_at as string),
     liked: ((post.likes ?? []) as { user_id: string }[]).some((l) => l.user_id === currentUserId),
     likes: ((post.likes ?? []) as unknown[]).length,
-    comments: ((post.comments ?? []) as { id: string; text: string; users: { username: string } | null }[]).map((c) => ({
+    comments: ((post.comments ?? []) as unknown as { id: string; text: string; users: { username: string } | null }[]).map((c) => ({
       id: c.id,
       user: c.users?.username ?? "Unknown",
       text: c.text,
