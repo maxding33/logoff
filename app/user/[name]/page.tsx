@@ -8,7 +8,7 @@ import type { Post } from "../../types";
 
 const STARTER_POSTS: Post[] = [
   {
-    id: 1,
+    id: "1",
     user: "Maya",
     location: "Primrose Hill",
     image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
@@ -19,7 +19,7 @@ const STARTER_POSTS: Post[] = [
     comments: [],
   },
   {
-    id: 2,
+    id: "2",
     user: "Jordan",
     location: "Hampstead Heath",
     image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
@@ -30,7 +30,7 @@ const STARTER_POSTS: Post[] = [
     comments: [],
   },
   {
-    id: 3,
+    id: "3",
     user: "Aisha",
     location: "Richmond Park",
     image: "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?auto=format&fit=crop&w=1200&q=80",
