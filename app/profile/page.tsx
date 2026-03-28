@@ -6,43 +6,49 @@ import Avatar from "../Avatar";
 import BottomNav from "../BottomNav";
 import UploadModal from "../UploadModal";
 import type { Post } from "../types";
+import { supabase } from "../../lib/supabase";
+import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
+import { fetchProfile, updateProfile } from "../../lib/profile";
 
 export default function ProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [name, setName] = useState("You");
   const [bio, setBio] = useState("");
+  const [joinDate, setJoinDate] = useState("");
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
-  const [joinDate, setJoinDate] = useState("");
-  const [streak] = useState(0);
-  const [bestStreak] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const bioInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileObjectRef = useRef<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
 
+  // Load user + posts
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("posts");
-      if (stored) setPosts(JSON.parse(stored));
-    } catch {}
-
-    const storedName = localStorage.getItem("profile_name");
-    if (storedName) setName(storedName);
-
-    const storedBio = localStorage.getItem("profile_bio");
-    if (storedBio) setBio(storedBio);
-
-    let storedJoinDate = localStorage.getItem("profile_joinDate");
-    if (!storedJoinDate) {
-      storedJoinDate = new Date().toLocaleDateString("en-GB", {
-        month: "long",
-        year: "numeric",
-      });
-      localStorage.setItem("profile_joinDate", storedJoinDate);
-    }
-    setJoinDate(storedJoinDate);
+    if (!supabase) return;
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      setCurrentUserId(user.id);
+      try {
+        const [profile, userPosts] = await Promise.all([
+          fetchProfile(user.id),
+          fetchPosts(user.id, user.id),
+        ]);
+        setName(profile.username);
+        setBio(profile.bio);
+        setJoinDate(profile.joinDate);
+        setPosts(userPosts);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -53,28 +59,35 @@ export default function ProfilePage() {
     if (editingBio) bioInputRef.current?.focus();
   }, [editingBio]);
 
-  const saveName = (value: string) => {
-    const trimmed = value.trim() || "You";
+  const saveName = async (value: string) => {
+    const trimmed = value.trim() || name;
     setName(trimmed);
     setEditingName(false);
-    try { localStorage.setItem("profile_name", trimmed); } catch {}
+    if (currentUserId) {
+      try { await updateProfile(currentUserId, { username: trimmed }); } catch {}
+    }
   };
 
-  const saveBio = (value: string) => {
-    setBio(value.trim());
+  const saveBio = async (value: string) => {
+    const trimmed = value.trim();
+    setBio(trimmed);
     setEditingBio(false);
-    try { localStorage.setItem("profile_bio", value.trim()); } catch {}
+    if (currentUserId) {
+      try { await updateProfile(currentUserId, { bio: trimmed }); } catch {}
+    }
   };
 
   const resetComposer = () => {
     setPreviewImage(null);
     setCaption("");
+    fileObjectRef.current = null;
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    fileObjectRef.current = file;
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") setPreviewImage(reader.result);
@@ -82,26 +95,24 @@ export default function ProfilePage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmitPost = () => {
-    if (!previewImage) return;
-    const newPost: Post = {
-      id: Date.now().toString(),
-      user: "You",
-      location: "Outside",
-      image: previewImage,
-      caption: caption.trim() || "Went outside today.",
-      createdAt: "Just now",
-      liked: false,
-      likes: 0,
-      comments: [],
-    };
-    const updated = [newPost, ...posts];
-    setPosts(updated);
-    try { localStorage.setItem("posts", JSON.stringify(updated)); } catch {}
-    resetComposer();
+  const handleSubmitPost = async () => {
+    const file = fileObjectRef.current;
+    if (!file || !currentUserId) return;
+    setPosting(true);
+    setPostError(null);
+    try {
+      const imageUrl = await uploadPhoto(file, currentUserId);
+      await createPost(currentUserId, imageUrl, caption.trim() || "Went outside today.");
+      const updated = await fetchPosts(currentUserId, currentUserId);
+      setPosts(updated);
+      resetComposer();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setPostError(msg);
+    } finally {
+      setPosting(false);
+    }
   };
-
-  const myPosts = posts.filter((p) => p.user === "You");
 
   return (
     <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
@@ -125,7 +136,7 @@ export default function ProfilePage() {
 
       {/* Profile info */}
       <div style={{ padding: "24px 20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-        <Avatar name="You" size={80} />
+        <Avatar name={name} size={80} />
 
         {/* Name */}
         {editingName ? (
@@ -172,7 +183,9 @@ export default function ProfilePage() {
           </button>
         )}
 
-        <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>joined {joinDate}</p>
+        {joinDate && (
+          <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>joined {joinDate}</p>
+        )}
       </div>
 
       {/* Stats */}
@@ -184,10 +197,10 @@ export default function ProfilePage() {
         margin: "0 0 2px",
       }}>
         {[
-          { label: "posts", value: myPosts.length },
+          { label: "posts", value: loading ? "—" : posts.length },
           { label: "friends", value: 0 },
-          { label: "streak", value: streak },
-          { label: "best", value: bestStreak },
+          { label: "streak", value: 0 },
+          { label: "best", value: 0 },
         ].map(({ label, value }) => (
           <div key={label} style={{ padding: "14px 0", textAlign: "center" }}>
             <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#000" }}>{value}</p>
@@ -197,13 +210,15 @@ export default function ProfilePage() {
       </div>
 
       {/* Photo grid */}
-      {myPosts.length === 0 ? (
+      {loading ? (
+        <p style={{ textAlign: "center", color: "#999", fontSize: "14px", marginTop: "40px" }}>loading...</p>
+      ) : posts.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center" }}>
           <p style={{ margin: 0, fontSize: "14px", color: "#aaa" }}>no posts yet — go outside!</p>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px" }}>
-          {myPosts.map((post) => (
+          {posts.map((post) => (
             <img
               key={post.id}
               src={post.image}
@@ -220,6 +235,8 @@ export default function ProfilePage() {
         onCaptionChange={setCaption}
         onClose={resetComposer}
         onSubmit={handleSubmitPost}
+        posting={posting}
+        error={postError}
       />
 
       <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />

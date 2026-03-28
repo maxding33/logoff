@@ -16,10 +16,10 @@ function formatTime(timestamp: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-export async function fetchPosts(currentUserId: string): Promise<Post[]> {
+export async function fetchPosts(currentUserId: string, filterUserId?: string): Promise<Post[]> {
   const client = getClient();
 
-  const { data, error } = await client
+  let query = client
     .from("posts")
     .select(`
       id,
@@ -32,6 +32,10 @@ export async function fetchPosts(currentUserId: string): Promise<Post[]> {
       comments(id, text, users(username))
     `)
     .order("created_at", { ascending: false });
+
+  if (filterUserId) query = query.eq("user_id", filterUserId);
+
+  const { data, error } = await query;
 
   if (error) throw error;
 
