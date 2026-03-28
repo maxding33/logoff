@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Avatar from "./Avatar";
 import type { Post } from "./types";
 
@@ -18,6 +18,15 @@ export default function FeedPost({
   const [commentText, setCommentText] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
   const [bouncing, setBouncing] = useState(false);
+  const lastTapRef = useRef<number>(0);
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!post.liked) handleLike();
+    }
+    lastTapRef.current = now;
+  };
 
   const handleLike = () => {
     if (!post.liked) {
@@ -64,6 +73,8 @@ export default function FeedPost({
       <img
         src={post.image}
         alt={post.caption || `${post.user} post`}
+        onTouchEnd={handleDoubleTap}
+        onDoubleClick={handleDoubleTap}
         style={{
           display: "block",
           width: "100%",
