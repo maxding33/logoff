@@ -20,6 +20,7 @@ export default function Home() {
   const [currentUsername, setCurrentUsername] = useState<string>("You");
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -73,6 +74,7 @@ export default function Home() {
     const file = fileObjectRef.current;
     if (!file || !currentUserId) return;
     setPosting(true);
+    setPostError(null);
     try {
       const imageUrl = await uploadPhoto(file, currentUserId);
       await createPost(currentUserId, imageUrl, caption.trim() || "Went outside today.");
@@ -81,7 +83,9 @@ export default function Home() {
       resetComposer();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      console.error("Failed to post:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Failed to post:", msg);
+      setPostError(msg);
     } finally {
       setPosting(false);
     }
@@ -186,6 +190,7 @@ export default function Home() {
         onClose={resetComposer}
         onSubmit={handleSubmitPost}
         posting={posting}
+        error={postError}
       />
 
       <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />

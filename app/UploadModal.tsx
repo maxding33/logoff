@@ -7,6 +7,7 @@ type UploadModalProps = {
   onClose: () => void;
   onSubmit: () => void;
   posting?: boolean;
+  error?: string | null;
 };
 
 export default function UploadModal({
@@ -16,6 +17,7 @@ export default function UploadModal({
   onClose,
   onSubmit,
   posting = false,
+  error = null,
 }: UploadModalProps) {
   if (!preview) return null;
 
@@ -106,6 +108,13 @@ export default function UploadModal({
           backgroundColor: "#f0f0f0",
         }}
       />
+
+      {/* Error */}
+      {error && (
+        <p style={{ margin: 0, padding: "10px 16px", fontSize: "13px", color: "#e53935", background: "#fff5f5", borderTop: "1px solid #fcc" }}>
+          ⚠️ {error}
+        </p>
+      )}
 
       {/* Caption */}
       <textarea
