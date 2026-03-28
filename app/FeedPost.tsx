@@ -74,8 +74,8 @@ export default function FeedPost({
       />
 
       {/* Actions */}
-      <div style={{ padding: "10px 14px 12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "8px" }}>
+      <div style={{ padding: "12px 16px 14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "22px", marginBottom: "10px" }}>
           <button
             type="button"
             onClick={handleLike}
@@ -96,7 +96,7 @@ export default function FeedPost({
             }}
           >
             <svg
-              width="22" height="22" viewBox="0 0 24 24"
+              width="24" height="24" viewBox="0 0 24 24"
               fill={post.liked ? "#000" : "none"}
               stroke="#000" strokeWidth="1.75"
               strokeLinecap="round" strokeLinejoin="round"
@@ -125,7 +125,7 @@ export default function FeedPost({
             }}
           >
             <svg
-              width="22" height="22" viewBox="0 0 24 24"
+              width="24" height="24" viewBox="0 0 24 24"
               fill="none" stroke="#000" strokeWidth="1.75"
               strokeLinecap="round" strokeLinejoin="round"
             >
