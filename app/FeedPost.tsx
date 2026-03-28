@@ -17,6 +17,15 @@ export default function FeedPost({
 }: FeedPostProps) {
   const [commentText, setCommentText] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
+  const [bouncing, setBouncing] = useState(false);
+
+  const handleLike = () => {
+    if (!post.liked) {
+      setBouncing(true);
+      setTimeout(() => setBouncing(false), 350);
+    }
+    onToggleLike(post.id);
+  };
 
   const handleSubmitComment = () => {
     const trimmedComment = commentText.trim();
@@ -69,7 +78,7 @@ export default function FeedPost({
         <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "8px" }}>
           <button
             type="button"
-            onClick={() => onToggleLike(post.id)}
+            onClick={handleLike}
             aria-label={post.liked ? "Unlike post" : "Like post"}
             style={{
               border: "none",
@@ -91,6 +100,7 @@ export default function FeedPost({
               fill={post.liked ? "#000" : "none"}
               stroke="#000" strokeWidth="1.75"
               strokeLinecap="round" strokeLinejoin="round"
+              className={bouncing ? "heart-bounce" : ""}
             >
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>

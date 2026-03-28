@@ -19,6 +19,7 @@ export default function UploadModal({
 
   return (
     <div
+      className="slide-up"
       style={{
         position: "fixed",
         inset: 0,
@@ -36,42 +37,53 @@ export default function UploadModal({
         padding: "14px 16px",
         borderBottom: "1px solid #e5e5e5",
       }}>
+        {/* X icon */}
         <button
           type="button"
           onClick={onClose}
+          aria-label="Cancel"
           style={{
             border: "none",
             background: "transparent",
-            fontSize: "14px",
             cursor: "pointer",
             color: "#000",
-            padding: "4px",
+            padding: 0,
             minHeight: "44px",
             minWidth: "44px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             touchAction: "manipulation",
             WebkitTapHighlightColor: "transparent",
           }}
         >
-          cancel
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
         </button>
+
         <span style={{ fontWeight: 700, fontSize: "14px", letterSpacing: "0.05em", textTransform: "uppercase" }}>
           new post
         </span>
+
+        {/* Share pill button */}
         <button
           type="button"
           onClick={onSubmit}
           style={{
             border: "none",
-            background: "transparent",
-            fontSize: "14px",
+            background: "#000",
+            color: "#fff",
+            fontSize: "13px",
             fontWeight: 700,
             cursor: "pointer",
-            color: "#000",
-            padding: "4px",
-            minHeight: "44px",
-            minWidth: "44px",
+            padding: "8px 18px",
+            borderRadius: "999px",
+            minHeight: "36px",
             touchAction: "manipulation",
             WebkitTapHighlightColor: "transparent",
+            letterSpacing: "0.03em",
           }}
         >
           share
@@ -97,6 +109,7 @@ export default function UploadModal({
         onChange={(e) => onCaptionChange(e.target.value)}
         placeholder="write a caption..."
         rows={3}
+        autoFocus
         style={{
           width: "100%",
           border: "none",
