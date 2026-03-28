@@ -27,7 +27,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
         right: 0,
         backgroundColor: "#ffffff",
         borderTop: "1px solid #e5e5e5",
-        padding: "14px 40px calc(14px + env(safe-area-inset-bottom))",
+        padding: "14px 70px calc(14px + env(safe-area-inset-bottom))",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
