@@ -20,10 +20,10 @@ function getAvatarColor(name: string): string {
 }
 
 const BUBBLE_POSITIONS = [
-  { left: "8%",  top: "12%" },
-  { left: "52%", top: "58%" },
-  { left: "48%", top: "10%" },
-  { left: "6%",  top: "60%" },
+  { left: "5%",  top: "68%" },
+  { left: "5%",  top: "80%" },
+  { left: "28%", top: "74%" },
+  { left: "22%", top: "86%" },
 ];
 
 type FeedPostProps = {
@@ -229,10 +229,17 @@ export default function FeedPost({
           }}
         />
         {/* Floating short comments */}
-        {post.comments
-          .filter((c) => c.text.trim().split(/\s+/).length <= 3)
-          .slice(0, 4)
-          .map((comment, i) => (
+        {(() => {
+          const seen = new Set<string>();
+          return post.comments
+            .filter((c) => {
+              if (c.text.trim().split(/\s+/).length > 3) return false;
+              if (seen.has(c.user)) return false;
+              seen.add(c.user);
+              return true;
+            })
+            .slice(0, 4);
+        })().map((comment, i) => (
             <div
               key={comment.id}
               style={{
