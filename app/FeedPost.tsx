@@ -361,20 +361,19 @@ export default function FeedPost({
           </p>
         )}
 
-        {/* Comments */}
-        {post.comments.length > 0 && (
-          <div style={{ marginBottom: "6px" }}>
-            {post.comments.map((comment) => (
-              <p key={comment.id} style={{ margin: "0 0 3px", fontSize: "12px", color: "#777", lineHeight: 1.4 }}>
-                <span style={{ fontWeight: 700, color: "#555" }}>{comment.user}</span>{" "}{comment.text}
-              </p>
-            ))}
-          </div>
-        )}
-
-        {/* Comment input - only shown when toggled */}
+        {/* Comments + input - only shown when toggled */}
         {showCommentInput && (
-          <div ref={commentRef} style={{ display: "flex", gap: "8px", alignItems: "center", borderTop: "1px solid #f0f0f0", paddingTop: "10px", marginTop: "6px" }}>
+          <div ref={commentRef}>
+            {post.comments.length > 0 && (
+              <div style={{ marginBottom: "8px" }}>
+                {post.comments.map((comment) => (
+                  <p key={comment.id} style={{ margin: "0 0 4px", fontSize: "12px", color: "#777", lineHeight: 1.4 }}>
+                    <span style={{ fontWeight: 700, color: "#555" }}>{comment.user}</span>{" "}{comment.text}
+                  </p>
+                ))}
+              </div>
+            )}
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", borderTop: "1px solid #f0f0f0", paddingTop: "10px" }}>
             <input
               type="text"
               value={commentText}
@@ -415,6 +414,7 @@ export default function FeedPost({
             >
               post
             </button>
+          </div>
           </div>
         )}
       </div>
