@@ -220,7 +220,7 @@ export default function Home() {
           textTransform: "uppercase",
           color: "#000000",
         }}>
-          LOGOFF
+          LOG<span style={{ color: "#4a7c59" }}>OFF</span>
         </p>
         <span style={{
           position: "absolute",
