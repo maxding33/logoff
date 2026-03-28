@@ -19,9 +19,8 @@ function getAvatarColor(name: string): string {
   return `hsl(${hue}, 45%, 55%)`;
 }
 
-const SIZE = 34;
-
-export default function Avatar({ name }: { name: string }) {
+export default function Avatar({ name, size = 34 }: { name: string; size?: number }) {
+  const SIZE = size;
   const isCurrentUser = name === "You";
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
@@ -75,7 +74,7 @@ export default function Avatar({ name }: { name: string }) {
         }}
       >
         {!showPhoto && (
-          <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700, lineHeight: 1 }}>
+          <span style={{ color: "#fff", fontSize: `${Math.round(SIZE * 0.35)}px`, fontWeight: 700, lineHeight: 1 }}>
             {getInitials(name)}
           </span>
         )}
