@@ -85,7 +85,7 @@ export default function ProfilePage() {
   const handleSubmitPost = () => {
     if (!previewImage) return;
     const newPost: Post = {
-      id: Date.now(),
+      id: Date.now().toString(),
       user: "You",
       location: "Outside",
       image: previewImage,
