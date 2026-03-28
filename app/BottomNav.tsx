@@ -51,16 +51,13 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
       >
         <svg
           width="26" height="26" viewBox="0 0 24 24"
-          fill="none"
-          stroke={pathname === "/" ? "#000" : "#aaa"}
-          strokeWidth="1.75"
+          fill={pathname === "/" ? "currentColor" : "none"}
+          stroke="currentColor" strokeWidth="1.75"
           strokeLinecap="round" strokeLinejoin="round"
           className={tapped === "home" ? "nav-tap" : ""}
         >
-          <path
-            d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
-            fill={pathname === "/" ? "#4a7c59" : "none"}
-          />
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          {pathname === "/" && <rect x="9" y="12" width="6" height="10" fill="#2a4a35" stroke="none" />}
           <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
       </Link>
