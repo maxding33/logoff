@@ -56,6 +56,12 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>(starterPosts);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
+  const [streak, setStreak] = useState(0);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("streak");
+    if (saved) setStreak(Number(saved));
+  }, []);
 
   // Load posts from localStorage on first load
   useEffect(() => {
@@ -194,7 +200,10 @@ export default function Home() {
       <header style={{
         padding: "16px",
         borderBottom: "1px solid #e5e5e5",
-        textAlign: "center",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
       }}>
         <p style={{
           margin: 0,
@@ -206,6 +215,15 @@ export default function Home() {
         }}>
           touchgrass
         </p>
+        <span style={{
+          position: "absolute",
+          right: "16px",
+          fontSize: "14px",
+          fontWeight: 700,
+          color: "#000",
+        }}>
+          {streak} 🔥
+        </span>
       </header>
 
       <section
