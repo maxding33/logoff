@@ -42,10 +42,27 @@ const STARTER_POSTS: Post[] = [
   },
 ];
 
+type UserData = {
+  bio: string;
+  joinDate: string;
+  streak: number;
+  bestStreak: number;
+  friends: number;
+};
+
+const USER_DATA: Record<string, UserData> = {
+  Maya: { bio: "outside before coffee ☀️", joinDate: "January 2025", streak: 12, bestStreak: 21, friends: 8 },
+  Jordan: { bio: "touch grass daily", joinDate: "February 2025", streak: 5, bestStreak: 14, friends: 11 },
+  Aisha: { bio: "richmond park regular 🌿", joinDate: "January 2025", streak: 19, bestStreak: 19, friends: 6 },
+};
+
+const DEFAULT_USER_DATA: UserData = { bio: "", joinDate: "2025", streak: 0, bestStreak: 0, friends: 0 };
+
 export default function UserProfilePage() {
   const params = useParams();
   const name = decodeURIComponent(params.name as string);
   const [posts, setPosts] = useState<Post[]>([]);
+  const userData = USER_DATA[name] ?? DEFAULT_USER_DATA;
 
   useEffect(() => {
     try {
@@ -72,17 +89,41 @@ export default function UserProfilePage() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
+          <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            {name}
+          </span>
         </Link>
-        <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-          {name}
-        </span>
       </header>
 
       {/* Profile info */}
-      <div style={{ padding: "24px 16px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", borderBottom: "1px solid #e5e5e5" }}>
-        <Avatar name={name} size={72} />
+      <div style={{ padding: "24px 20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+        <Avatar name={name} size={80} />
         <p style={{ margin: 0, fontSize: "18px", fontWeight: 700 }}>{name}</p>
-        <p style={{ margin: 0, fontSize: "13px", color: "#999" }}>{posts.length} {posts.length === 1 ? "post" : "posts"}</p>
+        {userData.bio && (
+          <p style={{ margin: 0, fontSize: "13px", color: "#444", textAlign: "center" }}>{userData.bio}</p>
+        )}
+        <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>joined {userData.joinDate}</p>
+      </div>
+
+      {/* Stats */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(4, 1fr)",
+        borderTop: "1px solid #e5e5e5",
+        borderBottom: "1px solid #e5e5e5",
+        margin: "0 0 2px",
+      }}>
+        {[
+          { label: "posts", value: posts.length },
+          { label: "friends", value: userData.friends },
+          { label: "streak", value: userData.streak },
+          { label: "best", value: userData.bestStreak },
+        ].map(({ label, value }) => (
+          <div key={label} style={{ padding: "14px 0", textAlign: "center" }}>
+            <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#000" }}>{value}</p>
+            <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</p>
+          </div>
+        ))}
       </div>
 
       {/* Photo grid */}
