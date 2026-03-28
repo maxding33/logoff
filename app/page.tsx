@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import BottomNav from "./BottomNav";
 import FeedPost from "./FeedPost";
@@ -21,12 +21,20 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const currentUserIdRef = useRef<string | null>(null);
+
+  // Pull-to-refresh state
+  const touchStartY = useRef(0);
+  const pulling = useRef(false);
+  const [pullDistance, setPullDistance] = useState(0);
 
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setCurrentUserId(user.id);
+        currentUserIdRef.current = user.id;
         supabase!
           .from("users")
           .select("username")
@@ -44,13 +52,67 @@ export default function Home() {
     if (saved) setStreak(Number(saved));
   }, []);
 
+  const loadPosts = useCallback(async (userId: string, quiet = false) => {
+    if (!quiet) setLoading(true);
+    try {
+      const fetched = await fetchPosts(userId);
+      setPosts(fetched);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  // Initial load
   useEffect(() => {
     if (!currentUserId) return;
-    fetchPosts(currentUserId)
-      .then((fetched) => setPosts(fetched))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [currentUserId]);
+    loadPosts(currentUserId);
+  }, [currentUserId, loadPosts]);
+
+  // Supabase Realtime — re-fetch whenever posts/likes/comments change
+  useEffect(() => {
+    if (!supabase || !currentUserId) return;
+
+    const channel = supabase
+      .channel("feed-updates")
+      .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => {
+        loadPosts(currentUserId, true);
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "likes" }, () => {
+        loadPosts(currentUserId, true);
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, () => {
+        loadPosts(currentUserId, true);
+      })
+      .subscribe();
+
+    return () => { supabase!.removeChannel(channel); };
+  }, [currentUserId, loadPosts]);
+
+  // Pull-to-refresh handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      touchStartY.current = e.touches[0].clientY;
+      pulling.current = true;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!pulling.current) return;
+    const dist = Math.max(0, Math.min(80, e.touches[0].clientY - touchStartY.current));
+    setPullDistance(dist);
+  };
+
+  const handleTouchEnd = () => {
+    if (pulling.current && pullDistance >= 60 && currentUserId) {
+      setRefreshing(true);
+      loadPosts(currentUserId, true);
+    }
+    pulling.current = false;
+    setPullDistance(0);
+  };
 
   const resetComposer = () => {
     setPreviewImage(null);
@@ -137,7 +199,26 @@ export default function Home() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#ffffff", padding: "0 0 80px" }}>
+    <main
+      style={{ minHeight: "100vh", background: "#ffffff", padding: "0 0 80px" }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      <div style={{
+        overflow: "hidden",
+        height: pullDistance > 0 || refreshing ? (refreshing ? 40 : pullDistance * 0.5) : 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        transition: pullDistance === 0 ? "height 0.2s ease" : "none",
+      }}>
+        <p style={{ margin: 0, fontSize: "12px", color: "#999", letterSpacing: "0.06em" }}>
+          {refreshing ? "refreshing..." : pullDistance >= 60 ? "release to refresh" : "pull to refresh"}
+        </p>
+      </div>
+
       <header style={{
         padding: "16px",
         borderBottom: "1px solid #e5e5e5",
