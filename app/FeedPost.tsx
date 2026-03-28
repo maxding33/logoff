@@ -287,7 +287,7 @@ export default function FeedPost({
 
         {/* Caption */}
         {post.caption && (
-          <p style={{ margin: "0 0 6px", fontSize: "14px", color: "#000", lineHeight: 1.4 }}>
+          <p style={{ margin: "0 0 6px", fontSize: "14px", color: "#000", lineHeight: 1.4, fontWeight: 500 }}>
             <span style={{ fontWeight: 700 }}>{post.user}</span>{" "}{post.caption}
           </p>
         )}
@@ -296,8 +296,8 @@ export default function FeedPost({
         {post.comments.length > 0 && (
           <div style={{ marginBottom: "6px" }}>
             {post.comments.map((comment) => (
-              <p key={comment.id} style={{ margin: "0 0 3px", fontSize: "13px", color: "#000", lineHeight: 1.4 }}>
-                <span style={{ fontWeight: 700 }}>{comment.user}</span>{" "}{comment.text}
+              <p key={comment.id} style={{ margin: "0 0 3px", fontSize: "12px", color: "#777", lineHeight: 1.4 }}>
+                <span style={{ fontWeight: 700, color: "#555" }}>{comment.user}</span>{" "}{comment.text}
               </p>
             ))}
           </div>
