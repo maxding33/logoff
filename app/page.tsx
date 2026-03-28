@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import BottomNav from "./BottomNav";
 import FeedPost from "./FeedPost";
 import UploadModal from "./UploadModal";
@@ -205,6 +206,12 @@ export default function Home() {
         justifyContent: "center",
         position: "relative",
       }}>
+        <Link href="/search" style={{ position: "absolute", left: "16px", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px" }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </Link>
         <p style={{
           margin: 0,
           fontSize: "13px",
