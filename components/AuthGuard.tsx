@@ -10,6 +10,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    if (!supabase) {
+      setChecked(true);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session && pathname !== "/auth") {
         router.replace("/auth");
@@ -18,7 +23,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session && pathname !== "/auth") {
         router.replace("/auth");
       }
