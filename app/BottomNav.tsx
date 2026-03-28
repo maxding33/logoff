@@ -18,7 +18,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
         right: 0,
         backgroundColor: "#ffffff",
         borderTop: "1px solid #e5e5e5",
-        padding: "10px 40px",
+        padding: "14px 40px calc(14px + env(safe-area-inset-bottom))",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -26,8 +26,8 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
       }}
     >
       {/* Home */}
-      <Link href="/" style={{ color: "#000", display: "flex", alignItems: "center" }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <Link href="/" style={{ color: "#000", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px", touchAction: "manipulation" }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
           <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
@@ -70,8 +70,8 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
       </label>
 
       {/* Profile */}
-      <Link href="/profile" style={{ color: "#000", display: "flex", alignItems: "center" }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <Link href="/profile" style={{ color: "#000", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px", touchAction: "manipulation" }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
