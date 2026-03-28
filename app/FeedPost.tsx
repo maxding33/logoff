@@ -108,8 +108,8 @@ export default function FeedPost({
           >
             <svg
               width="26" height="26" viewBox="0 0 24 24"
-              fill={post.liked ? "#000" : "none"}
-              stroke="#000" strokeWidth="1.75"
+              fill={post.liked ? "#4a7c59" : "none"}
+              stroke={post.liked ? "#4a7c59" : "#000"} strokeWidth="1.75"
               strokeLinecap="round" strokeLinejoin="round"
               className={bouncing ? "heart-bounce" : ""}
             >
