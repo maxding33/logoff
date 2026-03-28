@@ -5,6 +5,27 @@ import Link from "next/link";
 import Avatar from "./Avatar";
 import type { Post } from "./types";
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+function getAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return `hsl(${Math.abs(hash) % 360}, 45%, 55%)`;
+}
+
+const BUBBLE_POSITIONS = [
+  { left: "8%",  top: "12%" },
+  { left: "52%", top: "58%" },
+  { left: "48%", top: "10%" },
+  { left: "6%",  top: "60%" },
+];
+
 type FeedPostProps = {
   post: Post;
   onToggleLike: (postId: number) => void;
@@ -207,6 +228,54 @@ export default function FeedPost({
             backgroundColor: "#f0f0f0",
           }}
         />
+        {/* Floating short comments */}
+        {post.comments
+          .filter((c) => c.text.trim().split(/\s+/).length <= 3)
+          .slice(0, 4)
+          .map((comment, i) => (
+            <div
+              key={comment.id}
+              style={{
+                position: "absolute",
+                left: BUBBLE_POSITIONS[i].left,
+                top: BUBBLE_POSITIONS[i].top,
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                backgroundColor: "rgba(255,255,255,0.88)",
+                backdropFilter: "blur(6px)",
+                WebkitBackdropFilter: "blur(6px)",
+                borderRadius: "20px",
+                padding: "4px 10px 4px 4px",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+                animation: "fadeInBubble 0.4s ease forwards",
+                animationDelay: `${i * 0.1}s`,
+                opacity: 0,
+                pointerEvents: "none",
+                maxWidth: "140px",
+              }}
+            >
+              <div style={{
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                backgroundColor: getAvatarColor(comment.user),
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}>
+                <span style={{ color: "#fff", fontSize: "8px", fontWeight: 700, lineHeight: 1 }}>
+                  {getInitials(comment.user)}
+                </span>
+              </div>
+              <span style={{ fontSize: "11px", fontWeight: 600, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {comment.text}
+              </span>
+            </div>
+          ))
+        }
+
         {floatingHeart && (
           <svg
             key={floatingHeart.key}
