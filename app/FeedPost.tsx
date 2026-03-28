@@ -20,10 +20,10 @@ function getAvatarColor(name: string): string {
 }
 
 const BUBBLE_POSITIONS = [
-  { left: "5%",  top: "68%" },
-  { left: "5%",  top: "80%" },
-  { left: "28%", top: "74%" },
-  { left: "22%", top: "86%" },
+  { left: "5%",  top: "76%" },
+  { left: "5%",  top: "87%" },
+  { left: "42%", top: "78%" },
+  { left: "38%", top: "89%" },
 ];
 
 type FeedPostProps = {
