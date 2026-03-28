@@ -113,14 +113,14 @@ export default function ProfilePage() {
         alignItems: "center",
         gap: "12px",
       }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", color: "#000", textDecoration: "none" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#000", textDecoration: "none" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
+          <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            profile
+          </span>
         </Link>
-        <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-          profile
-        </p>
       </header>
 
       {/* Profile info */}
