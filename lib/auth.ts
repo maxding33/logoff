@@ -21,17 +21,12 @@ export async function getCurrentUser() {
 
 export async function signUp(email: string, password: string, username: string) {
   const client = getClient();
-  const { data, error } = await client.auth.signUp({ email, password });
+  const { data, error } = await client.auth.signUp({
+    email,
+    password,
+    options: { data: { username } },
+  });
   if (error) throw error;
-
-  if (data.user) {
-    const { error: profileError } = await client.from("users").insert({
-      id: data.user.id,
-      username,
-    });
-    if (profileError) throw profileError;
-  }
-
   return data;
 }
 
