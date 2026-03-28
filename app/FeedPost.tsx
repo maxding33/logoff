@@ -233,7 +233,7 @@ export default function FeedPost({
           const seen = new Set<string>();
           return post.comments
             .filter((c) => {
-              if (c.text.trim().split(/\s+/).length > 3) return false;
+              if (c.text.trim().length > 20) return false;
               if (seen.has(c.user)) return false;
               seen.add(c.user);
               return true;
