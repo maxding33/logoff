@@ -1,13 +1,13 @@
 export type Comment = {
-  id: number;
+  id: string;
   user: string;
   text: string;
 };
 
 export type Post = {
-  id: number;
+  id: string;
   user: string;
-  location: string;
+  location?: string;
   image: string;
   caption: string;
   createdAt: string;

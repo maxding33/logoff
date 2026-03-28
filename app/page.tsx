@@ -5,203 +5,135 @@ import Link from "next/link";
 import BottomNav from "./BottomNav";
 import FeedPost from "./FeedPost";
 import UploadModal from "./UploadModal";
-import type { Comment, Post } from "./types";
-
-const starterPosts: Post[] = [
-  {
-    id: 1,
-    user: "Maya",
-    location: "Primrose Hill",
-    image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
-    caption: "Morning air, little walk, head finally clear.",
-    createdAt: "2h ago",
-    liked: false,
-    likes: 18,
-    comments: [
-      { id: 101, user: "Leo", text: "This looks so peaceful." },
-      { id: 102, user: "Nina", text: "Need this kind of morning." },
-    ],
-  },
-  {
-    id: 2,
-    user: "Jordan",
-    location: "Hampstead Heath",
-    image:
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
-    caption: "Grass touched. Mission complete.",
-    createdAt: "4h ago",
-    liked: false,
-    likes: 27,
-    comments: [{ id: 201, user: "Sami", text: "Mission definitely complete." }],
-  },
-  {
-    id: 3,
-    user: "Aisha",
-    location: "Richmond Park",
-    image:
-      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80",
-    caption: "Golden light and an actually offline afternoon.",
-    createdAt: "Today",
-    liked: false,
-    likes: 34,
-    comments: [
-      { id: 301, user: "Tara", text: "That light is unreal." },
-      { id: 302, user: "Milo", text: "Richmond Park never misses." },
-    ],
-  },
-];
+import type { Post } from "./types";
+import { supabase } from "../lib/supabase";
+import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost } from "../lib/posts";
 
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [posts, setPosts] = useState<Post[]>(starterPosts);
+  const fileObjectRef = useRef<File | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [streak, setStreak] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string>("You");
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setCurrentUserId(user.id);
+        supabase!
+          .from("users")
+          .select("username")
+          .eq("id", user.id)
+          .single()
+          .then(({ data }) => {
+            if (data?.username) setCurrentUsername(data.username);
+          });
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("streak");
     if (saved) setStreak(Number(saved));
   }, []);
 
-  // Load posts from localStorage on first load
   useEffect(() => {
-    try {
-      const storedPosts = localStorage.getItem("posts");
-
-      if (!storedPosts) {
-        return;
-      }
-
-      const parsedPosts = JSON.parse(storedPosts) as Post[];
-
-      const normalizedPosts = parsedPosts.map((post) => ({
-        ...post,
-        liked: post.liked ?? false,
-        likes: post.likes ?? 0,
-        comments: post.comments ?? [],
-      }));
-
-      setPosts(normalizedPosts);
-    } catch (error) {
-      console.error("Failed to load posts from localStorage", error);
-      setPosts(starterPosts);
-    }
-  }, []);
-
-  // Save posts whenever they change
-  useEffect(() => {
-    try {
-      if (posts.length > 0) {
-        localStorage.setItem("posts", JSON.stringify(posts));
-      }
-    } catch (error) {
-      console.error("Failed to save posts to localStorage", error);
-    }
-  }, [posts]);
+    if (!currentUserId) return;
+    fetchPosts(currentUserId)
+      .then((fetched) => setPosts(fetched))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [currentUserId]);
 
   const resetComposer = () => {
     setPreviewImage(null);
     setCaption("");
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    fileObjectRef.current = null;
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
+    if (!file) return;
+    fileObjectRef.current = file;
     const reader = new FileReader();
-
     reader.onload = () => {
-      const result = reader.result;
-
-      if (typeof result === "string") {
-        setPreviewImage(result);
-      }
+      if (typeof reader.result === "string") setPreviewImage(reader.result);
     };
-
     reader.readAsDataURL(file);
   };
 
-  const handleSubmitPost = () => {
-    if (!previewImage) {
-      return;
+  const handleSubmitPost = async () => {
+    const file = fileObjectRef.current;
+    if (!file || !currentUserId) return;
+    setPosting(true);
+    try {
+      const imageUrl = await uploadPhoto(file, currentUserId);
+      await createPost(currentUserId, imageUrl, caption.trim() || "Went outside today.");
+      const updated = await fetchPosts(currentUserId);
+      setPosts(updated);
+      resetComposer();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error("Failed to post:", err);
+    } finally {
+      setPosting(false);
     }
-
-    const newPost: Post = {
-      id: Date.now(),
-      user: "You",
-      location: "Outside",
-      image: previewImage,
-      caption: caption.trim() || "Went outside today.",
-      createdAt: "Just now",
-      liked: false,
-      likes: 0,
-      comments: [],
-    };
-
-    setPosts((currentPosts) => [newPost, ...currentPosts]);
-    resetComposer();
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleToggleLike = (postId: number) => {
-    setPosts((currentPosts) =>
-      currentPosts.map((post) => {
-        if (post.id !== postId) {
-          return post;
-        }
-
-        const nextLiked = !post.liked;
-
-        return {
-          ...post,
-          liked: nextLiked,
-          likes: nextLiked ? post.likes + 1 : Math.max(post.likes - 1, 0),
-        };
-      })
+  const handleToggleLike = async (postId: string) => {
+    if (!currentUserId) return;
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+    setPosts((cur) =>
+      cur.map((p) =>
+        p.id === postId
+          ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
+          : p
+      )
     );
+    try {
+      await toggleLike(postId, currentUserId, post.liked);
+    } catch {
+      setPosts((cur) =>
+        cur.map((p) =>
+          p.id === postId ? { ...p, liked: post.liked, likes: post.likes } : p
+        )
+      );
+    }
   };
 
-  const handleAddComment = (postId: number, text: string) => {
-    const newComment: Comment = {
-      id: Date.now(),
-      user: "You",
-      text,
-    };
-
-    setPosts((currentPosts) =>
-      currentPosts.map((post) => {
-        if (post.id !== postId) {
-          return post;
-        }
-
-        return {
-          ...post,
-          comments: [...post.comments, newComment],
-        };
-      })
-    );
+  const handleAddComment = async (postId: string, text: string) => {
+    if (!currentUserId) return;
+    try {
+      const newComment = await addComment(postId, currentUserId, text, currentUsername);
+      setPosts((cur) =>
+        cur.map((p) =>
+          p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p
+        )
+      );
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+    }
   };
 
-  const handleDeletePost = (postId: number) => {
-    setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId));
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await deletePost(postId);
+      setPosts((cur) => cur.filter((p) => p.id !== postId));
+    } catch (err) {
+      console.error("Failed to delete post:", err);
+    }
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#ffffff",
-        padding: "0 0 80px",
-      }}
-    >
+    <main style={{ minHeight: "100vh", background: "#ffffff", padding: "0 0 80px" }}>
       <header style={{
         padding: "16px",
         borderBottom: "1px solid #e5e5e5",
@@ -210,48 +142,41 @@ export default function Home() {
         justifyContent: "center",
         position: "relative",
       }}>
-        <Link href="/search" style={{ position: "absolute", left: "16px", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px" }}>
+        <Link href="/search" style={{
+          position: "absolute", left: "16px", color: "#000",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          minWidth: "44px", minHeight: "44px",
+        }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
         </Link>
-        <p style={{
-          margin: 0,
-          fontSize: "13px",
-          fontWeight: 700,
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          color: "#000000",
-        }}>
+        <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000" }}>
           LOG<span style={{ color: "#4a7c59" }}>OFF</span>
         </p>
-        <span style={{
-          position: "absolute",
-          right: "16px",
-          fontSize: "14px",
-          fontWeight: 700,
-          color: "#000",
-        }}>
+        <span style={{ position: "absolute", right: "16px", fontSize: "14px", fontWeight: 700, color: "#000" }}>
           {streak} 🔥
         </span>
       </header>
 
-      <section
-        style={{
-          display: "grid",
-          gap: 0,
-        }}
-      >
-        {posts.map((post) => (
-          <FeedPost
-            key={post.id}
-            post={post}
-            onToggleLike={handleToggleLike}
-            onAddComment={handleAddComment}
-            onDeletePost={handleDeletePost}
-          />
-        ))}
+      <section style={{ display: "grid", gap: 0 }}>
+        {loading ? (
+          <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>Loading...</p>
+        ) : posts.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>No posts yet. Go outside and share!</p>
+        ) : (
+          posts.map((post) => (
+            <FeedPost
+              key={post.id}
+              post={post}
+              currentUsername={currentUsername}
+              onToggleLike={handleToggleLike}
+              onAddComment={handleAddComment}
+              onDeletePost={handleDeletePost}
+            />
+          ))
+        )}
       </section>
 
       <UploadModal
@@ -260,12 +185,10 @@ export default function Home() {
         onCaptionChange={setCaption}
         onClose={resetComposer}
         onSubmit={handleSubmitPost}
+        posting={posting}
       />
 
-      <BottomNav
-        fileInputRef={fileInputRef}
-        handlePhotoChange={handlePhotoChange}
-      />
+      <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
     </main>
   );
 }

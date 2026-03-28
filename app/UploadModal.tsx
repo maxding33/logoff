@@ -6,6 +6,7 @@ type UploadModalProps = {
   onCaptionChange: (value: string) => void;
   onClose: () => void;
   onSubmit: () => void;
+  posting?: boolean;
 };
 
 export default function UploadModal({
@@ -14,6 +15,7 @@ export default function UploadModal({
   onCaptionChange,
   onClose,
   onSubmit,
+  posting = false,
 }: UploadModalProps) {
   if (!preview) return null;
 
@@ -71,22 +73,24 @@ export default function UploadModal({
         <button
           type="button"
           onClick={onSubmit}
+          disabled={posting}
           style={{
             border: "none",
             background: "#000",
             color: "#fff",
             fontSize: "13px",
             fontWeight: 700,
-            cursor: "pointer",
+            cursor: posting ? "not-allowed" : "pointer",
             padding: "8px 18px",
             borderRadius: "999px",
             minHeight: "36px",
             touchAction: "manipulation",
             WebkitTapHighlightColor: "transparent",
             letterSpacing: "0.03em",
+            opacity: posting ? 0.5 : 1,
           }}
         >
-          share
+          {posting ? "uploading..." : "share"}
         </button>
       </div>
 

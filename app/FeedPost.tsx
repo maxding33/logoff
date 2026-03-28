@@ -44,13 +44,15 @@ function getShuffledPositions(seed: number) {
 
 type FeedPostProps = {
   post: Post;
-  onToggleLike: (postId: number) => void;
-  onAddComment: (postId: number, text: string) => void;
-  onDeletePost?: (postId: number) => void;
+  currentUsername: string;
+  onToggleLike: (postId: string) => void;
+  onAddComment: (postId: string, text: string) => void;
+  onDeletePost?: (postId: string) => void;
 };
 
 export default function FeedPost({
   post,
+  currentUsername,
   onToggleLike,
   onAddComment,
   onDeletePost,
@@ -66,7 +68,7 @@ export default function FeedPost({
   const commentButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const isOwnPost = post.user === "You";
+  const isOwnPost = post.user === currentUsername;
 
   useEffect(() => {
     if (!showCommentInput) return;
@@ -248,7 +250,8 @@ export default function FeedPost({
         />
         {/* Floating short comments */}
         {(() => {
-          const positions = getShuffledPositions(post.id);
+          const idSeed = post.id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+          const positions = getShuffledPositions(idSeed);
           return post.comments
             .filter((c) => c.text.trim().length <= 20)
             .slice(0, 4)
