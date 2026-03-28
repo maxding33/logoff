@@ -213,7 +213,7 @@ export default function Home() {
           textTransform: "uppercase",
           color: "#000000",
         }}>
-          touchgrass
+          LOGOFF
         </p>
         <span style={{
           position: "absolute",

@@ -1,6 +1,6 @@
 {
-  "name": "touchgrass",
-  "short_name": "touchgrass",
+  "name": "LOGOFF",
+  "short_name": "LOGOFF",
   "description": "A social app that gets people outside once a day.",
   "start_url": "/",
   "display": "standalone",
