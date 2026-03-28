@@ -12,6 +12,7 @@ export default function AuthPage() {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   const handleSubmit = async () => {
     setError("");
@@ -24,12 +25,14 @@ export default function AuthPage() {
           return;
         }
         await signUp(email, password, username.trim());
+        setConfirmed(true);
       } else {
         await signIn(email, password);
+        router.push("/");
       }
-      router.push("/");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const message = (err as { message?: string })?.message ?? "Something went wrong";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -45,6 +48,44 @@ export default function AuthPage() {
     background: "#fff",
     boxSizing: "border-box" as const,
   };
+
+  if (confirmed) {
+    return (
+      <main style={{
+        minHeight: "100vh",
+        background: "#fff",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "24px",
+        textAlign: "center",
+      }}>
+        <h1 style={{ fontSize: "28px", fontWeight: 800, margin: "0 0 12px" }}>
+          LOG<span style={{ color: "#2d5a3d" }}>OFF</span>
+        </h1>
+        <p style={{ fontSize: "16px", fontWeight: 700, margin: "0 0 8px" }}>Check your email</p>
+        <p style={{ fontSize: "14px", color: "#666", maxWidth: "280px", margin: 0 }}>
+          We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then come back and log in.
+        </p>
+        <button
+          type="button"
+          onClick={() => { setConfirmed(false); setMode("login"); }}
+          style={{
+            marginTop: "24px",
+            background: "none",
+            border: "none",
+            color: "#000",
+            fontWeight: 700,
+            fontSize: "14px",
+            cursor: "pointer",
+          }}
+        >
+          Back to log in
+        </button>
+      </main>
+    );
+  }
 
   return (
     <main style={{
