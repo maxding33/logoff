@@ -38,17 +38,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [pathname, router]);
 
   if (!checked && pathname !== "/auth") {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#fff",
-      }}>
-        <p style={{ fontSize: "13px", color: "#999" }}>Loading...</p>
-      </div>
-    );
+    return null;
   }
 
   return <>{children}</>;
