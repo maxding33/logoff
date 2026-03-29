@@ -10,6 +10,7 @@ import { supabase } from "../../lib/supabase";
 import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
 import { fetchProfile, updateProfile } from "../../lib/profile";
 import { registerAndSubscribe } from "../../lib/notifications";
+import { useChallengeTimer } from "../../lib/useChallengeTimer";
 
 export default function ProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -30,6 +31,7 @@ export default function ProfilePage() {
   const fileObjectRef = useRef<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
+  const challengeTimer = useChallengeTimer(currentUserId);
 
   // Load user + posts
   useEffect(() => {
@@ -181,6 +183,11 @@ export default function ProfilePage() {
             profile
           </span>
         </Link>
+        {challengeTimer && (
+          <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#4a7c59", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+            {challengeTimer}
+          </p>
+        )}
       </header>
 
       {/* Profile info */}

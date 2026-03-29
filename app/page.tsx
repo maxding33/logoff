@@ -8,6 +8,7 @@ import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
 import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost } from "../lib/posts";
+import { useChallengeTimer } from "../lib/useChallengeTimer";
 
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -23,6 +24,7 @@ export default function Home() {
   const [postError, setPostError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
+  const challengeTimer = useChallengeTimer(currentUserId);
 
   // Pull-to-refresh state
   const touchStartY = useRef(0);
@@ -237,9 +239,15 @@ export default function Home() {
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
         </Link>
-        <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000" }}>
-          LOG<span style={{ color: "#4a7c59" }}>OFF</span>
-        </p>
+        {challengeTimer ? (
+          <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, letterSpacing: "0.04em", color: "#4a7c59", fontVariantNumeric: "tabular-nums" }}>
+            {challengeTimer}
+          </p>
+        ) : (
+          <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000" }}>
+            LOG<span style={{ color: "#4a7c59" }}>OFF</span>
+          </p>
+        )}
         <span style={{ position: "absolute", right: "16px", fontSize: "14px", fontWeight: 700, color: "#000" }}>
           {streak} 🔥
         </span>
