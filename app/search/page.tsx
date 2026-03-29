@@ -3,29 +3,30 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Avatar from "../Avatar";
-import type { Post } from "../types";
+import { supabase } from "../../lib/supabase";
 
-const STARTER_USERS = ["Maya", "Jordan", "Aisha"];
+type UserResult = { id: string; username: string };
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [allUsers, setAllUsers] = useState<string[]>(STARTER_USERS);
+  const [allUsers, setAllUsers] = useState<UserResult[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("posts");
-      if (stored) {
-        const posts: Post[] = JSON.parse(stored);
-        const names = posts.map((p) => p.user).filter((u) => u !== "You");
-        const merged = Array.from(new Set([...STARTER_USERS, ...names]));
-        setAllUsers(merged);
-      }
-    } catch {}
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUserId(user.id);
+    });
+    supabase.from("users").select("id, username").then(({ data }) => {
+      if (data) setAllUsers(data);
+    });
   }, []);
 
   const results = query.trim()
-    ? allUsers.filter((u) => u.toLowerCase().includes(query.toLowerCase()))
-    : allUsers;
+    ? allUsers.filter((u) =>
+        u.username.toLowerCase().includes(query.toLowerCase()) && u.id !== currentUserId
+      )
+    : allUsers.filter((u) => u.id !== currentUserId);
 
   return (
     <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
@@ -44,15 +45,9 @@ export default function SearchPage() {
           </svg>
         </Link>
 
-        {/* Search input */}
         <div style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          background: "#f5f5f5",
-          borderRadius: "10px",
-          padding: "8px 12px",
+          flex: 1, display: "flex", alignItems: "center", gap: "8px",
+          background: "#f5f5f5", borderRadius: "10px", padding: "8px 12px",
         }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
@@ -65,47 +60,39 @@ export default function SearchPage() {
             placeholder="search by name..."
             autoFocus
             style={{
-              flex: 1,
-              border: "none",
-              outline: "none",
-              background: "transparent",
-              fontSize: "15px",
-              color: "#000",
+              flex: 1, border: "none", outline: "none",
+              background: "transparent", fontSize: "15px", color: "#000",
             }}
           />
           {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              style={{ border: "none", background: "transparent", cursor: "pointer", padding: 0, color: "#999", fontSize: "16px", lineHeight: 1 }}
-            >
+            <button type="button" onClick={() => setQuery("")}
+              style={{ border: "none", background: "transparent", cursor: "pointer", padding: 0, color: "#999", fontSize: "16px", lineHeight: 1 }}>
               ×
             </button>
           )}
         </div>
       </header>
 
-      {/* Results */}
       <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
         {results.length === 0 ? (
           <li style={{ padding: "40px 16px", textAlign: "center", color: "#999", fontSize: "14px" }}>
             no users found
           </li>
         ) : (
-          results.map((name) => (
-            <li
-              key={name}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-                padding: "12px 16px",
-                borderBottom: "1px solid #f0f0f0",
-              }}
+          results.map((user) => (
+            <Link
+              key={user.id}
+              href={`/user/${encodeURIComponent(user.username)}`}
+              style={{ textDecoration: "none", color: "inherit" }}
             >
-              <Avatar name={name} />
-              <span style={{ fontSize: "15px", fontWeight: 600, color: "#000" }}>{name}</span>
-            </li>
+              <li style={{
+                display: "flex", alignItems: "center", gap: "14px",
+                padding: "12px 16px", borderBottom: "1px solid #f0f0f0",
+              }}>
+                <Avatar name={user.username} />
+                <span style={{ fontSize: "15px", fontWeight: 600, color: "#000" }}>{user.username}</span>
+              </li>
+            </Link>
           ))
         )}
       </ul>

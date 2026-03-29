@@ -11,6 +11,7 @@ import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
 import { fetchProfile, updateProfile } from "../../lib/profile";
 import { registerAndSubscribe } from "../../lib/notifications";
 import { useChallengeTimer } from "../../lib/useChallengeTimer";
+import { getFriendsCount } from "../../lib/follows";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedProfile: { name: string; bio: string; joinDate: string } | null = null;
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
   const [loading, setLoading] = useState(cachedProfile === null);
+  const [friendsCount, setFriendsCount] = useState(0);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -47,14 +49,16 @@ export default function ProfilePage() {
       setCurrentUserId(user.id);
       cachedUserId = user.id;
       try {
-        const [profile, userPosts] = await Promise.all([
+        const [profile, userPosts, friends] = await Promise.all([
           fetchProfile(user.id),
           fetchPosts(user.id, user.id),
+          getFriendsCount(user.id),
         ]);
         setName(profile.username);
         setBio(profile.bio);
         setJoinDate(profile.joinDate);
         setPosts(userPosts);
+        setFriendsCount(friends);
         cachedProfile = { name: profile.username, bio: profile.bio, joinDate: profile.joinDate };
         cachedPosts = userPosts;
       } catch (err) {
@@ -306,7 +310,7 @@ export default function ProfilePage() {
       }}>
         {[
           { label: "posts", value: loading ? "—" : posts.length },
-          { label: "friends", value: 0 },
+          { label: "friends", value: friendsCount },
           { label: "streak", value: 0 },
           { label: "best", value: 0 },
         ].map(({ label, value }) => (
