@@ -28,6 +28,7 @@ export default function Home() {
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
   const challengeTimer = useChallengeTimer(currentUserId);
 
@@ -151,7 +152,12 @@ export default function Home() {
       await createPost(currentUserId, imageUrl, caption.trim() || "Went outside today.");
       const updated = await fetchPosts(currentUserId);
       setPosts(updated);
-      recheckChallengeStatus(currentUserId);
+      const wasActive = !!challengeTimer;
+      await recheckChallengeStatus(currentUserId);
+      if (wasActive) {
+        setShowCompletion(true);
+        setTimeout(() => setShowCompletion(false), 2000);
+      }
       resetComposer();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -292,6 +298,31 @@ export default function Home() {
       />
 
       <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
+
+      {/* Challenge completion overlay */}
+      {showCompletion && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          background: "rgba(74, 124, 89, 0.92)",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          gap: "16px",
+          animation: "fadeOut 2s ease forwards",
+        }}>
+          <style>{`
+            @keyframes fadeOut {
+              0% { opacity: 1; }
+              60% { opacity: 1; }
+              100% { opacity: 0; }
+            }
+          `}</style>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <p style={{ margin: 0, color: "#fff", fontSize: "15px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            logged off
+          </p>
+        </div>
+      )}
     </main>
   );
 }
