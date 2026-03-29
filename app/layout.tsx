@@ -39,6 +39,22 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="min-h-full flex flex-col">
+        <div id="splash" style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "#fff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "opacity 0.4s ease",
+        }}>
+          <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", fontFamily: "Arial, sans-serif" }}>
+            LOG<span style={{ color: "#4a7c59" }}>OFF</span>
+          </p>
+        </div>
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.addEventListener('load', function() {
+            var s = document.getElementById('splash');
+            if (s) { s.style.opacity = '0'; setTimeout(function(){ s.style.display = 'none'; }, 400); }
+          });
+        `}} />
         <AuthGuard>{children}</AuthGuard>
         <NotificationSetup />
       </body>
