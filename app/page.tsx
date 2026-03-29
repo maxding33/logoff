@@ -222,7 +222,8 @@ export default function Home() {
       </div>
 
       <header style={{
-        padding: "16px",
+        padding: "0 16px",
+        height: "53px",
         borderBottom: "1px solid #e5e5e5",
         display: "flex",
         alignItems: "center",

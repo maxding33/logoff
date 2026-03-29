@@ -169,11 +169,13 @@ export default function ProfilePage() {
     <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
       {/* Header */}
       <header style={{
-        padding: "16px",
+        padding: "0 16px",
+        height: "53px",
         borderBottom: "1px solid #e5e5e5",
         display: "flex",
         alignItems: "center",
         gap: "12px",
+        position: "relative",
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#000", textDecoration: "none" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
