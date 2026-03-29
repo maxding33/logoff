@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const fileObjectRef = useRef<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
+  const [expandedPost, setExpandedPost] = useState<Post | null>(null);
   const challengeTimer = useChallengeTimer(currentUserId);
 
   // Load user + posts
@@ -162,8 +163,11 @@ export default function ProfilePage() {
     try {
       const imageUrl = await uploadPhoto(file, currentUserId);
       await createPost(currentUserId, imageUrl, caption.trim() || "Went outside today.");
+      // Small delay to ensure DB write is committed before refetching
+      await new Promise((r) => setTimeout(r, 600));
       const updated = await fetchPosts(currentUserId, currentUserId);
       setPosts(updated);
+      cachedPosts = updated;
       resetComposer();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -325,7 +329,8 @@ export default function ProfilePage() {
               key={post.id}
               src={post.image}
               alt={post.caption}
-              style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block" }}
+              onClick={() => setExpandedPost(post)}
+              style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block", cursor: "pointer" }}
             />
           ))}
         </div>
@@ -342,6 +347,30 @@ export default function ProfilePage() {
       />
 
       <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
+
+      {/* Post lightbox */}
+      {expandedPost && (
+        <div
+          onClick={() => setExpandedPost(null)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: "12px", padding: "24px",
+          }}
+        >
+          <img
+            src={expandedPost.image}
+            alt={expandedPost.caption}
+            style={{ width: "100%", maxWidth: "480px", borderRadius: "4px", objectFit: "contain", maxHeight: "70vh" }}
+          />
+          {expandedPost.caption && (
+            <p style={{ margin: 0, color: "#fff", fontSize: "14px", textAlign: "center", opacity: 0.85 }}>
+              {expandedPost.caption}
+            </p>
+          )}
+        </div>
+      )}
     </main>
   );
 }
