@@ -1,15 +1,27 @@
 import { useEffect, useState } from "react";
 
+// Module-level cache so switching tabs doesn't re-fetch or flicker
+let cachedEndsAt: Date | null = null;
+let fetchedAt: number | null = null;
+
+async function fetchChallengeStatus(): Promise<Date | null> {
+  // Reuse cache if fetched within the last 60 seconds
+  if (cachedEndsAt && fetchedAt && Date.now() - fetchedAt < 60_000) {
+    return cachedEndsAt;
+  }
+  const res = await fetch("/api/challenge-status");
+  const { active, endsAt } = await res.json();
+  cachedEndsAt = active && endsAt ? new Date(endsAt) : null;
+  fetchedAt = Date.now();
+  return cachedEndsAt;
+}
+
 export function useChallengeTimer(): string | null {
-  const [endsAt, setEndsAt] = useState<Date | null>(null);
+  const [endsAt, setEndsAt] = useState<Date | null>(cachedEndsAt);
   const [display, setDisplay] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/challenge-status")
-      .then((r) => r.json())
-      .then(({ active, endsAt: end }) => {
-        if (active && end) setEndsAt(new Date(end));
-      });
+    fetchChallengeStatus().then(setEndsAt);
   }, []);
 
   useEffect(() => {
