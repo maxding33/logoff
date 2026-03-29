@@ -156,7 +156,7 @@ export default function Home() {
       await recheckChallengeStatus(currentUserId);
       if (wasActive) {
         setShowCompletion(true);
-        setTimeout(() => setShowCompletion(false), 3000);
+        setTimeout(() => setShowCompletion(false), 2500);
       }
       resetComposer();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -306,7 +306,7 @@ export default function Home() {
           background: "rgba(74, 124, 89, 0.92)",
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           gap: "16px",
-          animation: "fadeOut 3s ease forwards",
+          animation: "fadeOut 2.5s ease forwards",
         }}>
           <style>{`
             @keyframes fadeOut {
@@ -321,7 +321,7 @@ export default function Home() {
           `}</style>
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline
-              points="20 6 9 17 4 12"
+              points="4 12 9 17 20 6"
               strokeDasharray="30"
               strokeDashoffset="30"
               style={{ animation: "drawTick 0.8s ease forwards" }}
