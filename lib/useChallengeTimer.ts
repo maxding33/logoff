@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
 
 let cachedEndsAt: Date | null = null;
-let cachedCompleted = false;
 let fetchedAt: number | null = null;
+const listeners = new Set<(endsAt: Date | null) => void>();
 
-async function fetchChallengeStatus(userId?: string | null): Promise<{ endsAt: Date | null; completed: boolean }> {
+async function fetchChallengeStatus(userId?: string | null): Promise<Date | null> {
   if (!userId && cachedEndsAt && fetchedAt && Date.now() - fetchedAt < 60_000) {
-    return { endsAt: cachedEndsAt, completed: cachedCompleted };
+    return cachedEndsAt;
   }
   const url = userId ? `/api/challenge-status?userId=${userId}` : "/api/challenge-status";
   const res = await fetch(url);
   const { active, endsAt, completed } = await res.json();
-  cachedEndsAt = active && endsAt ? new Date(endsAt) : null;
-  cachedCompleted = completed ?? false;
+  cachedEndsAt = active && endsAt && !completed ? new Date(endsAt) : null;
   fetchedAt = Date.now();
-  return { endsAt: cachedEndsAt, completed: cachedCompleted };
+  return cachedEndsAt;
 }
 
 export function useChallengeTimer(userId?: string | null): string | null {
@@ -22,7 +21,12 @@ export function useChallengeTimer(userId?: string | null): string | null {
   const [display, setDisplay] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchChallengeStatus(userId).then(({ endsAt: end }) => setEndsAt(end));
+    listeners.add(setEndsAt);
+    return () => { listeners.delete(setEndsAt); };
+  }, []);
+
+  useEffect(() => {
+    fetchChallengeStatus(userId).then(setEndsAt);
   }, [userId]);
 
   useEffect(() => {
@@ -44,8 +48,9 @@ export function useChallengeTimer(userId?: string | null): string | null {
   return display;
 }
 
-// Call this after a successful post to re-check and clear the timer
-export function recheckChallengeStatus(userId: string) {
-  fetchedAt = null; // invalidate cache
-  return fetchChallengeStatus(userId);
+// Call after a successful post — re-fetches and notifies all mounted hooks
+export async function recheckChallengeStatus(userId: string) {
+  fetchedAt = null;
+  const endsAt = await fetchChallengeStatus(userId);
+  listeners.forEach((fn) => fn(endsAt));
 }
