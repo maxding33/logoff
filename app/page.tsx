@@ -314,9 +314,18 @@ export default function Home() {
               60% { opacity: 1; }
               100% { opacity: 0; }
             }
+            @keyframes drawTick {
+              from { stroke-dashoffset: 30; }
+              to { stroke-dashoffset: 0; }
+            }
           `}</style>
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
+            <polyline
+              points="20 6 9 17 4 12"
+              strokeDasharray="30"
+              strokeDashoffset="30"
+              style={{ animation: "drawTick 0.4s ease forwards" }}
+            />
           </svg>
           <p style={{ margin: 0, color: "#fff", fontSize: "15px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
             logged off
