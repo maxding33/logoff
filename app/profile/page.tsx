@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
+  const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const bioInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -74,6 +75,28 @@ export default function ProfilePage() {
     setEditingBio(false);
     if (currentUserId) {
       try { await updateProfile(currentUserId, { bio: trimmed }); } catch {}
+    }
+  };
+
+  const sendTestPush = async () => {
+    if (!currentUserId) return;
+    setTestPushStatus("sending");
+    try {
+      const res = await fetch("/api/test-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId }),
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error);
+      }
+      setTestPushStatus("sent");
+      setTimeout(() => setTestPushStatus("idle"), 4000);
+    } catch (err) {
+      console.error(err);
+      setTestPushStatus("error");
+      setTimeout(() => setTestPushStatus("idle"), 4000);
     }
   };
 
@@ -186,6 +209,29 @@ export default function ProfilePage() {
         {joinDate && (
           <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>joined {joinDate}</p>
         )}
+
+        {/* Test notification button */}
+        <button
+          onClick={sendTestPush}
+          disabled={testPushStatus === "sending"}
+          style={{
+            marginTop: "4px",
+            background: "transparent",
+            border: "1px solid #e5e5e5",
+            borderRadius: "999px",
+            padding: "8px 18px",
+            fontSize: "12px",
+            fontWeight: 600,
+            color: testPushStatus === "sent" ? "#4a7c59" : testPushStatus === "error" ? "#e53935" : "#999",
+            cursor: testPushStatus === "sending" ? "not-allowed" : "pointer",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {testPushStatus === "sending" ? "sending..." :
+           testPushStatus === "sent" ? "✓ notification sent — check your phone" :
+           testPushStatus === "error" ? "⚠ allow notifications first" :
+           "test notification"}
+        </button>
       </div>
 
       {/* Stats */}
