@@ -79,7 +79,7 @@ export default function UserProfilePage() {
     <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
       {/* Header */}
       <header style={{
-        padding: "14px 16px",
+        padding: "16px",
         borderBottom: "1px solid #e5e5e5",
         display: "flex",
         alignItems: "center",
