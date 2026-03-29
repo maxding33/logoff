@@ -74,10 +74,10 @@ export default function Home() {
     }
   }, []);
 
-  // Initial load
+  // Initial load — quiet if we have cached posts already
   useEffect(() => {
     if (!currentUserId) return;
-    loadPosts(currentUserId);
+    loadPosts(currentUserId, cachedPosts.length > 0);
   }, [currentUserId, loadPosts]);
 
   // Supabase Realtime — re-fetch whenever posts/likes/comments change
@@ -262,7 +262,7 @@ export default function Home() {
       </header>
 
       <section style={{ display: "grid", gap: 0 }}>
-        {loading ? (
+        {loading && posts.length === 0 ? (
           <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>Loading...</p>
         ) : posts.length === 0 ? (
           <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>No posts yet. Go outside and share!</p>
