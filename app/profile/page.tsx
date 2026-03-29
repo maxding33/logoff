@@ -9,6 +9,7 @@ import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
 import { fetchProfile, updateProfile } from "../../lib/profile";
+import { registerAndSubscribe } from "../../lib/notifications";
 
 export default function ProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -22,6 +23,7 @@ export default function ProfilePage() {
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [notifStatus, setNotifStatus] = useState<"unknown" | "granted" | "denied" | "enabling">("unknown");
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const bioInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -75,6 +77,25 @@ export default function ProfilePage() {
     setEditingBio(false);
     if (currentUserId) {
       try { await updateProfile(currentUserId, { bio: trimmed }); } catch {}
+    }
+  };
+
+  // Check notification permission on mount
+  useEffect(() => {
+    if ("Notification" in window) {
+      setNotifStatus(Notification.permission as "granted" | "denied" | "unknown");
+    }
+  }, []);
+
+  const enableNotifications = async () => {
+    if (!currentUserId) return;
+    setNotifStatus("enabling");
+    const ok = await registerAndSubscribe(currentUserId);
+    if (ok) {
+      setNotifStatus("granted");
+      localStorage.setItem("push_subscribed", "1");
+    } else {
+      setNotifStatus(("Notification" in window ? Notification.permission : "denied") as "granted" | "denied" | "unknown");
     }
   };
 
@@ -210,28 +231,43 @@ export default function ProfilePage() {
           <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>joined {joinDate}</p>
         )}
 
-        {/* Test notification button */}
-        <button
-          onClick={sendTestPush}
-          disabled={testPushStatus === "sending"}
-          style={{
-            marginTop: "4px",
-            background: "transparent",
-            border: "1px solid #e5e5e5",
-            borderRadius: "999px",
-            padding: "8px 18px",
-            fontSize: "12px",
-            fontWeight: 600,
-            color: testPushStatus === "sent" ? "#4a7c59" : testPushStatus === "error" ? "#e53935" : "#999",
-            cursor: testPushStatus === "sending" ? "not-allowed" : "pointer",
-            letterSpacing: "0.04em",
-          }}
-        >
-          {testPushStatus === "sending" ? "sending..." :
-           testPushStatus === "sent" ? "✓ notification sent — check your phone" :
-           testPushStatus === "error" ? "⚠ allow notifications first" :
-           "test notification"}
-        </button>
+        {/* Notification buttons */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", width: "100%" }}>
+          {notifStatus !== "granted" && (
+            <button
+              onClick={enableNotifications}
+              disabled={notifStatus === "enabling" || notifStatus === "denied"}
+              style={{
+                background: "#000", color: "#fff", border: "none",
+                borderRadius: "999px", padding: "10px 24px",
+                fontSize: "13px", fontWeight: 700, cursor: notifStatus === "denied" ? "not-allowed" : "pointer",
+                letterSpacing: "0.04em", opacity: notifStatus === "denied" ? 0.5 : 1,
+              }}
+            >
+              {notifStatus === "enabling" ? "enabling..." :
+               notifStatus === "denied" ? "notifications blocked — check phone settings" :
+               "enable notifications"}
+            </button>
+          )}
+          {notifStatus === "granted" && (
+            <button
+              onClick={sendTestPush}
+              disabled={testPushStatus === "sending"}
+              style={{
+                background: "transparent", border: "1px solid #e5e5e5",
+                borderRadius: "999px", padding: "8px 18px",
+                fontSize: "12px", fontWeight: 600, cursor: testPushStatus === "sending" ? "not-allowed" : "pointer",
+                color: testPushStatus === "sent" ? "#4a7c59" : testPushStatus === "error" ? "#e53935" : "#999",
+                letterSpacing: "0.04em",
+              }}
+            >
+              {testPushStatus === "sending" ? "sending..." :
+               testPushStatus === "sent" ? "✓ check your phone" :
+               testPushStatus === "error" ? "⚠ subscription not found" :
+               "test notification"}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
