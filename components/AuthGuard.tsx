@@ -21,6 +21,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       } else {
         setChecked(true);
       }
+      // Dismiss splash once auth is resolved
+      const splash = document.getElementById("splash");
+      if (splash) {
+        splash.style.opacity = "0";
+        setTimeout(() => { splash.style.display = "none"; }, 400);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

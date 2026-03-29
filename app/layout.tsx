@@ -49,13 +49,7 @@ export default function RootLayout({
             LOG<span style={{ color: "#4a7c59" }}>OFF</span>
           </p>
         </div>
-        <script dangerouslySetInnerHTML={{ __html: `
-          window.addEventListener('load', function() {
-            var s = document.getElementById('splash');
-            if (s) { s.style.opacity = '0'; setTimeout(function(){ s.style.display = 'none'; }, 400); }
-          });
-        `}} />
-        <AuthGuard>{children}</AuthGuard>
+<AuthGuard>{children}</AuthGuard>
         <NotificationSetup />
       </body>
     </html>
