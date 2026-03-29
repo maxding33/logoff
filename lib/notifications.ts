@@ -8,14 +8,13 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   return arr.buffer as ArrayBuffer;
 }
 
-export async function registerAndSubscribe(userId: string): Promise<boolean> {
-  try {
-    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
-    if (!VAPID_PUBLIC_KEY) { console.error("NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set"); return false; }
+export async function registerAndSubscribe(userId: string): Promise<{ ok: boolean; reason?: string }> {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return { ok: false, reason: "no serviceWorker or PushManager" };
+  if (!VAPID_PUBLIC_KEY) return { ok: false, reason: "VAPID key missing" };
 
-    // iOS requires requestPermission to be called first, directly from user gesture
+  try {
     const permission = await Notification.requestPermission();
-    if (permission !== "granted") return false;
+    if (permission !== "granted") return { ok: false, reason: `permission: ${permission}` };
 
     const reg = await navigator.serviceWorker.register("/sw.js");
     await navigator.serviceWorker.ready;
@@ -28,15 +27,15 @@ export async function registerAndSubscribe(userId: string): Promise<boolean> {
       });
     }
 
-    await fetch("/api/subscribe", {
+    const res = await fetch("/api/subscribe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, subscription }),
     });
+    if (!res.ok) return { ok: false, reason: `api/subscribe failed: ${res.status}` };
 
-    return true;
+    return { ok: true };
   } catch (err) {
-    console.error("Push subscription failed:", err);
-    return false;
+    return { ok: false, reason: String(err) };
   }
 }
