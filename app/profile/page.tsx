@@ -12,15 +12,20 @@ import { fetchProfile, updateProfile } from "../../lib/profile";
 import { registerAndSubscribe } from "../../lib/notifications";
 import { useChallengeTimer } from "../../lib/useChallengeTimer";
 
+// Module-level cache to avoid white flash on tab switch
+let cachedProfile: { name: string; bio: string; joinDate: string } | null = null;
+let cachedPosts: Post[] = [];
+let cachedUserId: string | null = null;
+
 export default function ProfilePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [joinDate, setJoinDate] = useState("");
+  const [posts, setPosts] = useState<Post[]>(cachedPosts);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(cachedUserId);
+  const [name, setName] = useState(cachedProfile?.name ?? "");
+  const [bio, setBio] = useState(cachedProfile?.bio ?? "");
+  const [joinDate, setJoinDate] = useState(cachedProfile?.joinDate ?? "");
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(cachedProfile === null);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -39,6 +44,7 @@ export default function ProfilePage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
       setCurrentUserId(user.id);
+      cachedUserId = user.id;
       try {
         const [profile, userPosts] = await Promise.all([
           fetchProfile(user.id),
@@ -48,6 +54,8 @@ export default function ProfilePage() {
         setBio(profile.bio);
         setJoinDate(profile.joinDate);
         setPosts(userPosts);
+        cachedProfile = { name: profile.username, bio: profile.bio, joinDate: profile.joinDate };
+        cachedPosts = userPosts;
       } catch (err) {
         console.error(err);
       } finally {

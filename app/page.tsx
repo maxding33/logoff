@@ -10,16 +10,21 @@ import { supabase } from "../lib/supabase";
 import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost } from "../lib/posts";
 import { useChallengeTimer } from "../lib/useChallengeTimer";
 
+// Module-level cache to avoid white flash on tab switch
+let cachedPosts: Post[] = [];
+let cachedUserId: string | null = null;
+let cachedUsername = "You";
+
 export default function Home() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileObjectRef = useRef<File | null>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>(cachedPosts);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [streak, setStreak] = useState(0);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [currentUsername, setCurrentUsername] = useState<string>("You");
-  const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(cachedUserId);
+  const [currentUsername, setCurrentUsername] = useState<string>(cachedUsername);
+  const [loading, setLoading] = useState(cachedPosts.length === 0);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -36,6 +41,7 @@ export default function Home() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setCurrentUserId(user.id);
+        cachedUserId = user.id;
         currentUserIdRef.current = user.id;
         supabase!
           .from("users")
@@ -43,7 +49,7 @@ export default function Home() {
           .eq("id", user.id)
           .single()
           .then(({ data }) => {
-            if (data?.username) setCurrentUsername(data.username);
+            if (data?.username) { setCurrentUsername(data.username); cachedUsername = data.username; }
           });
       }
     });
@@ -59,6 +65,7 @@ export default function Home() {
     try {
       const fetched = await fetchPosts(userId);
       setPosts(fetched);
+      cachedPosts = fetched;
     } catch (err) {
       console.error(err);
     } finally {
