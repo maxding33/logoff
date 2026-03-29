@@ -15,7 +15,7 @@ import { useChallengeTimer } from "../../lib/useChallengeTimer";
 export default function ProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [name, setName] = useState("You");
+  const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [joinDate, setJoinDate] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -193,7 +193,7 @@ export default function ProfilePage() {
       </header>
 
       {/* Profile info */}
-      <div style={{ padding: "24px 20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+      {loading ? null : <div style={{ padding: "24px 20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
         <Avatar name={name} size={80} />
 
         {/* Name */}
@@ -282,10 +282,10 @@ export default function ProfilePage() {
             </button>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* Stats */}
-      <div style={{
+      {!loading && <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(4, 1fr)",
         borderTop: "1px solid #e5e5e5",
@@ -303,12 +303,10 @@ export default function ProfilePage() {
             <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#999", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</p>
           </div>
         ))}
-      </div>
+      </div>}
 
       {/* Photo grid */}
-      {loading ? (
-        <p style={{ textAlign: "center", color: "#999", fontSize: "14px", marginTop: "40px" }}>loading...</p>
-      ) : posts.length === 0 ? (
+      {!loading && (posts.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center" }}>
           <p style={{ margin: 0, fontSize: "14px", color: "#aaa" }}>no posts yet — go outside!</p>
         </div>
@@ -323,7 +321,7 @@ export default function ProfilePage() {
             />
           ))}
         </div>
-      )}
+      ))}
 
       <UploadModal
         preview={previewImage}
