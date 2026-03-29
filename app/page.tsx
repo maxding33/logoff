@@ -72,6 +72,7 @@ export default function Home() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      (window as any).__dismissSplash?.();
     }
   }, []);
 

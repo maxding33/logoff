@@ -18,14 +18,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session && pathname !== "/auth") {
         router.replace("/auth");
+        // Dismiss splash for unauthenticated users going to /auth
+        (window as any).__dismissSplash?.();
       } else {
         setChecked(true);
-      }
-      // Dismiss splash once auth is resolved
-      const splash = document.getElementById("splash");
-      if (splash) {
-        splash.style.opacity = "0";
-        setTimeout(() => { splash.style.display = "none"; }, 400);
+        // Authenticated users: let the page dismiss the splash once data is ready
+        // (but safety fallback after 4s in case something goes wrong)
+        setTimeout(() => (window as any).__dismissSplash?.(), 4000);
       }
     });
 
