@@ -27,6 +27,26 @@ export function useChallengeTimer(userId?: string | null): string | null {
 
   useEffect(() => {
     fetchChallengeStatus(userId).then(setEndsAt);
+
+    // Re-check every 5 minutes in case the notification fires while app is open
+    const interval = setInterval(() => {
+      fetchedAt = null;
+      fetchChallengeStatus(userId).then(setEndsAt);
+    }, 5 * 60 * 1000);
+
+    // Re-check when app comes back into focus (e.g. after receiving notification)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchedAt = null;
+        fetchChallengeStatus(userId).then(setEndsAt);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [userId]);
 
   useEffect(() => {
