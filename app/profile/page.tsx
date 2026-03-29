@@ -24,7 +24,6 @@ export default function ProfilePage() {
   const [postError, setPostError] = useState<string | null>(null);
   const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [notifStatus, setNotifStatus] = useState<"unknown" | "granted" | "denied" | "enabling">("unknown");
-  const [subscribeDebug, setSubscribeDebug] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const bioInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -87,13 +86,8 @@ export default function ProfilePage() {
     const permission = Notification.permission as "granted" | "denied" | "default";
     setNotifStatus(permission === "default" ? "unknown" : permission);
     if (permission === "granted" && currentUserId) {
-      registerAndSubscribe(currentUserId).then(({ ok, reason }) => {
-        if (ok) {
-          localStorage.setItem("push_subscribed", "1");
-          setSubscribeDebug(`subscribed ok (uid: ${currentUserId?.slice(0, 8)})`);
-        } else {
-          setSubscribeDebug(reason ?? "unknown error");
-        }
+      registerAndSubscribe(currentUserId).then(({ ok }) => {
+        if (ok) localStorage.setItem("push_subscribed", "1");
       });
     }
   }, [currentUserId]);
@@ -101,14 +95,12 @@ export default function ProfilePage() {
   const enableNotifications = async () => {
     if (!currentUserId) return;
     setNotifStatus("enabling");
-    const { ok, reason } = await registerAndSubscribe(currentUserId);
+    const { ok } = await registerAndSubscribe(currentUserId);
     if (ok) {
       setNotifStatus("granted");
       localStorage.setItem("push_subscribed", "1");
-      setSubscribeDebug("subscribed ok");
     } else {
       setNotifStatus(("Notification" in window ? Notification.permission : "denied") as "granted" | "denied" | "unknown");
-      setSubscribeDebug(reason ?? "unknown error");
     }
   };
 
@@ -123,7 +115,6 @@ export default function ProfilePage() {
       });
       if (!res.ok) {
         const { error } = await res.json();
-        setSubscribeDebug(`test-push: ${error}`);
         throw new Error(error);
       }
       setTestPushStatus("sent");
@@ -247,12 +238,7 @@ export default function ProfilePage() {
 
         {/* Notification buttons */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", width: "100%" }}>
-          {subscribeDebug && (
-            <p style={{ margin: 0, fontSize: "11px", color: "#999", fontFamily: "monospace", textAlign: "center" }}>
-              {subscribeDebug}
-            </p>
-          )}
-          {notifStatus !== "granted" && (
+{notifStatus !== "granted" && (
             <button
               onClick={enableNotifications}
               disabled={notifStatus === "enabling" || notifStatus === "denied"}
