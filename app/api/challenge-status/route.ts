@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const userId = req.nextUrl.searchParams.get("userId");
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -25,6 +27,21 @@ export async function GET() {
   endsAt.setUTCHours(endsAt.getUTCHours() + 1);
 
   if (now >= endsAt) return NextResponse.json({ active: false });
+
+  // If userId provided, check if they've already posted during the window
+  if (userId) {
+    const startsAt = new Date(`${today}T${String(data.scheduled_hour).padStart(2, "0")}:00:00Z`);
+    const { data: post } = await supabase
+      .from("posts")
+      .select("id")
+      .eq("user_id", userId)
+      .gte("created_at", startsAt.toISOString())
+      .lte("created_at", endsAt.toISOString())
+      .limit(1)
+      .maybeSingle();
+
+    if (post) return NextResponse.json({ active: false, completed: true });
+  }
 
   return NextResponse.json({ active: true, endsAt: endsAt.toISOString() });
 }

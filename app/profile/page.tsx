@@ -36,7 +36,7 @@ export default function ProfilePage() {
   const fileObjectRef = useRef<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
-  const challengeTimer = useChallengeTimer();
+  const challengeTimer = useChallengeTimer(currentUserId);
 
   // Load user + posts
   useEffect(() => {

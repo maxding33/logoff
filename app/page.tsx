@@ -8,7 +8,7 @@ import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
 import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost } from "../lib/posts";
-import { useChallengeTimer } from "../lib/useChallengeTimer";
+import { useChallengeTimer, recheckChallengeStatus } from "../lib/useChallengeTimer";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
@@ -29,7 +29,7 @@ export default function Home() {
   const [postError, setPostError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
-  const challengeTimer = useChallengeTimer();
+  const challengeTimer = useChallengeTimer(currentUserId);
 
   // Pull-to-refresh state
   const touchStartY = useRef(0);
@@ -151,6 +151,7 @@ export default function Home() {
       await createPost(currentUserId, imageUrl, caption.trim() || "Went outside today.");
       const updated = await fetchPosts(currentUserId);
       setPosts(updated);
+      recheckChallengeStatus(currentUserId);
       resetComposer();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
