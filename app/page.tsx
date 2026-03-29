@@ -24,7 +24,7 @@ export default function Home() {
   const [postError, setPostError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
-  const challengeTimer = useChallengeTimer(currentUserId);
+  const challengeTimer = useChallengeTimer();
 
   // Pull-to-refresh state
   const touchStartY = useRef(0);

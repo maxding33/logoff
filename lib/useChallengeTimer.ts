@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 
-export function useChallengeTimer(userId: string | null): string | null {
+export function useChallengeTimer(): string | null {
   const [endsAt, setEndsAt] = useState<Date | null>(null);
   const [display, setDisplay] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
-    fetch(`/api/challenge-status?userId=${userId}`)
+    fetch("/api/challenge-status")
       .then((r) => r.json())
       .then(({ active, endsAt: end }) => {
         if (active && end) setEndsAt(new Date(end));
       });
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     if (!endsAt) return;
