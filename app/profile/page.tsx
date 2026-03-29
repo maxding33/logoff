@@ -80,12 +80,17 @@ export default function ProfilePage() {
     }
   };
 
-  // Check notification permission on mount
+  // Check notification permission on mount; auto-subscribe if already granted
   useEffect(() => {
-    if ("Notification" in window) {
-      setNotifStatus(Notification.permission as "granted" | "denied" | "unknown");
+    if (!("Notification" in window)) return;
+    const permission = Notification.permission as "granted" | "denied" | "default";
+    setNotifStatus(permission === "default" ? "unknown" : permission);
+    if (permission === "granted" && currentUserId) {
+      registerAndSubscribe(currentUserId).then((ok) => {
+        if (ok) localStorage.setItem("push_subscribed", "1");
+      });
     }
-  }, []);
+  }, [currentUserId]);
 
   const enableNotifications = async () => {
     if (!currentUserId) return;
