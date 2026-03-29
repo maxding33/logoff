@@ -45,7 +45,7 @@ export default function RootLayout({
           display: "flex", alignItems: "center", justifyContent: "center",
           transition: "opacity 0.4s ease",
         }}>
-          <p style={{ margin: 0, fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", fontFamily: "Arial, sans-serif" }}>
+          <p style={{ margin: 0, fontSize: "22px", fontWeight: 700, letterSpacing: "0.12em", fontFamily: "Arial, sans-serif" }}>
             LOG<span style={{ color: "#4a7c59" }}>OFF</span>
           </p>
         </div>
