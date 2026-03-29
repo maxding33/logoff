@@ -11,13 +11,14 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 export async function registerAndSubscribe(userId: string): Promise<boolean> {
   try {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
-    if (!VAPID_PUBLIC_KEY) return false;
+    if (!VAPID_PUBLIC_KEY) { console.error("NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set"); return false; }
+
+    // iOS requires requestPermission to be called first, directly from user gesture
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return false;
 
     const reg = await navigator.serviceWorker.register("/sw.js");
     await navigator.serviceWorker.ready;
-
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return false;
 
     let subscription = await reg.pushManager.getSubscription();
     if (!subscription) {
