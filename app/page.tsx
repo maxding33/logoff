@@ -156,7 +156,7 @@ export default function Home() {
       await recheckChallengeStatus(currentUserId);
       if (wasActive) {
         setShowCompletion(true);
-        setTimeout(() => setShowCompletion(false), 2000);
+        setTimeout(() => setShowCompletion(false), 3000);
       }
       resetComposer();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -306,12 +306,12 @@ export default function Home() {
           background: "rgba(74, 124, 89, 0.92)",
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           gap: "16px",
-          animation: "fadeOut 2s ease forwards",
+          animation: "fadeOut 3s ease forwards",
         }}>
           <style>{`
             @keyframes fadeOut {
               0% { opacity: 1; }
-              60% { opacity: 1; }
+              70% { opacity: 1; }
               100% { opacity: 0; }
             }
             @keyframes drawTick {
@@ -324,7 +324,7 @@ export default function Home() {
               points="20 6 9 17 4 12"
               strokeDasharray="30"
               strokeDashoffset="30"
-              style={{ animation: "drawTick 0.4s ease forwards" }}
+              style={{ animation: "drawTick 0.8s ease forwards" }}
             />
           </svg>
           <p style={{ margin: 0, color: "#fff", fontSize: "15px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
