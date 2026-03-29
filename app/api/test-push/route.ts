@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "No subscription found — allow notifications first" }, { status: 404 });
+    return NextResponse.json({ error: `No subscription found for uid ${userId?.slice(0, 8)} — ${error?.message ?? "no data"}` }, { status: 404 });
   }
 
   await webpush.sendNotification(

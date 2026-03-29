@@ -90,7 +90,7 @@ export default function ProfilePage() {
       registerAndSubscribe(currentUserId).then(({ ok, reason }) => {
         if (ok) {
           localStorage.setItem("push_subscribed", "1");
-          setSubscribeDebug("subscribed ok");
+          setSubscribeDebug(`subscribed ok (uid: ${currentUserId?.slice(0, 8)})`);
         } else {
           setSubscribeDebug(reason ?? "unknown error");
         }
@@ -123,6 +123,7 @@ export default function ProfilePage() {
       });
       if (!res.ok) {
         const { error } = await res.json();
+        setSubscribeDebug(`test-push: ${error}`);
         throw new Error(error);
       }
       setTestPushStatus("sent");
