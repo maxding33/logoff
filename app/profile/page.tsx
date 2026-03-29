@@ -186,7 +186,7 @@ export default function ProfilePage() {
           </span>
         </Link>
         {challengeTimer && (
-          <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#4a7c59", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+          <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, letterSpacing: "0.04em", color: "#4a7c59", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
             {challengeTimer}
           </p>
         )}
