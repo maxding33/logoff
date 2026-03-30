@@ -7,6 +7,7 @@ function getClient() {
 
 export type UserProfile = {
   username: string;
+  displayName: string | null;
   bio: string;
   joinDate: string;
   avatarUrl: string | null;
@@ -16,7 +17,7 @@ export async function fetchProfile(userId: string): Promise<UserProfile> {
   const client = getClient();
   const { data, error } = await client
     .from("users")
-    .select("username, bio, created_at, avatar_url")
+    .select("username, display_name, bio, created_at, avatar_url")
     .eq("id", userId)
     .single();
 
@@ -28,13 +29,14 @@ export async function fetchProfile(userId: string): Promise<UserProfile> {
 
   return {
     username: (data.username as string) ?? "",
+    displayName: (data.display_name as string | null) ?? null,
     bio: (data.bio as string) ?? "",
     joinDate,
     avatarUrl: (data.avatar_url as string | null) ?? null,
   };
 }
 
-export async function updateProfile(userId: string, fields: { username?: string; bio?: string }): Promise<void> {
+export async function updateProfile(userId: string, fields: { username?: string; display_name?: string | null; bio?: string }): Promise<void> {
   const client = getClient();
   const { error } = await client.from("users").update(fields).eq("id", userId);
   if (error) throw error;

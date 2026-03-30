@@ -5,7 +5,7 @@ import Link from "next/link";
 import Avatar from "../Avatar";
 import { supabase } from "../../lib/supabase";
 
-type UserResult = { id: string; username: string; avatar_url: string | null };
+type UserResult = { id: string; username: string; display_name: string | null; avatar_url: string | null };
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -17,15 +17,19 @@ export default function SearchPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setCurrentUserId(user.id);
     });
-    supabase.from("users").select("id, username, avatar_url").then(({ data }) => {
+    supabase.from("users").select("id, username, display_name, avatar_url").then(({ data }) => {
       if (data) setAllUsers(data);
     });
   }, []);
 
   const results = query.trim()
-    ? allUsers.filter((u) =>
-        u.username.toLowerCase().includes(query.toLowerCase()) && u.id !== currentUserId
-      )
+    ? allUsers.filter((u) => {
+        const q = query.toLowerCase();
+        return u.id !== currentUserId && (
+          u.username.toLowerCase().includes(q) ||
+          (u.display_name ?? "").toLowerCase().includes(q)
+        );
+      })
     : allUsers.filter((u) => u.id !== currentUserId);
 
   return (
@@ -90,7 +94,12 @@ export default function SearchPage() {
                 padding: "12px 16px", borderBottom: "1px solid #f0f0f0",
               }}>
                 <Avatar name={user.username} avatarUrl={user.avatar_url} />
-                <span style={{ fontSize: "15px", fontWeight: 600, color: "#000" }}>{user.username}</span>
+                <div>
+                  {user.display_name && (
+                    <p style={{ margin: 0, fontSize: "15px", fontWeight: 600, color: "#000" }}>{user.display_name}</p>
+                  )}
+                  <p style={{ margin: 0, fontSize: "13px", color: user.display_name ? "#888" : "#000", fontWeight: user.display_name ? 400 : 600 }}>@{user.username}</p>
+                </div>
               </li>
             </Link>
           ))

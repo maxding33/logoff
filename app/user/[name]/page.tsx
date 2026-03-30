@@ -17,6 +17,7 @@ export default function UserProfilePage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
   const [bio, setBio] = useState("");
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [joinDate, setJoinDate] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -40,7 +41,7 @@ export default function UserProfilePage() {
       // Look up target user by username
       const { data: target } = await supabase!
         .from("users")
-        .select("id, bio, created_at, avatar_url")
+        .select("id, bio, display_name, created_at, avatar_url")
         .eq("username", name)
         .maybeSingle();
 
@@ -48,6 +49,7 @@ export default function UserProfilePage() {
       if (user.id === target.id) { setRedirecting(true); router.replace("/profile"); return; }
       setTargetUserId(target.id);
       setBio(target.bio ?? "");
+      setDisplayName((target.display_name as string | null) ?? null);
       setJoinDate(new Date(target.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" }));
       setAvatarUrl((target.avatar_url as string | null) ?? null);
 
@@ -125,7 +127,8 @@ export default function UserProfilePage() {
           {/* Profile info */}
           <div style={{ padding: "24px 20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
             <Avatar name={name} size={80} avatarUrl={avatarUrl} />
-            <p style={{ margin: 0, fontSize: "18px", fontWeight: 700 }}>{name}</p>
+            {displayName && <p style={{ margin: 0, fontSize: "18px", fontWeight: 700 }}>{displayName}</p>}
+            <p style={{ margin: 0, fontSize: displayName ? "13px" : "18px", fontWeight: displayName ? 400 : 700, color: displayName ? "#888" : "#000" }}>@{name}</p>
             {bio && <p style={{ margin: 0, fontSize: "13px", color: "#444", textAlign: "center" }}>{bio}</p>}
             {joinDate && <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>joined {joinDate}</p>}
             {currentUserId !== targetUserId && (

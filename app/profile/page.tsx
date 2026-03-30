@@ -14,7 +14,7 @@ import { useChallengeTimer } from "../../lib/useChallengeTimer";
 import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../lib/follows";
 
 // Module-level cache to avoid white flash on tab switch
-let cachedProfile: { name: string; bio: string; joinDate: string; avatarUrl: string | null } | null = null;
+let cachedProfile: { name: string; displayName: string | null; bio: string; joinDate: string; avatarUrl: string | null } | null = null;
 let cachedPosts: Post[] = [];
 let cachedUserId: string | null = null;
 
@@ -23,6 +23,8 @@ export default function ProfilePage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(cachedUserId);
   const [name, setName] = useState(cachedProfile?.name ?? "");
   const [bio, setBio] = useState(cachedProfile?.bio ?? "");
+  const [displayName, setDisplayName] = useState<string | null>(cachedProfile?.displayName ?? null);
+  const [editingDisplayName, setEditingDisplayName] = useState(false);
   const [joinDate, setJoinDate] = useState(cachedProfile?.joinDate ?? "");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(cachedProfile?.avatarUrl ?? null);
   const [avatarUploading, setAvatarUploading] = useState(false);
@@ -38,6 +40,7 @@ export default function ProfilePage() {
   const [notifStatus, setNotifStatus] = useState<"unknown" | "granted" | "denied" | "enabling">("unknown");
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const bioInputRef = useRef<HTMLInputElement | null>(null);
+  const displayNameInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileObjectRef = useRef<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -61,13 +64,14 @@ export default function ProfilePage() {
           getPendingRequests(user.id),
         ]);
         setName(profile.username);
+        setDisplayName(profile.displayName);
         setBio(profile.bio);
         setJoinDate(profile.joinDate);
         setAvatarUrl(profile.avatarUrl);
         setPosts(userPosts);
         setFriendsCount(friends);
         setPendingRequests(requests);
-        cachedProfile = { name: profile.username, bio: profile.bio, joinDate: profile.joinDate, avatarUrl: profile.avatarUrl };
+        cachedProfile = { name: profile.username, displayName: profile.displayName, bio: profile.bio, joinDate: profile.joinDate, avatarUrl: profile.avatarUrl };
         cachedPosts = userPosts;
       } catch (err) {
         console.error(err);
@@ -104,6 +108,16 @@ export default function ProfilePage() {
     if (currentUserId) {
       try { await updateProfile(currentUserId, { username: trimmed }); } catch {}
     }
+  };
+
+  const saveDisplayName = async (value: string) => {
+    const trimmed = value.trim() || null;
+    setDisplayName(trimmed);
+    setEditingDisplayName(false);
+    if (currentUserId) {
+      try { await updateProfile(currentUserId, { display_name: trimmed }); } catch {}
+    }
+    if (cachedProfile) cachedProfile = { ...cachedProfile, displayName: trimmed };
   };
 
   const saveBio = async (value: string) => {
@@ -282,7 +296,29 @@ export default function ProfilePage() {
         )}
         </div>
 
-        {/* Name */}
+        {/* Display name */}
+        {editingDisplayName ? (
+          <input
+            ref={displayNameInputRef}
+            defaultValue={displayName ?? ""}
+            placeholder="your real name..."
+            autoFocus
+            onBlur={(e) => saveDisplayName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") saveDisplayName(e.currentTarget.value); }}
+            style={{
+              fontSize: "18px", fontWeight: 700, border: "none", borderBottom: "1.5px solid #000",
+              outline: "none", textAlign: "center", background: "transparent", width: "200px",
+            }}
+          />
+        ) : (
+          <button onClick={() => setEditingDisplayName(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <p style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: displayName ? "#000" : "#bbb" }}>
+              {displayName || "add your name..."}
+            </p>
+          </button>
+        )}
+
+        {/* Username */}
         {editingName ? (
           <input
             ref={nameInputRef}
@@ -290,16 +326,13 @@ export default function ProfilePage() {
             onBlur={(e) => saveName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") saveName(e.currentTarget.value); }}
             style={{
-              fontSize: "18px", fontWeight: 700, border: "none", borderBottom: "1.5px solid #000",
-              outline: "none", textAlign: "center", background: "transparent", width: "180px",
+              fontSize: "13px", fontWeight: 600, border: "none", borderBottom: "1px solid #ccc",
+              outline: "none", textAlign: "center", background: "transparent", width: "160px", color: "#666",
             }}
           />
         ) : (
-          <button
-            onClick={() => setEditingName(true)}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
-          >
-            <p style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#000" }}>{name}</p>
+          <button onClick={() => setEditingName(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#888" }}>@{name}</p>
           </button>
         )}
 
