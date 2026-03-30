@@ -31,8 +31,17 @@ export default function Home() {
   const [showCompletion, setShowCompletion] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
   const challengeTimer = useChallengeTimer(currentUserId);
-  const challengeFailed = useChallengeFailed(currentUserId);
+  const challengeFailedReal = useChallengeFailed(currentUserId);
   const [failDismissed, setFailDismissed] = useState(false);
+
+  // Allow ?testFail=1 in the URL to force the fail screen (for testing)
+  const [testFail, setTestFail] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("testFail") === "1") {
+      setTestFail(true);
+    }
+  }, []);
+  const challengeFailed = challengeFailedReal || testFail;
 
   // Reset dismiss state whenever failed flips to false (new day / new session)
   useEffect(() => {
