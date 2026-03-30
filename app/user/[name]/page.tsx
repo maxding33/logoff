@@ -19,6 +19,7 @@ export default function UserProfilePage() {
   const [joinDate, setJoinDate] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [friendsCount, setFriendsCount] = useState(0);
+  const [postsCount, setPostsCount] = useState(0);
   const [following, setFollowing] = useState(false);
   const [followedBy, setFollowedBy] = useState(false);
   const [pendingThem, setPendingThem] = useState(false);
@@ -45,10 +46,13 @@ export default function UserProfilePage() {
       setBio(target.bio ?? "");
       setJoinDate(new Date(target.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" }));
 
-      const [status, friends] = await Promise.all([
+      const [status, friends, countResult] = await Promise.all([
         getFollowStatus(user.id, target.id),
         getFriendsCount(target.id),
+        supabase!.from("posts").select("id", { count: "exact", head: true }).eq("user_id", target.id),
       ]);
+
+      setPostsCount(countResult.count ?? 0);
 
       const isOwnProfile = user.id === target.id;
       const areFriends = status.following && status.followedBy;
@@ -130,7 +134,7 @@ export default function UserProfilePage() {
             borderTop: "1px solid #e5e5e5", borderBottom: "1px solid #e5e5e5", margin: "0 0 2px",
           }}>
             {[
-              { label: "posts", value: posts.length },
+              { label: "posts", value: postsCount },
               { label: "friends", value: friendsCount },
               { label: "streak", value: 0 },
               { label: "best", value: 0 },
