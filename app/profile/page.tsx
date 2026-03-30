@@ -227,14 +227,10 @@ export default function ProfilePage() {
         justifyContent: "space-between",
         position: "relative",
       }}>
-        <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-          profile
-        </span>
-        {challengeTimer && (
-          <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, letterSpacing: "0.04em", color: "#4a7c59", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
-            {challengeTimer}
-          </p>
-        )}
+        <div style={{ width: 22 }} />
+        <p style={{ margin: 0, fontSize: challengeTimer ? "17px" : "13px", fontWeight: 700, letterSpacing: challengeTimer ? "0.04em" : "0.08em", color: challengeTimer ? "#4a7c59" : "#000", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
+          {challengeTimer ?? (name ? `@${name}` : "")}
+        </p>
         <button
           onClick={() => setShowUpdates(true)}
           style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", display: "flex", alignItems: "center" }}
@@ -318,7 +314,7 @@ export default function ProfilePage() {
           </button>
         )}
 
-        {/* Username */}
+        {/* Username — tap to edit */}
         {editingName ? (
           <input
             ref={nameInputRef}
@@ -332,7 +328,7 @@ export default function ProfilePage() {
           />
         ) : (
           <button onClick={() => setEditingName(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#888" }}>@{name}</p>
+            <p style={{ margin: 0, fontSize: "12px", color: "#aaa" }}>tap to change username</p>
           </button>
         )}
 
