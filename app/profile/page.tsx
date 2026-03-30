@@ -7,6 +7,7 @@ import BottomNav from "../BottomNav";
 import UploadModal from "../UploadModal";
 import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
+import { signOut } from "../../lib/auth";
 import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
 import { fetchProfile, updateProfile, uploadAvatar, removeAvatar } from "../../lib/profile";
 import { registerAndSubscribe } from "../../lib/notifications";
@@ -47,6 +48,7 @@ export default function ProfilePage() {
   const [caption, setCaption] = useState("");
   const [expandedPost, setExpandedPost] = useState<Post | null>(null);
   const [showUpdates, setShowUpdates] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const challengeTimer = useChallengeTimer(currentUserId);
 
   // Load user + posts
@@ -227,7 +229,15 @@ export default function ProfilePage() {
         justifyContent: "space-between",
         position: "relative",
       }}>
-        <div style={{ width: 22 }} />
+        <button
+          onClick={() => setShowSettings(true)}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
         <p style={{ margin: 0, fontSize: challengeTimer ? "17px" : "15px", fontWeight: 700, letterSpacing: challengeTimer ? "0.04em" : "0.08em", color: challengeTimer ? "#4a7c59" : "#000", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
           {challengeTimer ?? (name ? `@${name}` : "")}
         </p>
@@ -360,43 +370,6 @@ export default function ProfilePage() {
           <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>joined {joinDate}</p>
         )}
 
-        {/* Notification buttons */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", width: "100%" }}>
-{notifStatus !== "granted" && (
-            <button
-              onClick={enableNotifications}
-              disabled={notifStatus === "enabling" || notifStatus === "denied"}
-              style={{
-                background: "#000", color: "#fff", border: "none",
-                borderRadius: "999px", padding: "10px 24px",
-                fontSize: "13px", fontWeight: 700, cursor: notifStatus === "denied" ? "not-allowed" : "pointer",
-                letterSpacing: "0.04em", opacity: notifStatus === "denied" ? 0.5 : 1,
-              }}
-            >
-              {notifStatus === "enabling" ? "enabling..." :
-               notifStatus === "denied" ? "notifications blocked — check phone settings" :
-               "enable notifications"}
-            </button>
-          )}
-          {notifStatus === "granted" && (
-            <button
-              onClick={sendTestPush}
-              disabled={testPushStatus === "sending"}
-              style={{
-                background: "transparent", border: "1px solid #e5e5e5",
-                borderRadius: "999px", padding: "8px 18px",
-                fontSize: "12px", fontWeight: 600, cursor: testPushStatus === "sending" ? "not-allowed" : "pointer",
-                color: testPushStatus === "sent" ? "#4a7c59" : testPushStatus === "error" ? "#e53935" : "#999",
-                letterSpacing: "0.04em",
-              }}
-            >
-              {testPushStatus === "sending" ? "sending..." :
-               testPushStatus === "sent" ? "✓ check your phone" :
-               testPushStatus === "error" ? "⚠ subscription not found" :
-               "test notification"}
-            </button>
-          )}
-        </div>
       </div>}
 
       {/* Stats */}
@@ -450,6 +423,67 @@ export default function ProfilePage() {
       />
 
       <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
+
+      {/* Settings panel */}
+      {showSettings && (
+        <div onClick={() => setShowSettings(false)} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            background: "#fff", borderRadius: "16px 16px 0 0",
+            padding: "0 0 40px", maxHeight: "70vh", overflowY: "auto",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #e5e5e5" }}>
+              <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase" }}>settings</span>
+              <button onClick={() => setShowSettings(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#999", lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+
+            {/* Notifications */}
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #f0f0f0" }}>
+              <p style={{ margin: "0 0 10px", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#999" }}>notifications</p>
+              {notifStatus !== "granted" ? (
+                <button
+                  onClick={enableNotifications}
+                  disabled={notifStatus === "enabling" || notifStatus === "denied"}
+                  style={{
+                    background: "#000", color: "#fff", border: "none",
+                    borderRadius: "999px", padding: "10px 24px",
+                    fontSize: "13px", fontWeight: 700, cursor: notifStatus === "denied" ? "not-allowed" : "pointer",
+                    letterSpacing: "0.04em", opacity: notifStatus === "denied" ? 0.5 : 1,
+                  }}
+                >
+                  {notifStatus === "enabling" ? "enabling..." : notifStatus === "denied" ? "blocked — check phone settings" : "enable notifications"}
+                </button>
+              ) : (
+                <button
+                  onClick={sendTestPush}
+                  disabled={testPushStatus === "sending"}
+                  style={{
+                    background: "transparent", border: "1px solid #e5e5e5",
+                    borderRadius: "999px", padding: "8px 18px",
+                    fontSize: "12px", fontWeight: 600, cursor: "pointer",
+                    color: testPushStatus === "sent" ? "#4a7c59" : testPushStatus === "error" ? "#e53935" : "#999",
+                  }}
+                >
+                  {testPushStatus === "sending" ? "sending..." : testPushStatus === "sent" ? "✓ check your phone" : testPushStatus === "error" ? "⚠ not found" : "test notification"}
+                </button>
+              )}
+            </div>
+
+            {/* Log out */}
+            <div style={{ padding: "16px 20px" }}>
+              <button
+                onClick={async () => { try { await signOut(); } catch {} }}
+                style={{
+                  background: "none", border: "none", cursor: "pointer", padding: 0,
+                  fontSize: "15px", fontWeight: 600, color: "#e53935",
+                }}
+              >
+                log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Updates panel */}
       {showUpdates && (
