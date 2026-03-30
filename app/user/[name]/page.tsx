@@ -76,7 +76,7 @@ export default function UserProfilePage() {
       await unfollowUser(currentUserId, targetUserId);
       setFollowing(false);
       setPendingThem(false);
-      if (followedBy) setFriendsCount((c) => c - 1);
+      if (following && followedBy) setFriendsCount((c) => c - 1);
     } else {
       await followUser(currentUserId, targetUserId);
       setPendingThem(true);
