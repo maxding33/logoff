@@ -8,7 +8,7 @@ import UploadModal from "../UploadModal";
 import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
-import { fetchProfile, updateProfile, uploadAvatar } from "../../lib/profile";
+import { fetchProfile, updateProfile, uploadAvatar, removeAvatar } from "../../lib/profile";
 import { registerAndSubscribe } from "../../lib/notifications";
 import { useChallengeTimer } from "../../lib/useChallengeTimer";
 import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../lib/follows";
@@ -246,6 +246,7 @@ export default function ProfilePage() {
 
       {/* Profile info */}
       {loading ? null : <div style={{ padding: "24px 20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
         <div style={{ position: "relative", cursor: "pointer" }} onClick={() => avatarInputRef.current?.click()}>
           <Avatar name={name} size={80} avatarUrl={avatarUrl} />
           <div style={{
@@ -263,6 +264,20 @@ export default function ProfilePage() {
             )}
           </div>
           <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
+        </div>
+        {avatarUrl && (
+          <button
+            onClick={async () => {
+              if (!currentUserId) return;
+              try { await removeAvatar(currentUserId); } catch {}
+              setAvatarUrl(null);
+              if (cachedProfile) cachedProfile = { ...cachedProfile, avatarUrl: null };
+            }}
+            style={{ background: "none", border: "none", color: "#999", fontSize: "12px", cursor: "pointer", padding: 0 }}
+          >
+            remove photo
+          </button>
+        )}
         </div>
 
         {/* Name */}

@@ -72,3 +72,16 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
 
   return avatarUrl;
 }
+
+export async function removeAvatar(userId: string): Promise<void> {
+  const client = getClient();
+  await client.storage.from("avatars").remove([
+    `${userId}/avatar.jpg`,
+    `${userId}/avatar.jpeg`,
+    `${userId}/avatar.png`,
+    `${userId}/avatar.webp`,
+    `${userId}/avatar.heic`,
+  ]);
+  const { error } = await client.from("users").update({ avatar_url: null }).eq("id", userId);
+  if (error) throw error;
+}
