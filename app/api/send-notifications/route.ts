@@ -22,12 +22,14 @@ export async function GET(req: NextRequest) {
   );
 
   const today = new Date().toISOString().split("T")[0];
-  const currentHour = new Date().getUTCHours();
+  const now = new Date();
+  const currentHour = now.getUTCHours();
+  const currentMinute = now.getUTCMinutes();
 
-  // Get or create today's global scheduled hour
+  // Get or create today's scheduled time
   const { data: existing } = await supabase
     .from("daily_notifications")
-    .select("scheduled_hour, sent")
+    .select("scheduled_hour, scheduled_minute, sent")
     .eq("date", today)
     .maybeSingle();
 
@@ -36,6 +38,7 @@ export async function GET(req: NextRequest) {
   }
 
   let scheduledHour = existing?.scheduled_hour as number | undefined;
+  let scheduledMinute = existing?.scheduled_minute as number | undefined;
 
   if (scheduledHour == null) {
     const earliest = Math.max(9, currentHour);
@@ -44,14 +47,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: true, sent: 0, tooLate: true });
     }
     scheduledHour = earliest + Math.floor(Math.random() * (latest - earliest + 1));
+    scheduledMinute = Math.floor(Math.random() * 60);
     await supabase.from("daily_notifications").upsert(
-      { date: today, scheduled_hour: scheduledHour, sent: false },
+      { date: today, scheduled_hour: scheduledHour, scheduled_minute: scheduledMinute, sent: false },
       { onConflict: "date" }
     );
   }
 
-  if (currentHour < scheduledHour) {
-    return NextResponse.json({ ok: true, sent: 0, scheduledHour });
+  scheduledMinute = scheduledMinute ?? 0;
+
+  // Check if we've reached the scheduled time
+  const timeReached =
+    currentHour > scheduledHour ||
+    (currentHour === scheduledHour && currentMinute >= scheduledMinute);
+
+  if (!timeReached) {
+    return NextResponse.json({ ok: true, sent: 0, scheduledHour, scheduledMinute });
   }
 
   // It's time — send to all subscribers
@@ -80,9 +91,9 @@ export async function GET(req: NextRequest) {
   }
 
   await supabase.from("daily_notifications").upsert(
-    { date: today, scheduled_hour: scheduledHour, sent: true },
+    { date: today, scheduled_hour: scheduledHour, scheduled_minute: scheduledMinute, sent: true },
     { onConflict: "date" }
   );
 
-  return NextResponse.json({ ok: true, sent, hour: currentHour });
+  return NextResponse.json({ ok: true, sent, hour: currentHour, minute: currentMinute });
 }

@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabase
     .from("daily_notifications")
-    .select("scheduled_hour, sent")
+    .select("scheduled_hour, scheduled_minute, sent")
     .eq("date", today)
     .eq("sent", true)
     .maybeSingle();
@@ -23,14 +23,14 @@ export async function GET(req: NextRequest) {
   if (!data) return NextResponse.json({ active: false });
 
   const now = new Date();
-  const endsAt = new Date(`${today}T${String(data.scheduled_hour).padStart(2, "0")}:00:00Z`);
-  endsAt.setUTCHours(endsAt.getUTCHours() + 1);
+  const minute = data.scheduled_minute ?? 0;
+  const startsAt = new Date(`${today}T${String(data.scheduled_hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`);
+  const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
 
   if (now >= endsAt) return NextResponse.json({ active: false });
 
   // If userId provided, check if they've already posted during the window
   if (userId) {
-    const startsAt = new Date(`${today}T${String(data.scheduled_hour).padStart(2, "0")}:00:00Z`);
     const { data: post } = await supabase
       .from("posts")
       .select("id")
