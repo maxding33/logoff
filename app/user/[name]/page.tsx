@@ -45,13 +45,17 @@ export default function UserProfilePage() {
       setBio(target.bio ?? "");
       setJoinDate(new Date(target.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" }));
 
-      const [userPosts, status, friends] = await Promise.all([
-        fetchPosts(user.id, target.id),
+      const [status, friends] = await Promise.all([
         getFollowStatus(user.id, target.id),
         getFriendsCount(target.id),
       ]);
 
-      setPosts(userPosts);
+      const areFriends = status.following && status.followedBy;
+      if (areFriends) {
+        const userPosts = await fetchPosts(user.id, target.id);
+        setPosts(userPosts);
+      }
+
       setFollowing(status.following);
       setFollowedBy(status.followedBy);
       setPendingThem(status.pendingThem);
@@ -136,7 +140,17 @@ export default function UserProfilePage() {
           </div>
 
           {/* Photo grid */}
-          {posts.length === 0 ? (
+          {!isFriends ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginTop: "48px", color: "#aaa" }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <p style={{ margin: 0, fontSize: "14px", color: "#aaa" }}>
+                {pendingThem ? "waiting for them to accept" : "add as a friend to see their posts"}
+              </p>
+            </div>
+          ) : posts.length === 0 ? (
             <p style={{ textAlign: "center", color: "#999", fontSize: "14px", marginTop: "40px" }}>no posts yet</p>
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px" }}>
