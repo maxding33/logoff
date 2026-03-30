@@ -37,5 +37,18 @@ export async function POST(req: NextRequest) {
     })
   );
 
+  // Set today's challenge window to now so the timer appears
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  await supabase.from("daily_notifications").upsert(
+    {
+      date: today,
+      scheduled_hour: now.getUTCHours(),
+      scheduled_minute: now.getUTCMinutes(),
+      sent: true,
+    },
+    { onConflict: "date" }
+  );
+
   return NextResponse.json({ ok: true });
 }
