@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Avatar from "../../Avatar";
 import { supabase } from "../../../lib/supabase";
@@ -11,6 +11,7 @@ import type { Post } from "../../types";
 
 export default function UserProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const name = decodeURIComponent(params.name as string);
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export default function UserProfilePage() {
         .maybeSingle();
 
       if (!target) { setLoading(false); return; }
+      if (user.id === target.id) { router.replace("/profile"); return; }
       setTargetUserId(target.id);
       setBio(target.bio ?? "");
       setJoinDate(new Date(target.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" }));
