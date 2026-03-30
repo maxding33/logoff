@@ -145,7 +145,7 @@ export async function addComment(postId: string, userId: string, text: string, u
     .select("id, text")
     .single();
   if (error) throw error;
-  return { id: data.id as string, user: username, text: data.text as string };
+  return { id: data.id as string, user: username, userId, text: data.text as string };
 }
 
 export async function deleteComment(commentId: string): Promise<void> {
