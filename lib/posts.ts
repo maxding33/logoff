@@ -16,6 +16,55 @@ function formatTime(timestamp: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
+  const client = getClient();
+
+  // Get mutual friends (accepted follows in both directions)
+  const [{ data: iFollow }, { data: theyFollow }] = await Promise.all([
+    client.from("follows").select("following_id").eq("follower_id", currentUserId).eq("status", "accepted"),
+    client.from("follows").select("follower_id").eq("following_id", currentUserId).eq("status", "accepted"),
+  ]);
+
+  const iFollowIds = new Set((iFollow ?? []).map((r) => r.following_id));
+  const friendIds = (theyFollow ?? [])
+    .filter((r) => iFollowIds.has(r.follower_id))
+    .map((r) => r.follower_id);
+
+  const userIds = [currentUserId, ...friendIds];
+
+  const { data, error } = await client
+    .from("posts")
+    .select(`
+      id,
+      image_url,
+      caption,
+      created_at,
+      user_id,
+      users(username),
+      likes(id, user_id),
+      comments(id, text, users(username))
+    `)
+    .in("user_id", userIds)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((post) => ({
+    id: post.id as string,
+    user: (post.users as unknown as { username: string } | null)?.username ?? "Unknown",
+    image: post.image_url as string,
+    caption: post.caption as string,
+    createdAt: formatTime(post.created_at as string),
+    liked: ((post.likes ?? []) as { user_id: string }[]).some((l) => l.user_id === currentUserId),
+    likes: ((post.likes ?? []) as unknown[]).length,
+    comments: ((post.comments ?? []) as unknown as { id: string; text: string; users: { username: string } | null }[]).map((c) => ({
+      id: c.id,
+      user: c.users?.username ?? "Unknown",
+      text: c.text,
+    })),
+  }));
+}
+
 export async function fetchPosts(currentUserId: string, filterUserId?: string): Promise<Post[]> {
   const client = getClient();
 

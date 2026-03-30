@@ -7,7 +7,7 @@ import FeedPost from "./FeedPost";
 import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
-import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost } from "../lib/posts";
+import { fetchFeedPosts, fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost } from "../lib/posts";
 import { useChallengeTimer, recheckChallengeStatus } from "../lib/useChallengeTimer";
 
 // Module-level cache to avoid white flash on tab switch
@@ -64,7 +64,7 @@ export default function Home() {
   const loadPosts = useCallback(async (userId: string, quiet = false) => {
     if (!quiet) setLoading(true);
     try {
-      const fetched = await fetchPosts(userId);
+      const fetched = await fetchFeedPosts(userId);
       setPosts(fetched);
       cachedPosts = fetched;
     } catch (err) {
