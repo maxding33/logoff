@@ -8,7 +8,7 @@ import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
 import { fetchFeedPosts, fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
-import { useChallengeTimer, recheckChallengeStatus } from "../lib/useChallengeTimer";
+import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus } from "../lib/useChallengeTimer";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
@@ -31,6 +31,13 @@ export default function Home() {
   const [showCompletion, setShowCompletion] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
   const challengeTimer = useChallengeTimer(currentUserId);
+  const challengeFailed = useChallengeFailed(currentUserId);
+  const [failDismissed, setFailDismissed] = useState(false);
+
+  // Reset dismiss state whenever failed flips to false (new day / new session)
+  useEffect(() => {
+    if (!challengeFailed) setFailDismissed(false);
+  }, [challengeFailed]);
 
   // Pull-to-refresh state
   const touchStartY = useRef(0);
@@ -312,6 +319,62 @@ export default function Home() {
       />
 
       <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
+
+      {/* Challenge fail overlay */}
+      {challengeFailed && !failDismissed && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          background: "rgba(0,0,0,0.88)",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          gap: "20px",
+          padding: "32px",
+        }}>
+          <style>{`
+            @keyframes shakeX {
+              0%, 100% { transform: translateX(0); }
+              20% { transform: translateX(-8px); }
+              40% { transform: translateX(8px); }
+              60% { transform: translateX(-6px); }
+              80% { transform: translateX(6px); }
+            }
+          `}</style>
+          <svg
+            width="52" height="52" viewBox="0 0 24 24"
+            fill="none" stroke="#e53935" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ animation: "shakeX 0.6s ease" }}
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" />
+          </svg>
+          <p style={{ margin: 0, color: "#fff", fontSize: "22px", fontWeight: 800, letterSpacing: "0.06em", textTransform: "uppercase", textAlign: "center" }}>
+            you didn&apos;t log off
+          </p>
+          <p style={{ margin: 0, color: "#888", fontSize: "14px", textAlign: "center", lineHeight: 1.5, maxWidth: "260px" }}>
+            the window closed before you posted. get outside next time.
+          </p>
+          <button
+            type="button"
+            onClick={() => setFailDismissed(true)}
+            style={{
+              marginTop: "8px",
+              border: "1px solid #333",
+              background: "transparent",
+              color: "#fff",
+              fontSize: "14px",
+              fontWeight: 700,
+              padding: "12px 32px",
+              borderRadius: "24px",
+              cursor: "pointer",
+              letterSpacing: "0.06em",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            ok
+          </button>
+        </div>
+      )}
 
       {/* Challenge completion overlay */}
       {showCompletion && (

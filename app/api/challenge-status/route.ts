@@ -27,7 +27,22 @@ export async function GET(req: NextRequest) {
   const startsAt = new Date(`${today}T${String(data.scheduled_hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`);
   const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
 
-  if (now >= endsAt) return NextResponse.json({ active: false });
+  if (now >= endsAt) {
+    // Check if user posted during the window — if not, it's a failure
+    if (userId) {
+      const { data: post } = await supabase
+        .from("posts")
+        .select("id")
+        .eq("user_id", userId)
+        .gte("created_at", startsAt.toISOString())
+        .lte("created_at", endsAt.toISOString())
+        .limit(1)
+        .maybeSingle();
+
+      if (!post) return NextResponse.json({ active: false, failed: true });
+    }
+    return NextResponse.json({ active: false });
+  }
 
   // If userId provided, check if they've already posted during the window
   if (userId) {
