@@ -11,7 +11,7 @@ import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
 import { fetchProfile, updateProfile } from "../../lib/profile";
 import { registerAndSubscribe } from "../../lib/notifications";
 import { useChallengeTimer } from "../../lib/useChallengeTimer";
-import { getFriendsCount } from "../../lib/follows";
+import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../lib/follows";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedProfile: { name: string; bio: string; joinDate: string } | null = null;
@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [editingBio, setEditingBio] = useState(false);
   const [loading, setLoading] = useState(cachedProfile === null);
   const [friendsCount, setFriendsCount] = useState(0);
+  const [pendingRequests, setPendingRequests] = useState<{ id: string; username: string }[]>([]);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -49,16 +50,18 @@ export default function ProfilePage() {
       setCurrentUserId(user.id);
       cachedUserId = user.id;
       try {
-        const [profile, userPosts, friends] = await Promise.all([
+        const [profile, userPosts, friends, requests] = await Promise.all([
           fetchProfile(user.id),
           fetchPosts(user.id, user.id),
           getFriendsCount(user.id),
+          getPendingRequests(user.id),
         ]);
         setName(profile.username);
         setBio(profile.bio);
         setJoinDate(profile.joinDate);
         setPosts(userPosts);
         setFriendsCount(friends);
+        setPendingRequests(requests);
         cachedProfile = { name: profile.username, bio: profile.bio, joinDate: profile.joinDate };
         cachedPosts = userPosts;
       } catch (err) {
@@ -299,6 +302,51 @@ export default function ProfilePage() {
           )}
         </div>
       </div>}
+
+      {/* Friend requests */}
+      {!loading && pendingRequests.length > 0 && (
+        <div style={{ borderTop: "1px solid #e5e5e5", padding: "12px 16px" }}>
+          <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#999" }}>
+            friend requests
+          </p>
+          {pendingRequests.map((req) => (
+            <div key={req.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
+              <span style={{ fontSize: "14px", fontWeight: 600 }}>{req.username}</span>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={async () => {
+                    if (!currentUserId) return;
+                    await acceptFollow(req.id, currentUserId);
+                    setPendingRequests((r) => r.filter((x) => x.id !== req.id));
+                    setFriendsCount((c) => c + 1);
+                  }}
+                  style={{
+                    background: "#000", color: "#fff", border: "none",
+                    borderRadius: "999px", padding: "6px 14px",
+                    fontSize: "12px", fontWeight: 700, cursor: "pointer",
+                  }}
+                >
+                  accept
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!currentUserId) return;
+                    await denyFollow(req.id, currentUserId);
+                    setPendingRequests((r) => r.filter((x) => x.id !== req.id));
+                  }}
+                  style={{
+                    background: "transparent", color: "#666", border: "1px solid #e5e5e5",
+                    borderRadius: "999px", padding: "6px 14px",
+                    fontSize: "12px", fontWeight: 700, cursor: "pointer",
+                  }}
+                >
+                  deny
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Stats */}
       {!loading && <div style={{

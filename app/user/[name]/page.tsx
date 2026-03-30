@@ -21,6 +21,7 @@ export default function UserProfilePage() {
   const [friendsCount, setFriendsCount] = useState(0);
   const [following, setFollowing] = useState(false);
   const [followedBy, setFollowedBy] = useState(false);
+  const [pendingThem, setPendingThem] = useState(false);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [expandedPost, setExpandedPost] = useState<Post | null>(null);
@@ -53,6 +54,7 @@ export default function UserProfilePage() {
       setPosts(userPosts);
       setFollowing(status.following);
       setFollowedBy(status.followedBy);
+      setPendingThem(status.pendingThem);
       setFriendsCount(friends);
       setLoading(false);
     });
@@ -61,24 +63,24 @@ export default function UserProfilePage() {
   const handleFollow = async () => {
     if (!currentUserId || !targetUserId) return;
     setFollowLoading(true);
-    if (following) {
+    if (following || pendingThem) {
       await unfollowUser(currentUserId, targetUserId);
       setFollowing(false);
+      setPendingThem(false);
       if (followedBy) setFriendsCount((c) => c - 1);
     } else {
       await followUser(currentUserId, targetUserId);
-      setFollowing(true);
-      if (followedBy) setFriendsCount((c) => c + 1);
+      setPendingThem(true);
     }
     setFollowLoading(false);
   };
 
   const isFriends = following && followedBy;
-  const buttonLabel = followLoading ? "..." : isFriends ? "friends ✓" : following ? "following" : "follow";
+  const buttonLabel = followLoading ? "..." : isFriends ? "friends ✓" : pendingThem ? "requested" : "follow";
   const buttonStyle: React.CSSProperties = {
-    border: isFriends ? "1px solid #4a7c59" : following ? "1px solid #ccc" : "none",
-    background: isFriends ? "transparent" : following ? "transparent" : "#000",
-    color: isFriends ? "#4a7c59" : following ? "#666" : "#fff",
+    border: isFriends ? "1px solid #4a7c59" : pendingThem ? "1px solid #ccc" : "none",
+    background: isFriends ? "transparent" : pendingThem ? "transparent" : "#000",
+    color: isFriends ? "#4a7c59" : pendingThem ? "#666" : "#fff",
     borderRadius: "999px", padding: "8px 20px",
     fontSize: "13px", fontWeight: 700, cursor: "pointer",
     letterSpacing: "0.04em",
