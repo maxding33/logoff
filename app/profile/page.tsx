@@ -249,20 +249,22 @@ export default function ProfilePage() {
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
         <div style={{ position: "relative", cursor: "pointer" }} onClick={() => avatarInputRef.current?.click()}>
           <Avatar name={name} size={80} avatarUrl={avatarUrl} />
-          <div style={{
-            position: "absolute", inset: 0, borderRadius: "50%",
-            background: "rgba(0,0,0,0.25)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            {avatarUploading ? (
-              <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>...</span>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-            )}
-          </div>
+          {(!avatarUrl || avatarUploading) && (
+            <div style={{
+              position: "absolute", inset: 0, borderRadius: "50%",
+              background: "rgba(0,0,0,0.25)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {avatarUploading ? (
+                <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>...</span>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
+              )}
+            </div>
+          )}
           <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
         </div>
         {avatarUrl && (
