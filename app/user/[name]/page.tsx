@@ -25,6 +25,7 @@ export default function UserProfilePage() {
   const [followedBy, setFollowedBy] = useState(false);
   const [pendingThem, setPendingThem] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [expandedPost, setExpandedPost] = useState<Post | null>(null);
 
@@ -43,7 +44,7 @@ export default function UserProfilePage() {
         .maybeSingle();
 
       if (!target) { setLoading(false); return; }
-      if (user.id === target.id) { router.replace("/profile"); return; }
+      if (user.id === target.id) { setRedirecting(true); router.replace("/profile"); return; }
       setTargetUserId(target.id);
       setBio(target.bio ?? "");
       setJoinDate(new Date(target.created_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" }));
@@ -96,6 +97,8 @@ export default function UserProfilePage() {
     fontSize: "13px", fontWeight: 700, cursor: "pointer",
     letterSpacing: "0.04em",
   };
+
+  if (redirecting) return null;
 
   return (
     <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
