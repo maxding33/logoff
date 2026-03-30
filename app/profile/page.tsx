@@ -8,13 +8,13 @@ import UploadModal from "../UploadModal";
 import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
-import { fetchProfile, updateProfile } from "../../lib/profile";
+import { fetchProfile, updateProfile, uploadAvatar } from "../../lib/profile";
 import { registerAndSubscribe } from "../../lib/notifications";
 import { useChallengeTimer } from "../../lib/useChallengeTimer";
 import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../lib/follows";
 
 // Module-level cache to avoid white flash on tab switch
-let cachedProfile: { name: string; bio: string; joinDate: string } | null = null;
+let cachedProfile: { name: string; bio: string; joinDate: string; avatarUrl: string | null } | null = null;
 let cachedPosts: Post[] = [];
 let cachedUserId: string | null = null;
 
@@ -24,6 +24,9 @@ export default function ProfilePage() {
   const [name, setName] = useState(cachedProfile?.name ?? "");
   const [bio, setBio] = useState(cachedProfile?.bio ?? "");
   const [joinDate, setJoinDate] = useState(cachedProfile?.joinDate ?? "");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(cachedProfile?.avatarUrl ?? null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
   const [loading, setLoading] = useState(cachedProfile === null);
@@ -60,10 +63,11 @@ export default function ProfilePage() {
         setName(profile.username);
         setBio(profile.bio);
         setJoinDate(profile.joinDate);
+        setAvatarUrl(profile.avatarUrl);
         setPosts(userPosts);
         setFriendsCount(friends);
         setPendingRequests(requests);
-        cachedProfile = { name: profile.username, bio: profile.bio, joinDate: profile.joinDate };
+        cachedProfile = { name: profile.username, bio: profile.bio, joinDate: profile.joinDate, avatarUrl: profile.avatarUrl };
         cachedPosts = userPosts;
       } catch (err) {
         console.error(err);
@@ -80,6 +84,18 @@ export default function ProfilePage() {
   useEffect(() => {
     if (editingBio) bioInputRef.current?.focus();
   }, [editingBio]);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUserId) return;
+    setAvatarUploading(true);
+    try {
+      const url = await uploadAvatar(currentUserId, file);
+      setAvatarUrl(url);
+      if (cachedProfile) cachedProfile = { ...cachedProfile, avatarUrl: url };
+    } catch {}
+    setAvatarUploading(false);
+  };
 
   const saveName = async (value: string) => {
     const trimmed = value.trim() || name;
@@ -230,7 +246,24 @@ export default function ProfilePage() {
 
       {/* Profile info */}
       {loading ? null : <div style={{ padding: "24px 20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-        <Avatar name={name} size={80} />
+        <div style={{ position: "relative", cursor: "pointer" }} onClick={() => avatarInputRef.current?.click()}>
+          <Avatar name={name} size={80} avatarUrl={avatarUrl} />
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            background: "rgba(0,0,0,0.25)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {avatarUploading ? (
+              <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>...</span>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            )}
+          </div>
+          <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
+        </div>
 
         {/* Name */}
         {editingName ? (

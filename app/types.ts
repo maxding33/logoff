@@ -7,6 +7,7 @@ export type Comment = {
 export type Post = {
   id: string;
   user: string;
+  avatarUrl?: string | null;
   location?: string;
   image: string;
   caption: string;

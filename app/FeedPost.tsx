@@ -149,7 +149,7 @@ export default function FeedPost({
         padding: "10px 14px",
       }}>
         <Link href={isOwnPost ? "/profile" : `/user/${encodeURIComponent(post.user)}`} style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
-          <Avatar name={post.user} />
+          <Avatar name={post.user} avatarUrl={post.avatarUrl} />
           <div>
             <span style={{ fontWeight: 700, fontSize: "14px", color: "#000" }}>
               {post.user}

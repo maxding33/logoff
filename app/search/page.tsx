@@ -5,7 +5,7 @@ import Link from "next/link";
 import Avatar from "../Avatar";
 import { supabase } from "../../lib/supabase";
 
-type UserResult = { id: string; username: string };
+type UserResult = { id: string; username: string; avatar_url: string | null };
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
@@ -17,7 +17,7 @@ export default function SearchPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setCurrentUserId(user.id);
     });
-    supabase.from("users").select("id, username").then(({ data }) => {
+    supabase.from("users").select("id, username, avatar_url").then(({ data }) => {
       if (data) setAllUsers(data);
     });
   }, []);
@@ -89,7 +89,7 @@ export default function SearchPage() {
                 display: "flex", alignItems: "center", gap: "14px",
                 padding: "12px 16px", borderBottom: "1px solid #f0f0f0",
               }}>
-                <Avatar name={user.username} />
+                <Avatar name={user.username} avatarUrl={user.avatar_url} />
                 <span style={{ fontSize: "15px", fontWeight: 600, color: "#000" }}>{user.username}</span>
               </li>
             </Link>

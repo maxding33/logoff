@@ -40,7 +40,7 @@ export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
       caption,
       created_at,
       user_id,
-      users(username),
+      users(username, avatar_url),
       likes(id, user_id),
       comments(id, text, users(username))
     `)
@@ -51,7 +51,8 @@ export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
 
   return (data ?? []).map((post) => ({
     id: post.id as string,
-    user: (post.users as unknown as { username: string } | null)?.username ?? "Unknown",
+    user: (post.users as unknown as { username: string; avatar_url: string | null } | null)?.username ?? "Unknown",
+    avatarUrl: (post.users as unknown as { username: string; avatar_url: string | null } | null)?.avatar_url ?? null,
     image: post.image_url as string,
     caption: post.caption as string,
     createdAt: formatTime(post.created_at as string),
@@ -76,7 +77,7 @@ export async function fetchPosts(currentUserId: string, filterUserId?: string): 
       caption,
       created_at,
       user_id,
-      users(username),
+      users(username, avatar_url),
       likes(id, user_id),
       comments(id, text, users(username))
     `)
@@ -90,7 +91,8 @@ export async function fetchPosts(currentUserId: string, filterUserId?: string): 
 
   return (data ?? []).map((post) => ({
     id: post.id as string,
-    user: (post.users as unknown as { username: string } | null)?.username ?? "Unknown",
+    user: (post.users as unknown as { username: string; avatar_url: string | null } | null)?.username ?? "Unknown",
+    avatarUrl: (post.users as unknown as { username: string; avatar_url: string | null } | null)?.avatar_url ?? null,
     image: post.image_url as string,
     caption: post.caption as string,
     createdAt: formatTime(post.created_at as string),

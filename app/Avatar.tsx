@@ -1,7 +1,5 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
@@ -19,75 +17,37 @@ function getAvatarColor(name: string): string {
   return `hsl(${hue}, 45%, 55%)`;
 }
 
-export default function Avatar({ name, size = 34 }: { name: string; size?: number }) {
-  const SIZE = size;
-  const isCurrentUser = name === "You";
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isCurrentUser) return;
-    try {
-      const stored = localStorage.getItem("profilePhoto");
-      if (stored) setProfilePhoto(stored);
-    } catch {}
-  }, [isCurrentUser]);
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === "string") {
-        setProfilePhoto(result);
-        try {
-          localStorage.setItem("profilePhoto", result);
-        } catch {}
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const showPhoto = isCurrentUser && profilePhoto;
-
+export default function Avatar({
+  name,
+  size = 34,
+  avatarUrl,
+}: {
+  name: string;
+  size?: number;
+  avatarUrl?: string | null;
+}) {
   return (
-    <>
-      <div
-        onClick={isCurrentUser ? () => fileInputRef.current?.click() : undefined}
-        title={isCurrentUser ? "Tap to set profile photo" : undefined}
-        style={{
-          width: SIZE,
-          height: SIZE,
-          borderRadius: "50%",
-          backgroundColor: showPhoto ? "transparent" : getAvatarColor(name),
-          backgroundImage: showPhoto ? `url(${profilePhoto})` : undefined,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          cursor: isCurrentUser ? "pointer" : "default",
-          overflow: "hidden",
-          touchAction: "manipulation",
-        }}
-      >
-        {!showPhoto && (
-          <span style={{ color: "#fff", fontSize: `${Math.round(SIZE * 0.35)}px`, fontWeight: 700, lineHeight: 1 }}>
-            {getInitials(name)}
-          </span>
-        )}
-      </div>
-      {isCurrentUser && (
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handlePhotoChange}
-          style={{ display: "none" }}
-        />
+    <div
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        backgroundColor: avatarUrl ? "transparent" : getAvatarColor(name),
+        backgroundImage: avatarUrl ? `url(${avatarUrl})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        overflow: "hidden",
+      }}
+    >
+      {!avatarUrl && (
+        <span style={{ color: "#fff", fontSize: `${Math.round(size * 0.35)}px`, fontWeight: 700, lineHeight: 1 }}>
+          {getInitials(name)}
+        </span>
       )}
-    </>
+    </div>
   );
 }
