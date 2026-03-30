@@ -45,17 +45,21 @@ function getShuffledPositions(seed: number) {
 type FeedPostProps = {
   post: Post;
   currentUsername: string;
+  currentUserId: string;
   onToggleLike: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
   onDeletePost?: (postId: string) => void;
+  onDeleteComment?: (postId: string, commentId: string) => void;
 };
 
 export default function FeedPost({
   post,
   currentUsername,
+  currentUserId,
   onToggleLike,
   onAddComment,
   onDeletePost,
+  onDeleteComment,
 }: FeedPostProps) {
   const [commentText, setCommentText] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
@@ -392,9 +396,19 @@ export default function FeedPost({
             {post.comments.length > 0 && (
               <div style={{ marginBottom: "8px" }}>
                 {post.comments.map((comment) => (
-                  <p key={comment.id} style={{ margin: "0 0 4px", fontSize: "12px", color: "#777", lineHeight: 1.4 }}>
-                    <span style={{ fontWeight: 700, color: "#555" }}>{comment.user}</span>{" "}{comment.text}
-                  </p>
+                  <div key={comment.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 4px" }}>
+                    <p style={{ margin: 0, fontSize: "12px", color: "#777", lineHeight: 1.4 }}>
+                      <span style={{ fontWeight: 700, color: "#555" }}>{comment.user}</span>{" "}{comment.text}
+                    </p>
+                    {comment.userId === currentUserId && onDeleteComment && (
+                      <button
+                        onClick={() => onDeleteComment(post.id, comment.id)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: "14px", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0 }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

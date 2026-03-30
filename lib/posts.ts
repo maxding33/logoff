@@ -42,7 +42,7 @@ export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
       user_id,
       users(username, avatar_url),
       likes(id, user_id),
-      comments(id, text, users(username))
+      comments(id, text, user_id, users(username))
     `)
     .in("user_id", userIds)
     .order("created_at", { ascending: false });
@@ -58,9 +58,10 @@ export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
     createdAt: formatTime(post.created_at as string),
     liked: ((post.likes ?? []) as { user_id: string }[]).some((l) => l.user_id === currentUserId),
     likes: ((post.likes ?? []) as unknown[]).length,
-    comments: ((post.comments ?? []) as unknown as { id: string; text: string; users: { username: string } | null }[]).map((c) => ({
+    comments: ((post.comments ?? []) as unknown as { id: string; text: string; user_id: string; users: { username: string } | null }[]).map((c) => ({
       id: c.id,
       user: c.users?.username ?? "Unknown",
+      userId: c.user_id,
       text: c.text,
     })),
   }));
@@ -79,7 +80,7 @@ export async function fetchPosts(currentUserId: string, filterUserId?: string): 
       user_id,
       users(username, avatar_url),
       likes(id, user_id),
-      comments(id, text, users(username))
+      comments(id, text, user_id, users(username))
     `)
     .order("created_at", { ascending: false });
 
@@ -98,9 +99,10 @@ export async function fetchPosts(currentUserId: string, filterUserId?: string): 
     createdAt: formatTime(post.created_at as string),
     liked: ((post.likes ?? []) as { user_id: string }[]).some((l) => l.user_id === currentUserId),
     likes: ((post.likes ?? []) as unknown[]).length,
-    comments: ((post.comments ?? []) as unknown as { id: string; text: string; users: { username: string } | null }[]).map((c) => ({
+    comments: ((post.comments ?? []) as unknown as { id: string; text: string; user_id: string; users: { username: string } | null }[]).map((c) => ({
       id: c.id,
       user: c.users?.username ?? "Unknown",
+      userId: c.user_id,
       text: c.text,
     })),
   }));
@@ -144,6 +146,12 @@ export async function addComment(postId: string, userId: string, text: string, u
     .single();
   if (error) throw error;
   return { id: data.id as string, user: username, text: data.text as string };
+}
+
+export async function deleteComment(commentId: string): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from("comments").delete().eq("id", commentId);
+  if (error) throw error;
 }
 
 export async function deletePost(postId: string): Promise<void> {

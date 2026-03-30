@@ -7,7 +7,7 @@ import FeedPost from "./FeedPost";
 import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
-import { fetchFeedPosts, fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost } from "../lib/posts";
+import { fetchFeedPosts, fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
 import { useChallengeTimer, recheckChallengeStatus } from "../lib/useChallengeTimer";
 
 // Module-level cache to avoid white flash on tab switch
@@ -206,6 +206,17 @@ export default function Home() {
     }
   };
 
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    try {
+      await deleteComment(commentId);
+      setPosts((cur) => cur.map((p) => p.id !== postId ? p : {
+        ...p, comments: p.comments.filter((c) => c.id !== commentId),
+      }));
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+    }
+  };
+
   const handleDeletePost = async (postId: string) => {
     try {
       await deletePost(postId);
@@ -280,9 +291,11 @@ export default function Home() {
               key={post.id}
               post={post}
               currentUsername={currentUsername}
+              currentUserId={currentUserId ?? ""}
               onToggleLike={handleToggleLike}
               onAddComment={handleAddComment}
               onDeletePost={handleDeletePost}
+              onDeleteComment={handleDeleteComment}
             />
           ))
         )}
