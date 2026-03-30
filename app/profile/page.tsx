@@ -228,7 +228,7 @@ export default function ProfilePage() {
         position: "relative",
       }}>
         <div style={{ width: 22 }} />
-        <p style={{ margin: 0, fontSize: challengeTimer ? "17px" : "13px", fontWeight: 700, letterSpacing: challengeTimer ? "0.04em" : "0.08em", color: challengeTimer ? "#4a7c59" : "#000", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
+        <p style={{ margin: 0, fontSize: challengeTimer ? "17px" : "15px", fontWeight: 700, letterSpacing: challengeTimer ? "0.04em" : "0.08em", color: challengeTimer ? "#4a7c59" : "#000", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
           {challengeTimer ?? (name ? `@${name}` : "")}
         </p>
         <button
