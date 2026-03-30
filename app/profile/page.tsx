@@ -102,7 +102,7 @@ export default function ProfilePage() {
   };
 
   const saveName = async (value: string) => {
-    const trimmed = value.trim().replace(/\s+/g, "") || name;
+    const trimmed = value.trim().replace(/\s+/g, "").toLowerCase() || name;
     setName(trimmed);
     setEditingName(false);
     if (currentUserId) {

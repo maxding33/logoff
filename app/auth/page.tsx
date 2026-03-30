@@ -24,7 +24,7 @@ export default function AuthPage() {
           setLoading(false);
           return;
         }
-        await signUp(email, password, username.trim().replace(/\s+/g, ""));
+        await signUp(email, password, username.trim().replace(/\s+/g, "").toLowerCase());
         setConfirmed(true);
       } else {
         await signIn(email, password);
@@ -124,7 +124,7 @@ export default function AuthPage() {
               type="text"
               placeholder="Username"
               value={username}
-              onChange={(e) => setUsername(e.target.value.replace(/\s+/g, ""))}
+              onChange={(e) => setUsername(e.target.value.replace(/\s+/g, "").toLowerCase())}
               style={inputStyle}
             />
           )}
