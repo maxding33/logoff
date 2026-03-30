@@ -50,8 +50,9 @@ export default function UserProfilePage() {
         getFriendsCount(target.id),
       ]);
 
+      const isOwnProfile = user.id === target.id;
       const areFriends = status.following && status.followedBy;
-      if (areFriends) {
+      if (isOwnProfile || areFriends) {
         const userPosts = await fetchPosts(user.id, target.id);
         setPosts(userPosts);
       }
@@ -116,9 +117,11 @@ export default function UserProfilePage() {
             <p style={{ margin: 0, fontSize: "18px", fontWeight: 700 }}>{name}</p>
             {bio && <p style={{ margin: 0, fontSize: "13px", color: "#444", textAlign: "center" }}>{bio}</p>}
             {joinDate && <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>joined {joinDate}</p>}
-            <button onClick={handleFollow} disabled={followLoading} style={buttonStyle}>
-              {buttonLabel}
-            </button>
+            {currentUserId !== targetUserId && (
+              <button onClick={handleFollow} disabled={followLoading} style={buttonStyle}>
+                {buttonLabel}
+              </button>
+            )}
           </div>
 
           {/* Stats */}
@@ -140,7 +143,7 @@ export default function UserProfilePage() {
           </div>
 
           {/* Photo grid */}
-          {!isFriends ? (
+          {!isFriends && currentUserId !== targetUserId ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginTop: "48px", color: "#aaa" }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
