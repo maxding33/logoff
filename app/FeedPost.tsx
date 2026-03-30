@@ -270,12 +270,13 @@ export default function FeedPost({
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
-                backgroundColor: "rgba(255,255,255,0.88)",
-                backdropFilter: "blur(6px)",
-                WebkitBackdropFilter: "blur(6px)",
+                backgroundColor: "rgba(255,255,255,0.15)",
+                backdropFilter: "blur(16px) saturate(180%)",
+                WebkitBackdropFilter: "blur(16px) saturate(180%)",
                 borderRadius: "20px",
                 padding: "4px 10px 4px 4px",
-                boxShadow: "0 2px 10px rgba(0,0,0,0.18)",
+                border: "1px solid rgba(255,255,255,0.35)",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
                 animation: "fadeInBubble 0.4s ease forwards",
                 animationDelay: `${i * 0.1}s`,
                 opacity: 0,
@@ -297,7 +298,7 @@ export default function FeedPost({
                   {getInitials(comment.user)}
                 </span>
               </div>
-              <span style={{ fontSize: "11px", fontWeight: 600, color: "#000", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <span style={{ fontSize: "11px", fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
                 {comment.text}
               </span>
             </div>
