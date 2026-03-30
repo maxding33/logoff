@@ -148,7 +148,7 @@ export default function FeedPost({
         justifyContent: "space-between",
         padding: "10px 14px",
       }}>
-        <Link href={`/user/${encodeURIComponent(post.user)}`} style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+        <Link href={isOwnPost ? "/profile" : `/user/${encodeURIComponent(post.user)}`} style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
           <Avatar name={post.user} />
           <div>
             <span style={{ fontWeight: 700, fontSize: "14px", color: "#000" }}>
