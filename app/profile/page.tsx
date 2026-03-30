@@ -40,6 +40,7 @@ export default function ProfilePage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [expandedPost, setExpandedPost] = useState<Post | null>(null);
+  const [showUpdates, setShowUpdates] = useState(false);
   const challengeTimer = useChallengeTimer(currentUserId);
 
   // Load user + posts
@@ -193,22 +194,38 @@ export default function ProfilePage() {
         borderBottom: "1px solid #e5e5e5",
         display: "flex",
         alignItems: "center",
-        gap: "12px",
+        justifyContent: "space-between",
         position: "relative",
       }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#000", textDecoration: "none" }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-          <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-            profile
-          </span>
-        </Link>
+        <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+          profile
+        </span>
         {challengeTimer && (
           <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, letterSpacing: "0.04em", color: "#4a7c59", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
             {challengeTimer}
           </p>
         )}
+        <button
+          onClick={() => setShowUpdates(true)}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", display: "flex", alignItems: "center" }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+          {pendingRequests.length > 0 && (
+            <span style={{
+              position: "absolute", top: "-4px", right: "-4px",
+              background: "#e53935", color: "#fff",
+              borderRadius: "999px", fontSize: "10px", fontWeight: 700,
+              minWidth: "16px", height: "16px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              padding: "0 4px",
+            }}>
+              {pendingRequests.length}
+            </span>
+          )}
+        </button>
       </header>
 
       {/* Profile info */}
@@ -303,51 +320,6 @@ export default function ProfilePage() {
         </div>
       </div>}
 
-      {/* Friend requests */}
-      {!loading && pendingRequests.length > 0 && (
-        <div style={{ borderTop: "1px solid #e5e5e5", padding: "12px 16px" }}>
-          <p style={{ margin: "0 0 10px", fontSize: "12px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#999" }}>
-            friend requests
-          </p>
-          {pendingRequests.map((req) => (
-            <div key={req.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
-              <span style={{ fontSize: "14px", fontWeight: 600 }}>{req.username}</span>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  onClick={async () => {
-                    if (!currentUserId) return;
-                    await acceptFollow(req.id, currentUserId);
-                    setPendingRequests((r) => r.filter((x) => x.id !== req.id));
-                    setFriendsCount((c) => c + 1);
-                  }}
-                  style={{
-                    background: "#000", color: "#fff", border: "none",
-                    borderRadius: "999px", padding: "6px 14px",
-                    fontSize: "12px", fontWeight: 700, cursor: "pointer",
-                  }}
-                >
-                  accept
-                </button>
-                <button
-                  onClick={async () => {
-                    if (!currentUserId) return;
-                    await denyFollow(req.id, currentUserId);
-                    setPendingRequests((r) => r.filter((x) => x.id !== req.id));
-                  }}
-                  style={{
-                    background: "transparent", color: "#666", border: "1px solid #e5e5e5",
-                    borderRadius: "999px", padding: "6px 14px",
-                    fontSize: "12px", fontWeight: 700, cursor: "pointer",
-                  }}
-                >
-                  deny
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Stats */}
       {!loading && <div style={{
         display: "grid",
@@ -399,6 +371,67 @@ export default function ProfilePage() {
       />
 
       <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
+
+      {/* Updates panel */}
+      {showUpdates && (
+        <div
+          onClick={() => setShowUpdates(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "absolute", bottom: 0, left: 0, right: 0,
+              background: "#fff", borderRadius: "16px 16px 0 0",
+              padding: "0 0 40px",
+              maxHeight: "70vh", overflowY: "auto",
+            }}
+          >
+            {/* Panel header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #e5e5e5" }}>
+              <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase" }}>updates</span>
+              <button onClick={() => setShowUpdates(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#999", lineHeight: 1, padding: 0 }}>×</button>
+            </div>
+
+            {/* Friend requests */}
+            {pendingRequests.length === 0 ? (
+              <p style={{ textAlign: "center", color: "#aaa", fontSize: "14px", margin: "40px 0" }}>no new updates</p>
+            ) : (
+              <div>
+                <p style={{ margin: "14px 20px 6px", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#999" }}>friend requests</p>
+                {pendingRequests.map((req) => (
+                  <div key={req.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px" }}>
+                    <span style={{ fontSize: "14px", fontWeight: 600 }}>{req.username}</span>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        onClick={async () => {
+                          if (!currentUserId) return;
+                          await acceptFollow(req.id, currentUserId);
+                          setPendingRequests((r) => r.filter((x) => x.id !== req.id));
+                          setFriendsCount((c) => c + 1);
+                        }}
+                        style={{ background: "#000", color: "#fff", border: "none", borderRadius: "999px", padding: "7px 16px", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}
+                      >
+                        accept
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!currentUserId) return;
+                          await denyFollow(req.id, currentUserId);
+                          setPendingRequests((r) => r.filter((x) => x.id !== req.id));
+                        }}
+                        style={{ background: "transparent", color: "#666", border: "1px solid #e5e5e5", borderRadius: "999px", padding: "7px 16px", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}
+                      >
+                        deny
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Post lightbox */}
       {expandedPost && (
