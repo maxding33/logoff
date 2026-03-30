@@ -102,7 +102,7 @@ export default function ProfilePage() {
   };
 
   const saveName = async (value: string) => {
-    const trimmed = value.trim() || name;
+    const trimmed = value.trim().replace(/\s+/g, "") || name;
     setName(trimmed);
     setEditingName(false);
     if (currentUserId) {
@@ -320,7 +320,7 @@ export default function ProfilePage() {
             ref={nameInputRef}
             defaultValue={name}
             onBlur={(e) => saveName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") saveName(e.currentTarget.value); }}
+            onKeyDown={(e) => { if (e.key === " ") e.preventDefault(); if (e.key === "Enter") saveName(e.currentTarget.value); }}
             style={{
               fontSize: "13px", fontWeight: 600, border: "none", borderBottom: "1px solid #ccc",
               outline: "none", textAlign: "center", background: "transparent", width: "160px", color: "#666",
