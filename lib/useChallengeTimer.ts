@@ -2,21 +2,23 @@ import { useEffect, useState } from "react";
 
 let cachedEndsAt: Date | null = null;
 let cachedFailed: boolean = false;
+let cachedFailedDate: string | null = null;
 let fetchedAt: number | null = null;
 const listeners = new Set<(endsAt: Date | null) => void>();
 const failedListeners = new Set<(failed: boolean) => void>();
 
-async function fetchChallengeStatus(userId?: string | null): Promise<{ endsAt: Date | null; failed: boolean }> {
+async function fetchChallengeStatus(userId?: string | null): Promise<{ endsAt: Date | null; failed: boolean; failedDate: string | null }> {
   if (!userId && cachedEndsAt && fetchedAt && Date.now() - fetchedAt < 60_000) {
-    return { endsAt: cachedEndsAt, failed: cachedFailed };
+    return { endsAt: cachedEndsAt, failed: cachedFailed, failedDate: cachedFailedDate };
   }
   const url = userId ? `/api/challenge-status?userId=${userId}` : "/api/challenge-status";
   const res = await fetch(url);
-  const { active, endsAt, completed, failed } = await res.json();
+  const { active, endsAt, completed, failed, failedDate } = await res.json();
   cachedEndsAt = active && endsAt && !completed ? new Date(endsAt) : null;
   cachedFailed = !!failed;
+  cachedFailedDate = failedDate ?? null;
   fetchedAt = Date.now();
-  return { endsAt: cachedEndsAt, failed: cachedFailed };
+  return { endsAt: cachedEndsAt, failed: cachedFailed, failedDate: cachedFailedDate };
 }
 
 export function useChallengeTimer(userId?: string | null): string | null {
@@ -65,6 +67,7 @@ export function useChallengeTimer(userId?: string | null): string | null {
           listeners.forEach((fn) => fn(newEndsAt));
           failedListeners.forEach((fn) => fn(failed));
         });
+
         return;
       }
       const m = String(Math.floor(secsLeft / 60)).padStart(2, "0");
@@ -80,8 +83,9 @@ export function useChallengeTimer(userId?: string | null): string | null {
   return display;
 }
 
-export function useChallengeFailed(userId?: string | null): boolean {
+export function useChallengeFailed(userId?: string | null): { failed: boolean; failedDate: string | null } {
   const [failed, setFailed] = useState<boolean>(cachedFailed);
+  const [failedDate, setFailedDate] = useState<string | null>(cachedFailedDate);
 
   useEffect(() => {
     failedListeners.add(setFailed);
@@ -89,10 +93,13 @@ export function useChallengeFailed(userId?: string | null): boolean {
   }, []);
 
   useEffect(() => {
-    fetchChallengeStatus(userId).then(({ failed }) => setFailed(failed));
+    fetchChallengeStatus(userId).then(({ failed, failedDate }) => {
+      setFailed(failed);
+      setFailedDate(failedDate);
+    });
   }, [userId]);
 
-  return failed;
+  return { failed, failedDate };
 }
 
 // Call after a successful post — re-fetches and notifies all mounted hooks

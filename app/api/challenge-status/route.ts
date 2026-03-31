@@ -11,20 +11,20 @@ export async function GET(req: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const today = new Date().toISOString().split("T")[0];
-
+  // Look at the most recent sent notification (not just today — user may open app next day)
   const { data } = await supabase
     .from("daily_notifications")
-    .select("scheduled_hour, scheduled_minute, sent")
-    .eq("date", today)
+    .select("date, scheduled_hour, scheduled_minute, sent")
     .eq("sent", true)
+    .order("date", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (!data) return NextResponse.json({ active: false });
 
   const now = new Date();
   const minute = data.scheduled_minute ?? 0;
-  const startsAt = new Date(`${today}T${String(data.scheduled_hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`);
+  const startsAt = new Date(`${data.date}T${String(data.scheduled_hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`);
   const endsAt = new Date(startsAt.getTime() + 60 * 60 * 1000);
 
   if (now >= endsAt) {
@@ -39,12 +39,12 @@ export async function GET(req: NextRequest) {
         .limit(1)
         .maybeSingle();
 
-      if (!post) return NextResponse.json({ active: false, failed: true });
+      if (!post) return NextResponse.json({ active: false, failed: true, failedDate: data.date });
     }
     return NextResponse.json({ active: false });
   }
 
-  // If userId provided, check if they've already posted during the window
+  // Window is currently active
   if (userId) {
     const { data: post } = await supabase
       .from("posts")

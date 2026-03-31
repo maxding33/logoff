@@ -31,15 +31,27 @@ function HomeInner() {
   const [showCompletion, setShowCompletion] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
   const challengeTimer = useChallengeTimer(currentUserId);
-  const challengeFailedReal = useChallengeFailed(currentUserId);
-  const [failDismissed, setFailDismissed] = useState(false);
+  const { failed: challengeFailedReal, failedDate } = useChallengeFailed(currentUserId);
   const [testFail, setTestFail] = useState(false);
   const challengeFailed = challengeFailedReal || testFail;
 
-  // Reset dismiss state whenever failed flips to false (new day / new session)
+  // Persist dismissed state in localStorage keyed by failed date so it survives app close
+  const failKey = testFail ? "logoff_fail_dismissed_test" : failedDate ? `logoff_fail_dismissed_${failedDate}` : null;
+  const [failDismissed, setFailDismissedState] = useState(() => {
+    if (typeof window === "undefined" || !failKey) return false;
+    return localStorage.getItem(failKey) === "1";
+  });
+
+  const dismissFail = () => {
+    if (failKey) localStorage.setItem(failKey, "1");
+    setFailDismissedState(true);
+  };
+
+  // When failedDate arrives from API, re-check localStorage
   useEffect(() => {
-    if (!challengeFailed) setFailDismissed(false);
-  }, [challengeFailed]);
+    if (!failKey) { setFailDismissedState(false); return; }
+    setFailDismissedState(localStorage.getItem(failKey) === "1");
+  }, [failKey]);
 
   // Pull-to-refresh state
   const touchStartY = useRef(0);
@@ -287,7 +299,7 @@ function HomeInner() {
         <span style={{ position: "absolute", right: "16px", display: "flex", alignItems: "center", gap: "10px" }}>
           <button
             type="button"
-            onClick={() => { setTestFail(true); setFailDismissed(false); }}
+            onClick={() => { setTestFail(true); setFailDismissedState(false); }}
             style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
           >fail</button>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{streak} 🔥</span>
@@ -362,7 +374,7 @@ function HomeInner() {
           </p>
           <button
             type="button"
-            onClick={() => setFailDismissed(true)}
+            onClick={dismissFail}
             style={{
               marginTop: "8px",
               border: "1px solid #333",
