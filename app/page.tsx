@@ -8,6 +8,7 @@ import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
 import { fetchFeedPosts, fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
+import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus } from "../lib/useChallengeTimer";
 
 // Module-level cache to avoid white flash on tab switch
@@ -78,9 +79,9 @@ function HomeInner() {
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem("streak");
-    if (saved) setStreak(Number(saved));
-  }, []);
+    if (!currentUserId) return;
+    getStreak(currentUserId).then(({ current }) => setStreak(current));
+  }, [currentUserId]);
 
   const loadPosts = useCallback(async (userId: string, quiet = false) => {
     if (!quiet) setLoading(true);

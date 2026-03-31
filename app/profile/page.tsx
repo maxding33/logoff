@@ -13,6 +13,7 @@ import { fetchProfile, updateProfile, uploadAvatar, removeAvatar } from "../../l
 import { registerAndSubscribe } from "../../lib/notifications";
 import { useChallengeTimer } from "../../lib/useChallengeTimer";
 import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../lib/follows";
+import { getStreak } from "../../lib/streak";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedProfile: { name: string; displayName: string | null; bio: string; joinDate: string; avatarUrl: string | null } | null = null;
@@ -34,6 +35,8 @@ export default function ProfilePage() {
   const [editingBio, setEditingBio] = useState(false);
   const [loading, setLoading] = useState(cachedProfile === null);
   const [friendsCount, setFriendsCount] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
   const [pendingRequests, setPendingRequests] = useState<{ id: string; username: string }[]>([]);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
@@ -59,11 +62,12 @@ export default function ProfilePage() {
       setCurrentUserId(user.id);
       cachedUserId = user.id;
       try {
-        const [profile, userPosts, friends, requests] = await Promise.all([
+        const [profile, userPosts, friends, requests, streak] = await Promise.all([
           fetchProfile(user.id),
           fetchPosts(user.id, user.id),
           getFriendsCount(user.id),
           getPendingRequests(user.id),
+          getStreak(user.id),
         ]);
         setName(profile.username);
         setDisplayName(profile.displayName);
@@ -73,6 +77,8 @@ export default function ProfilePage() {
         setPosts(userPosts);
         setFriendsCount(friends);
         setPendingRequests(requests);
+        setCurrentStreak(streak.current);
+        setBestStreak(streak.best);
         cachedProfile = { name: profile.username, displayName: profile.displayName, bio: profile.bio, joinDate: profile.joinDate, avatarUrl: profile.avatarUrl };
         cachedPosts = userPosts;
       } catch (err) {
@@ -383,8 +389,8 @@ export default function ProfilePage() {
         {[
           { label: "posts", value: loading ? "—" : posts.length },
           { label: "friends", value: friendsCount },
-          { label: "streak", value: 0 },
-          { label: "best", value: 0 },
+          { label: "streak", value: currentStreak },
+          { label: "best", value: bestStreak },
         ].map(({ label, value }) => (
           <div key={label} style={{ padding: "14px 0", textAlign: "center" }}>
             <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#000" }}>{value}</p>
