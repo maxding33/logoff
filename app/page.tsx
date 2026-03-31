@@ -1,6 +1,7 @@
 "use client";
 
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "./BottomNav";
 import FeedPost from "./FeedPost";
@@ -15,7 +16,7 @@ let cachedPosts: Post[] = [];
 let cachedUserId: string | null = null;
 let cachedUsername = "You";
 
-export default function Home() {
+function HomeInner() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileObjectRef = useRef<File | null>(null);
   const [posts, setPosts] = useState<Post[]>(cachedPosts);
@@ -35,12 +36,8 @@ export default function Home() {
   const [failDismissed, setFailDismissed] = useState(false);
 
   // Allow ?testFail=1 in the URL to force the fail screen (for testing)
-  const [testFail, setTestFail] = useState(false);
-  useEffect(() => {
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("testFail") === "1") {
-      setTestFail(true);
-    }
-  }, []);
+  const searchParams = useSearchParams();
+  const testFail = searchParams.get("testFail") === "1";
   const challengeFailed = challengeFailedReal || testFail;
 
   // Reset dismiss state whenever failed flips to false (new day / new session)
@@ -419,5 +416,13 @@ export default function Home() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeInner />
+    </Suspense>
   );
 }
