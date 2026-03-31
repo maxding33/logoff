@@ -1,7 +1,6 @@
 "use client";
 
-import { ChangeEvent, useCallback, useEffect, useRef, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import BottomNav from "./BottomNav";
 import FeedPost from "./FeedPost";
@@ -34,10 +33,7 @@ function HomeInner() {
   const challengeTimer = useChallengeTimer(currentUserId);
   const challengeFailedReal = useChallengeFailed(currentUserId);
   const [failDismissed, setFailDismissed] = useState(false);
-
-  // Allow ?testFail=1 in the URL to force the fail screen (for testing)
-  const searchParams = useSearchParams();
-  const testFail = searchParams.get("testFail") === "1";
+  const [testFail, setTestFail] = useState(false);
   const challengeFailed = challengeFailedReal || testFail;
 
   // Reset dismiss state whenever failed flips to false (new day / new session)
@@ -288,8 +284,13 @@ function HomeInner() {
             LOG<span style={{ color: "#4a7c59" }}>OFF</span>
           </p>
         )}
-        <span style={{ position: "absolute", right: "16px", fontSize: "14px", fontWeight: 700, color: "#000" }}>
-          {streak} 🔥
+        <span style={{ position: "absolute", right: "16px", display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            type="button"
+            onClick={() => { setTestFail(true); setFailDismissed(false); }}
+            style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
+          >fail</button>
+          <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{streak} 🔥</span>
         </span>
       </header>
 
@@ -420,9 +421,5 @@ function HomeInner() {
 }
 
 export default function Home() {
-  return (
-    <Suspense>
-      <HomeInner />
-    </Suspense>
-  );
+  return <HomeInner />;
 }
