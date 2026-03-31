@@ -124,7 +124,9 @@ export async function fetchPosts(currentUserId: string, filterUserId?: string): 
 
 export async function uploadPhoto(file: File, userId: string): Promise<string> {
   const client = getClient();
-  const ext = file.name.split(".").pop() ?? "jpg";
+  const rawExt = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+  // Normalize HEIC/HEIF (iOS camera format) to jpg for storage compatibility
+  const ext = rawExt === "heic" || rawExt === "heif" ? "jpg" : rawExt;
   const path = `${userId}/${Date.now()}.${ext}`;
 
   const { error } = await client.storage.from("posts").upload(path, file);
