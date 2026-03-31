@@ -171,6 +171,21 @@ function HomeInner() {
     setPosting(true);
     setPostError(null);
     try {
+      // During challenge window, verify photo is outdoors before uploading
+      if (challengeTimer && previewImage) {
+        const check = await fetch("/api/check-outdoor", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageBase64: previewImage }),
+        });
+        const { outdoor } = await check.json();
+        if (!outdoor) {
+          setPostError("photo must be taken outside — go outside and try again");
+          setPosting(false);
+          return;
+        }
+      }
+
       const imageUrl = await uploadPhoto(file, currentUserId);
       await createPost(currentUserId, imageUrl, caption.trim() || "Went outside today.");
       const updated = await fetchPosts(currentUserId);
