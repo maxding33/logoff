@@ -177,6 +177,7 @@ function HomeInner() {
       setPosts(updated);
       const wasActive = !!challengeTimer;
       await recheckChallengeStatus(currentUserId);
+      getStreak(currentUserId).then(({ current }) => setStreak(current));
       if (wasActive) {
         setShowCompletion(true);
         setTimeout(() => setShowCompletion(false), 2500);

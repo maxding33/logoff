@@ -33,14 +33,11 @@ export async function getStreak(userId: string): Promise<StreakResult> {
     return { date: n.date, startsAt, endsAt };
   });
 
-  // Only count windows that have already ended
   const now = new Date();
-  const closedWindows = windows.filter((w) => now >= w.endsAt);
-  if (closedWindows.length === 0) return { current: 0, best: 0 };
 
   // Fetch user's posts within the overall date range
-  const oldest = closedWindows[closedWindows.length - 1].startsAt;
-  const newest = closedWindows[0].endsAt;
+  const oldest = windows[windows.length - 1].startsAt;
+  const newest = windows[0].endsAt;
 
   const { data: posts } = await supabase
     .from("posts")
@@ -55,17 +52,27 @@ export async function getStreak(userId: string): Promise<StreakResult> {
   const hit = (w: { startsAt: Date; endsAt: Date }) =>
     postTimes.some((t) => t >= w.startsAt.getTime() && t <= w.endsAt.getTime());
 
-  // Count current streak (most recent first, stop at first miss)
+  // Count current streak (most recent first)
+  // - posted during window (open or closed) → counts
+  // - window still open, no post yet → skip (undecided, don't break streak)
+  // - window closed, no post → stop
   let current = 0;
-  for (const w of closedWindows) {
-    if (hit(w)) current++;
-    else break;
+  for (const w of windows) {
+    if (hit(w)) {
+      current++;
+    } else if (now < w.endsAt) {
+      // still open, no post yet — skip but don't break
+      continue;
+    } else {
+      break;
+    }
   }
 
-  // Count best streak ever
+  // Count best streak ever (only over decided windows)
+  const decidedWindows = windows.filter((w) => hit(w) || now >= w.endsAt);
   let best = 0;
   let run = 0;
-  for (const w of [...closedWindows].reverse()) {
+  for (const w of [...decidedWindows].reverse()) {
     if (hit(w)) {
       run++;
       if (run > best) best = run;
