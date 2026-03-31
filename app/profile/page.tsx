@@ -428,7 +428,7 @@ export default function ProfilePage() {
         error={postError}
       />
 
-      <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
+      <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} cameraOnly={!!challengeTimer} />
 
       {/* Settings panel */}
       {showSettings && (

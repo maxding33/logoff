@@ -7,9 +7,10 @@ import { usePathname } from "next/navigation";
 type BottomNavProps = {
   fileInputRef: RefObject<HTMLInputElement | null>;
   handlePhotoChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  cameraOnly?: boolean;
 };
 
-export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNavProps) {
+export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly }: BottomNavProps) {
   const pathname = usePathname();
   const [tapped, setTapped] = useState<"home" | "profile" | null>(null);
 
@@ -86,6 +87,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange }: BottomNav
           id="photo-upload"
           type="file"
           accept="image/*"
+          {...(cameraOnly ? { capture: "environment" } : {})}
           onChange={handlePhotoChange}
           style={{ display: "none" }}
         />

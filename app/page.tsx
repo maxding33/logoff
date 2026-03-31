@@ -339,7 +339,7 @@ function HomeInner() {
         error={postError}
       />
 
-      <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} />
+      <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} cameraOnly={!!challengeTimer} />
 
       {/* Challenge fail overlay */}
       {challengeFailed && !failDismissed && (
