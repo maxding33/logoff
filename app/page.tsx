@@ -7,12 +7,14 @@ import FeedPost from "./FeedPost";
 import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
-import { fetchFeedPosts, fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
+import { fetchFeedPosts, fetchFreePosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
+import FreePostGrid from "./FreePostGrid";
 import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus } from "../lib/useChallengeTimer";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
+let cachedFreePosts: Post[] = [];
 let cachedUserId: string | null = null;
 let cachedUsername = "You";
 
@@ -20,6 +22,9 @@ function HomeInner() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileObjectRef = useRef<File | null>(null);
   const [posts, setPosts] = useState<Post[]>(cachedPosts);
+  const [freePosts, setFreePosts] = useState<Post[]>(cachedFreePosts);
+  const [activeTab, setActiveTab] = useState<"challenge" | "free">("challenge");
+  const [expandedFreePost, setExpandedFreePost] = useState<Post | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [streak, setStreak] = useState(0);
@@ -86,9 +91,14 @@ function HomeInner() {
   const loadPosts = useCallback(async (userId: string, quiet = false) => {
     if (!quiet) setLoading(true);
     try {
-      const fetched = await fetchFeedPosts(userId);
+      const [fetched, fetchedFree] = await Promise.all([
+        fetchFeedPosts(userId),
+        fetchFreePosts(userId),
+      ]);
       setPosts(fetched);
       cachedPosts = fetched;
+      setFreePosts(fetchedFree);
+      cachedFreePosts = fetchedFree;
     } catch (err) {
       console.error(err);
     } finally {
@@ -187,9 +197,16 @@ function HomeInner() {
       }
 
       const imageUrl = await uploadPhoto(file, currentUserId);
-      await createPost(currentUserId, imageUrl, caption.trim() || "Went outside today.");
-      const updated = await fetchPosts(currentUserId);
+      const isChallenge = !!challengeTimer;
+      await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : ""), isChallenge);
+      const [updated, updatedFree] = await Promise.all([
+        fetchFeedPosts(currentUserId),
+        fetchFreePosts(currentUserId),
+      ]);
       setPosts(updated);
+      cachedPosts = updated;
+      setFreePosts(updatedFree);
+      cachedFreePosts = updatedFree;
       const wasActive = !!challengeTimer;
       await recheckChallengeStatus(currentUserId);
       getStreak(currentUserId).then(({ current }) => setStreak(current));
@@ -323,26 +340,57 @@ function HomeInner() {
         </span>
       </header>
 
-      <section style={{ display: "grid", gap: 0 }}>
-        {loading && posts.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>Loading...</p>
-        ) : posts.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>No posts yet. Go outside and share!</p>
-        ) : (
-          posts.map((post) => (
-            <FeedPost
-              key={post.id}
-              post={post}
-              currentUsername={currentUsername}
-              currentUserId={currentUserId ?? ""}
-              onToggleLike={handleToggleLike}
-              onAddComment={handleAddComment}
-              onDeletePost={handleDeletePost}
-              onDeleteComment={handleDeleteComment}
-            />
-          ))
-        )}
-      </section>
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid #e5e5e5" }}>
+        {(["challenge", "free"] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            style={{
+              flex: 1,
+              padding: "12px 0",
+              fontSize: "13px",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              background: "none",
+              border: "none",
+              borderBottom: activeTab === tab ? "2px solid #000" : "2px solid transparent",
+              color: activeTab === tab ? "#000" : "#aaa",
+              cursor: "pointer",
+              marginBottom: "-1px",
+            }}
+          >
+            {tab === "challenge" ? "challenge" : "free"}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "challenge" ? (
+        <section style={{ display: "grid", gap: 0 }}>
+          {loading && posts.length === 0 ? (
+            <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>Loading...</p>
+          ) : posts.length === 0 ? (
+            <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>No challenge posts yet. Go outside and share!</p>
+          ) : (
+            posts.map((post) => (
+              <FeedPost
+                key={post.id}
+                post={post}
+                currentUsername={currentUsername}
+                currentUserId={currentUserId ?? ""}
+                onToggleLike={handleToggleLike}
+                onAddComment={handleAddComment}
+                onDeletePost={handleDeletePost}
+                onDeleteComment={handleDeleteComment}
+              />
+            ))
+          )}
+        </section>
+      ) : (
+        <FreePostGrid posts={freePosts} onTap={setExpandedFreePost} />
+      )}
 
       <UploadModal
         preview={previewImage}
@@ -409,6 +457,31 @@ function HomeInner() {
           >
             ok
           </button>
+        </div>
+      )}
+
+      {/* Free post expanded view */}
+      {expandedFreePost && (
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.92)", overflowY: "auto" }}
+          onClick={() => setExpandedFreePost(null)}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <FeedPost
+              post={expandedFreePost}
+              currentUsername={currentUsername}
+              currentUserId={currentUserId ?? ""}
+              onToggleLike={handleToggleLike}
+              onAddComment={handleAddComment}
+              onDeletePost={(id) => { handleDeletePost(id); setExpandedFreePost(null); }}
+              onDeleteComment={handleDeleteComment}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setExpandedFreePost(null)}
+            style={{ position: "fixed", top: "16px", right: "16px", background: "none", border: "none", color: "#fff", fontSize: "28px", cursor: "pointer", lineHeight: 1 }}
+          >×</button>
         </div>
       )}
 

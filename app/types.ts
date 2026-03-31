@@ -8,6 +8,7 @@ export type Comment = {
 export type Post = {
   id: string;
   user: string;
+  userId: string;
   avatarUrl?: string | null;
   location?: string;
   image: string;
@@ -16,4 +17,6 @@ export type Post = {
   liked: boolean;
   likes: number;
   comments: Comment[];
+  isChallenge: boolean;
+  expiresAt: string | null;
 };

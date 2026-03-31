@@ -16,55 +16,95 @@ function formatTime(timestamp: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
-  const client = getClient();
+const POST_SELECT = `
+  id,
+  image_url,
+  caption,
+  created_at,
+  user_id,
+  is_challenge,
+  expires_at,
+  users(username, avatar_url),
+  likes(id, user_id),
+  comments(id, text, user_id, users(username))
+`;
 
-  // Get mutual friends (accepted follows in both directions)
-  const [{ data: iFollow }, { data: theyFollow }] = await Promise.all([
-    client.from("follows").select("following_id").eq("follower_id", currentUserId).eq("status", "accepted"),
-    client.from("follows").select("follower_id").eq("following_id", currentUserId).eq("status", "accepted"),
-  ]);
+type RawPost = {
+  id: string;
+  image_url: string;
+  caption: string;
+  created_at: string;
+  user_id: string;
+  is_challenge: boolean;
+  expires_at: string | null;
+  users: { username: string; avatar_url: string | null } | null;
+  likes: { user_id: string }[];
+  comments: { id: string; text: string; user_id: string; users: { username: string } | null }[];
+};
 
-  const iFollowIds = new Set((iFollow ?? []).map((r) => r.following_id));
-  const friendIds = (theyFollow ?? [])
-    .filter((r) => iFollowIds.has(r.follower_id))
-    .map((r) => r.follower_id);
-
-  const userIds = [currentUserId, ...friendIds];
-
-  const { data, error } = await client
-    .from("posts")
-    .select(`
-      id,
-      image_url,
-      caption,
-      created_at,
-      user_id,
-      users(username, avatar_url),
-      likes(id, user_id),
-      comments(id, text, user_id, users(username))
-    `)
-    .in("user_id", userIds)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-
-  return (data ?? []).map((post) => ({
-    id: post.id as string,
-    user: (post.users as unknown as { username: string; avatar_url: string | null } | null)?.username ?? "Unknown",
-    avatarUrl: (post.users as unknown as { username: string; avatar_url: string | null } | null)?.avatar_url ?? null,
-    image: post.image_url as string,
-    caption: post.caption as string,
-    createdAt: formatTime(post.created_at as string),
-    liked: ((post.likes ?? []) as { user_id: string }[]).some((l) => l.user_id === currentUserId),
-    likes: ((post.likes ?? []) as unknown[]).length,
-    comments: ((post.comments ?? []) as unknown as { id: string; text: string; user_id: string; users: { username: string } | null }[]).map((c) => ({
+function mapPost(post: RawPost, currentUserId: string): Post {
+  return {
+    id: post.id,
+    user: post.users?.username ?? "Unknown",
+    userId: post.user_id,
+    avatarUrl: post.users?.avatar_url ?? null,
+    image: post.image_url,
+    caption: post.caption,
+    createdAt: formatTime(post.created_at),
+    liked: (post.likes ?? []).some((l) => l.user_id === currentUserId),
+    likes: (post.likes ?? []).length,
+    comments: (post.comments ?? []).map((c) => ({
       id: c.id,
       user: c.users?.username ?? "Unknown",
       userId: c.user_id,
       text: c.text,
     })),
-  }));
+    isChallenge: post.is_challenge,
+    expiresAt: post.expires_at,
+  };
+}
+
+async function getFriendIds(currentUserId: string): Promise<string[]> {
+  const client = getClient();
+  const [{ data: iFollow }, { data: theyFollow }] = await Promise.all([
+    client.from("follows").select("following_id").eq("follower_id", currentUserId).eq("status", "accepted"),
+    client.from("follows").select("follower_id").eq("following_id", currentUserId).eq("status", "accepted"),
+  ]);
+  const iFollowIds = new Set((iFollow ?? []).map((r) => r.following_id));
+  return (theyFollow ?? []).filter((r) => iFollowIds.has(r.follower_id)).map((r) => r.follower_id);
+}
+
+export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
+  const client = getClient();
+  const friendIds = await getFriendIds(currentUserId);
+  const userIds = [currentUserId, ...friendIds];
+
+  const { data, error } = await client
+    .from("posts")
+    .select(POST_SELECT)
+    .in("user_id", userIds)
+    .eq("is_challenge", true)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []).map((p) => mapPost(p as unknown as RawPost, currentUserId));
+}
+
+export async function fetchFreePosts(currentUserId: string): Promise<Post[]> {
+  const client = getClient();
+  const friendIds = await getFriendIds(currentUserId);
+  const userIds = [currentUserId, ...friendIds];
+
+  const { data, error } = await client
+    .from("posts")
+    .select(POST_SELECT)
+    .in("user_id", userIds)
+    .eq("is_challenge", false)
+    .gt("expires_at", new Date().toISOString())
+    .order("expires_at", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []).map((p) => mapPost(p as unknown as RawPost, currentUserId));
 }
 
 export async function fetchPosts(currentUserId: string, filterUserId?: string): Promise<Post[]> {
@@ -72,40 +112,14 @@ export async function fetchPosts(currentUserId: string, filterUserId?: string): 
 
   let query = client
     .from("posts")
-    .select(`
-      id,
-      image_url,
-      caption,
-      created_at,
-      user_id,
-      users(username, avatar_url),
-      likes(id, user_id),
-      comments(id, text, user_id, users(username))
-    `)
+    .select(POST_SELECT)
     .order("created_at", { ascending: false });
 
   if (filterUserId) query = query.eq("user_id", filterUserId);
 
   const { data, error } = await query;
-
   if (error) throw error;
-
-  return (data ?? []).map((post) => ({
-    id: post.id as string,
-    user: (post.users as unknown as { username: string; avatar_url: string | null } | null)?.username ?? "Unknown",
-    avatarUrl: (post.users as unknown as { username: string; avatar_url: string | null } | null)?.avatar_url ?? null,
-    image: post.image_url as string,
-    caption: post.caption as string,
-    createdAt: formatTime(post.created_at as string),
-    liked: ((post.likes ?? []) as { user_id: string }[]).some((l) => l.user_id === currentUserId),
-    likes: ((post.likes ?? []) as unknown[]).length,
-    comments: ((post.comments ?? []) as unknown as { id: string; text: string; user_id: string; users: { username: string } | null }[]).map((c) => ({
-      id: c.id,
-      user: c.users?.username ?? "Unknown",
-      userId: c.user_id,
-      text: c.text,
-    })),
-  }));
+  return (data ?? []).map((p) => mapPost(p as unknown as RawPost, currentUserId));
 }
 
 export async function uploadPhoto(file: File, userId: string): Promise<string> {
@@ -120,11 +134,12 @@ export async function uploadPhoto(file: File, userId: string): Promise<string> {
   return data.publicUrl;
 }
 
-export async function createPost(userId: string, imageUrl: string, caption: string): Promise<void> {
+export async function createPost(userId: string, imageUrl: string, caption: string, isChallenge: boolean): Promise<void> {
   const client = getClient();
+  const expiresAt = isChallenge ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const { error } = await client
     .from("posts")
-    .insert({ user_id: userId, image_url: imageUrl, caption });
+    .insert({ user_id: userId, image_url: imageUrl, caption, is_challenge: isChallenge, expires_at: expiresAt });
   if (error) throw error;
 }
 
