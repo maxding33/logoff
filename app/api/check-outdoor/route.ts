@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
           content: [
             {
               type: "text",
-              text: "Is this photo taken outdoors? Reply with only YES or NO. Outdoors means outside a building — sky, street, park, garden, etc. A photo clearly taken indoors (bedroom, office, inside a vehicle, screen/monitor) is NO.",
+              text: "Is this photo taken outdoors? Reply with only YES or NO. Be generous — if there is any chance it was taken outside, say YES. Only say NO if the photo is unambiguously indoors: e.g. a bedroom, office, indoor room, or a photo of a screen or monitor. If in doubt, say YES.",
             },
             {
               type: "image_url",
