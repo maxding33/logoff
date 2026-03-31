@@ -209,7 +209,7 @@ export default function ProfilePage() {
     try {
       const imageUrl = await uploadPhoto(file, currentUserId);
       const isChallenge = !!challengeTimer;
-      await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : ""), isChallenge);
+      await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : " "), isChallenge);
       // Small delay to ensure DB write is committed before refetching
       await new Promise((r) => setTimeout(r, 600));
       const updated = await fetchPosts(currentUserId, currentUserId);

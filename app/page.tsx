@@ -198,7 +198,7 @@ function HomeInner() {
 
       const imageUrl = await uploadPhoto(file, currentUserId);
       const isChallenge = !!challengeTimer;
-      await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : ""), isChallenge);
+      await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : " "), isChallenge);
       const [updated, updatedFree] = await Promise.all([
         fetchFeedPosts(currentUserId),
         fetchFreePosts(currentUserId),
