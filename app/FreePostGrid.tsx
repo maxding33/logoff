@@ -81,6 +81,27 @@ export default function FreePostGrid({ posts, onTap }: Props) {
                 {label}
               </div>
             )}
+            <div style={{
+              position: "absolute",
+              bottom: "6px",
+              right: "6px",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              background: "rgba(0,0,0,0.55)",
+              borderRadius: "12px",
+              padding: "2px 6px 2px 2px",
+            }}>
+              {post.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={post.avatarUrl} alt={post.user} style={{ width: "16px", height: "16px", borderRadius: "50%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "#4a7c59", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: "#fff", fontSize: "8px", fontWeight: 700 }}>{post.user[0]?.toUpperCase()}</span>
+                </div>
+              )}
+              <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{post.user}</span>
+            </div>
           </div>
         );
       })}
