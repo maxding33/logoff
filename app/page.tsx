@@ -207,7 +207,7 @@ function HomeInner() {
         });
         const { outdoor } = await check.json();
         if (!outdoor) {
-          setPostError("photo must be taken outside — go outside and try again");
+          setPostError("photo must be taken outside. go outside and try again");
           setPosting(false);
           return;
         }
@@ -216,7 +216,7 @@ function HomeInner() {
         console.error("Outdoor check failed:", msg);
         const isNetworkError = msg === "Load failed" || msg === "Failed to fetch" || msg === "NetworkError when attempting to fetch resource.";
         setPostError(isNetworkError
-          ? "no connection — check your signal and try again"
+          ? "no connection. check your signal and try again"
           : "outdoor check failed: " + msg);
         setPosting(false);
         return;

@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
         sub.subscription as webpush.PushSubscription,
         JSON.stringify({
           title: "LOGOFF 🌿",
-          body: "time to log off — you have 1 hour to go outside and post",
+          body: "time to log off. you have 1 hour to go outside and post",
         })
       );
       sent++;

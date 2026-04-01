@@ -403,7 +403,7 @@ export default function ProfilePage() {
       {/* Photo grid */}
       {!loading && (posts.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center" }}>
-          <p style={{ margin: 0, fontSize: "14px", color: "#aaa" }}>no posts yet — go outside!</p>
+          <p style={{ margin: 0, fontSize: "14px", color: "#aaa" }}>no posts yet. go outside!</p>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px" }}>
@@ -458,7 +458,7 @@ export default function ProfilePage() {
                     letterSpacing: "0.04em", opacity: notifStatus === "denied" ? 0.5 : 1,
                   }}
                 >
-                  {notifStatus === "enabling" ? "enabling..." : notifStatus === "denied" ? "blocked — check phone settings" : "enable notifications"}
+                  {notifStatus === "enabling" ? "enabling..." : notifStatus === "denied" ? "blocked. check phone settings" : "enable notifications"}
                 </button>
               ) : (
                 <button
