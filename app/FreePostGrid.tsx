@@ -28,7 +28,7 @@ export default function FreePostGrid({ posts, onTap }: Props) {
   if (posts.length === 0) {
     return (
       <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 16px" }}>
-        no free posts yet. post anything outside the challenge window
+        nothing in your log yet. post anything outside the challenge window
       </p>
     );
   }
