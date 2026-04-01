@@ -9,6 +9,7 @@ import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
 import { fetchFeedPosts, fetchFreePosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
 import FreePostGrid from "./FreePostGrid";
+import FriendsMap from "./FriendsMap";
 import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
 import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
@@ -474,6 +475,8 @@ function HomeInner() {
             ))
           )}
         </section>
+      ) : challengeTimer ? (
+        <FriendsMap currentUserId={currentUserId ?? ""} />
       ) : (
         <FreePostGrid posts={freePosts} onTap={setExpandedFreePost} />
       )}
