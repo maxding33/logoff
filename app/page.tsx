@@ -11,6 +11,7 @@ import { fetchFeedPosts, fetchFreePosts, uploadPhoto, createPost, toggleLike, ad
 import FreePostGrid from "./FreePostGrid";
 import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
+import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
@@ -58,6 +59,24 @@ function HomeInner() {
     if (!failKey) { setFailDismissedState(false); return; }
     setFailDismissedState(localStorage.getItem(failKey) === "1");
   }, [failKey]);
+
+  // End-of-day summary
+  const { shouldShow: eodShouldShow, summary: eodSummary } = useEndOfDaySummary(currentUserId);
+  const eodKey = eodSummary ? `logoff_eod_dismissed_${eodSummary.windowDate}` : null;
+  const [eodDismissed, setEodDismissed] = useState(() => {
+    if (typeof window === "undefined" || !eodKey) return false;
+    return localStorage.getItem(eodKey) === "1";
+  });
+  useEffect(() => {
+    if (!eodKey) { setEodDismissed(false); return; }
+    setEodDismissed(localStorage.getItem(eodKey) === "1");
+  }, [eodKey]);
+  const dismissEod = () => {
+    if (eodKey) localStorage.setItem(eodKey, "1");
+    setEodDismissed(true);
+  };
+  // Show EoD only after fail screen is dismissed (if there was one)
+  const showEod = eodShouldShow && !eodDismissed && (!challengeFailed || failDismissed);
 
   // Pull-to-refresh state
   const touchStartY = useRef(0);
@@ -492,6 +511,71 @@ function HomeInner() {
             onClick={dismissFail}
             style={{
               marginTop: "8px",
+              border: "1px solid #333",
+              background: "transparent",
+              color: "#fff",
+              fontSize: "14px",
+              fontWeight: 700,
+              padding: "12px 32px",
+              borderRadius: "24px",
+              cursor: "pointer",
+              letterSpacing: "0.06em",
+              touchAction: "manipulation",
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            ok
+          </button>
+        </div>
+      )}
+
+      {/* End-of-day summary overlay */}
+      {showEod && eodSummary && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 999,
+          background: "rgba(0,0,0,0.92)",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          gap: "0",
+          padding: "32px 24px",
+          overflowY: "auto",
+        }}>
+          <p style={{ margin: "0 0 4px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#555" }}>
+            today&apos;s log
+          </p>
+
+          {eodSummary.didntMakeIt.length > 0 && (
+            <div style={{ width: "100%", maxWidth: "320px", marginTop: "24px" }}>
+              <p style={{ margin: "0 0 12px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#666" }}>
+                didn&apos;t make it
+              </p>
+              {eodSummary.didntMakeIt.map((f) => (
+                <div key={f.userId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1a1a1a" }}>
+                  <span style={{ color: "#fff", fontSize: "15px", fontWeight: 600 }}>@{f.username}</span>
+                  <span style={{ color: "#555", fontSize: "13px" }}>{f.missedThisMonth} missed this month</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {eodSummary.onFire.length > 0 && (
+            <div style={{ width: "100%", maxWidth: "320px", marginTop: "28px" }}>
+              <p style={{ margin: "0 0 12px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#666" }}>
+                on fire 🔥
+              </p>
+              {eodSummary.onFire.map((f) => (
+                <div key={f.userId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1a1a1a" }}>
+                  <span style={{ color: "#fff", fontSize: "15px", fontWeight: 600 }}>@{f.username}</span>
+                  <span style={{ color: "#e8a838", fontSize: "13px", fontWeight: 700 }}>{f.streak} day streak</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={dismissEod}
+            style={{
+              marginTop: "32px",
               border: "1px solid #333",
               background: "transparent",
               color: "#fff",
