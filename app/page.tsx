@@ -160,6 +160,7 @@ function HomeInner() {
   const resetComposer = () => {
     setPreviewImage(null);
     setCaption("");
+    setPostError(null);
     fileObjectRef.current = null;
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
