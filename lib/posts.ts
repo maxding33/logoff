@@ -122,14 +122,31 @@ export async function fetchPosts(currentUserId: string, filterUserId?: string): 
   return (data ?? []).map((p) => mapPost(p as unknown as RawPost, currentUserId));
 }
 
+function compressImage(file: File): Promise<Blob> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX = 1080;
+      const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => resolve(blob ?? file), "image/jpeg", 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 export async function uploadPhoto(file: File, userId: string): Promise<string> {
   const client = getClient();
-  const rawExt = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-  // Normalize HEIC/HEIF (iOS camera format) to jpg for storage compatibility
-  const ext = rawExt === "heic" || rawExt === "heif" ? "jpg" : rawExt;
-  const path = `${userId}/${Date.now()}.${ext}`;
+  const compressed = await compressImage(file);
+  const path = `${userId}/${Date.now()}.jpg`;
 
-  const { error } = await client.storage.from("posts").upload(path, file);
+  const { error } = await client.storage.from("posts").upload(path, compressed, { contentType: "image/jpeg" });
   if (error) throw error;
 
   const { data } = client.storage.from("posts").getPublicUrl(path);
