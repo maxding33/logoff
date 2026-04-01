@@ -213,7 +213,10 @@ function HomeInner() {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error("Outdoor check failed:", msg);
-        setPostError("outdoor check failed: " + msg);
+        const isNetworkError = msg === "Load failed" || msg === "Failed to fetch" || msg === "NetworkError when attempting to fetch resource.";
+        setPostError(isNetworkError
+          ? "no connection — check your signal and try again"
+          : "outdoor check failed: " + msg);
         setPosting(false);
         return;
       }
