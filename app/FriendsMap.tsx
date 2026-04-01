@@ -70,14 +70,36 @@ export default function FriendsMap({ currentUserId }: Props) {
         });
       };
 
+      let selfMarker: any = null;
+
+      const updateSelfMarker = (lat: number, lng: number) => {
+        if (selfMarker) {
+          selfMarker.setLngLat([lng, lat]);
+          return;
+        }
+        const el = document.createElement("div");
+        el.style.cssText = [
+          "width:14px", "height:14px", "border-radius:50%",
+          "background:#4a7c59", "border:2px solid #fff",
+          "box-shadow:0 0 0 3px rgba(74,124,89,0.35)",
+        ].join(";");
+        selfMarker = new mapboxgl.default.Marker({ element: el })
+          .setLngLat([lng, lat])
+          .addTo(map);
+      };
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude: lat, longitude: lng } = pos.coords;
           map.setCenter([lng, lat]);
           updateLocation(lat, lng);
+          updateSelfMarker(lat, lng);
 
           watchIdRef.current = navigator.geolocation.watchPosition(
-            (p) => updateLocation(p.coords.latitude, p.coords.longitude),
+            (p) => {
+              updateLocation(p.coords.latitude, p.coords.longitude);
+              updateSelfMarker(p.coords.latitude, p.coords.longitude);
+            },
             undefined,
             { maximumAge: 30000, timeout: 10000 }
           );
