@@ -102,6 +102,11 @@ export function useChallengeFailed(userId?: string | null): { failed: boolean; f
   return { failed, failedDate };
 }
 
+// Returns true only if the challenge window is currently active (uses module-level cache)
+export function isChallengeActive(): boolean {
+  return cachedEndsAt !== null && cachedEndsAt > new Date();
+}
+
 // Call after a successful post — re-fetches and notifies all mounted hooks
 export async function recheckChallengeStatus(userId: string) {
   fetchedAt = null;

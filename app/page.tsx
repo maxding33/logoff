@@ -10,7 +10,7 @@ import { supabase } from "../lib/supabase";
 import { fetchFeedPosts, fetchFreePosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
 import FreePostGrid from "./FreePostGrid";
 import { getStreak } from "../lib/streak";
-import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus } from "../lib/useChallengeTimer";
+import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
@@ -236,7 +236,7 @@ function HomeInner() {
     }
 
     // Step 3: create post
-    const isChallenge = !!challengeTimer;
+    const isChallenge = isChallengeActive();
     try {
       await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : " "), isChallenge);
     } catch (err) {
