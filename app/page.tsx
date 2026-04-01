@@ -180,9 +180,9 @@ function HomeInner() {
     if (!file || !currentUserId) return;
     setPosting(true);
     setPostError(null);
-    try {
-      // During challenge window, verify photo is outdoors before uploading
-      if (challengeTimer && previewImage) {
+    // Step 1: outdoor check
+    if (challengeTimer && previewImage) {
+      try {
         const check = await fetch("/api/check-outdoor", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -194,11 +194,41 @@ function HomeInner() {
           setPosting(false);
           return;
         }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("Outdoor check failed:", msg);
+        setPostError("outdoor check failed: " + msg);
+        setPosting(false);
+        return;
       }
+    }
 
-      const imageUrl = await uploadPhoto(file, currentUserId);
-      const isChallenge = !!challengeTimer;
+    // Step 2: upload photo
+    let imageUrl: string;
+    try {
+      imageUrl = await uploadPhoto(file, currentUserId);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Upload failed:", msg);
+      setPostError("upload failed: " + msg);
+      setPosting(false);
+      return;
+    }
+
+    // Step 3: create post
+    const isChallenge = !!challengeTimer;
+    try {
       await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : " "), isChallenge);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Create post failed:", msg);
+      setPostError("post failed: " + msg);
+      setPosting(false);
+      return;
+    }
+
+    // Step 4: refresh feeds + finish
+    try {
       const [updated, updatedFree] = await Promise.all([
         fetchFeedPosts(currentUserId),
         fetchFreePosts(currentUserId),
@@ -207,7 +237,7 @@ function HomeInner() {
       cachedPosts = updated;
       setFreePosts(updatedFree);
       cachedFreePosts = updatedFree;
-      const wasActive = !!challengeTimer;
+      const wasActive = isChallenge;
       await recheckChallengeStatus(currentUserId);
       getStreak(currentUserId).then(({ current }) => setStreak(current));
       if (wasActive) {
@@ -218,8 +248,8 @@ function HomeInner() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error("Failed to post:", msg);
-      setPostError(msg);
+      console.error("Post-upload refresh failed:", msg);
+      setPostError("refresh failed: " + msg);
     } finally {
       setPosting(false);
     }
