@@ -65,26 +65,10 @@ export default function FreePostGrid({ posts, onTap }: Props) {
               alt={post.caption}
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />
-            {label && (
-              <div style={{
-                position: "absolute",
-                bottom: "6px",
-                left: "6px",
-                background: nearExpiry ? "rgba(220,38,38,0.85)" : "rgba(0,0,0,0.55)",
-                color: "#fff",
-                fontSize: "11px",
-                fontWeight: 700,
-                padding: "2px 6px",
-                borderRadius: "4px",
-                letterSpacing: "0.04em",
-              }}>
-                {label}
-              </div>
-            )}
             <div style={{
               position: "absolute",
               bottom: "6px",
-              right: "6px",
+              left: "6px",
               display: "flex",
               alignItems: "center",
               gap: "4px",
@@ -102,6 +86,22 @@ export default function FreePostGrid({ posts, onTap }: Props) {
               )}
               <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{post.user}</span>
             </div>
+            {label && (
+              <div style={{
+                position: "absolute",
+                bottom: "6px",
+                right: "6px",
+                background: nearExpiry ? "rgba(220,38,38,0.85)" : "rgba(0,0,0,0.55)",
+                color: "#fff",
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "2px 6px",
+                borderRadius: "4px",
+                letterSpacing: "0.04em",
+              }}>
+                {label}
+              </div>
+            )}
           </div>
         );
       })}
