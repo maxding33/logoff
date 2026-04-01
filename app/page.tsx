@@ -175,6 +175,21 @@ function HomeInner() {
     reader.readAsDataURL(file);
   };
 
+  const compressForCheck = (dataUrl: string): Promise<string> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 512;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = dataUrl;
+    });
+
   const handleSubmitPost = async () => {
     const file = fileObjectRef.current;
     if (!file || !currentUserId) return;
@@ -183,10 +198,11 @@ function HomeInner() {
     // Step 1: outdoor check
     if (challengeTimer && previewImage) {
       try {
+        const compressed = await compressForCheck(previewImage);
         const check = await fetch("/api/check-outdoor", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageBase64: previewImage }),
+          body: JSON.stringify({ imageBase64: compressed }),
         });
         const { outdoor } = await check.json();
         if (!outdoor) {
