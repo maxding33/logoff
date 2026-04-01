@@ -41,6 +41,7 @@ export default function ProfilePage() {
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
   const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [endChallengeStatus, setEndChallengeStatus] = useState<"idle" | "ending" | "done" | "error">("idle");
   const [notifStatus, setNotifStatus] = useState<"unknown" | "granted" | "denied" | "enabling">("unknown");
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const bioInputRef = useRef<HTMLInputElement | null>(null);
@@ -158,6 +159,19 @@ export default function ProfilePage() {
       localStorage.setItem("push_subscribed", "1");
     } else {
       setNotifStatus(("Notification" in window ? Notification.permission : "denied") as "granted" | "denied" | "unknown");
+    }
+  };
+
+  const endChallenge = async () => {
+    setEndChallengeStatus("ending");
+    try {
+      const res = await fetch("/api/end-challenge", { method: "POST" });
+      if (!res.ok) throw new Error();
+      setEndChallengeStatus("done");
+      setTimeout(() => setEndChallengeStatus("idle"), 3000);
+    } catch {
+      setEndChallengeStatus("error");
+      setTimeout(() => setEndChallengeStatus("idle"), 3000);
     }
   };
 
@@ -474,6 +488,22 @@ export default function ProfilePage() {
                   {testPushStatus === "sending" ? "sending..." : testPushStatus === "sent" ? "✓ check your phone" : testPushStatus === "error" ? "⚠ not found" : "test notification"}
                 </button>
               )}
+            </div>
+
+            {/* Dev: end challenge window */}
+            <div style={{ padding: "16px 20px" }}>
+              <button
+                onClick={endChallenge}
+                disabled={endChallengeStatus === "ending"}
+                style={{
+                  background: "transparent", border: "1px solid #e5e5e5",
+                  borderRadius: "999px", padding: "8px 18px",
+                  fontSize: "12px", fontWeight: 600, cursor: "pointer",
+                  color: endChallengeStatus === "done" ? "#4a7c59" : endChallengeStatus === "error" ? "#e53935" : "#999",
+                }}
+              >
+                {endChallengeStatus === "ending" ? "ending..." : endChallengeStatus === "done" ? "✓ challenge ended" : endChallengeStatus === "error" ? "⚠ failed" : "end challenge (dev)"}
+              </button>
             </div>
 
             {/* Log out */}
