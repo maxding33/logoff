@@ -40,6 +40,7 @@ function HomeInner() {
   const challengeTimer = useChallengeTimer(currentUserId);
   const { failed: challengeFailedReal, failedDate } = useChallengeFailed(currentUserId);
   const [testFail, setTestFail] = useState(false);
+  const [testEod, setTestEod] = useState(false);
   const challengeFailed = challengeFailedReal || testFail;
 
   // Persist dismissed state in localStorage keyed by failed date so it survives app close
@@ -76,7 +77,18 @@ function HomeInner() {
     setEodDismissed(true);
   };
   // Show EoD only after fail screen is dismissed (if there was one)
-  const showEod = eodShouldShow && !eodDismissed && (!challengeFailed || failDismissed);
+  const showEod = (eodShouldShow || testEod) && !eodDismissed && (!challengeFailed || failDismissed);
+  const eodData = eodSummary ?? (testEod ? {
+    windowDate: "test",
+    didntMakeIt: [
+      { userId: "1", username: "jake", avatarUrl: null, missedThisMonth: 8 },
+      { userId: "2", username: "sarah", avatarUrl: null, missedThisMonth: 3 },
+    ],
+    onFire: [
+      { userId: "3", username: "tom", avatarUrl: null, streak: 12 },
+      { userId: "4", username: "mia", avatarUrl: null, streak: 9 },
+    ],
+  } : null);
 
   // Pull-to-refresh state
   const touchStartY = useRef(0);
@@ -405,6 +417,11 @@ function HomeInner() {
             onClick={() => { setTestFail(true); setFailDismissedState(false); }}
             style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
           >fail</button>
+          <button
+            type="button"
+            onClick={() => { setTestEod(true); setEodDismissed(false); }}
+            style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
+          >eod</button>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{streak} 🔥</span>
         </span>
       </header>
@@ -530,7 +547,7 @@ function HomeInner() {
       )}
 
       {/* End-of-day summary overlay */}
-      {showEod && eodSummary && (
+      {showEod && eodData && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 999,
           background: "rgba(0,0,0,0.92)",
@@ -543,12 +560,12 @@ function HomeInner() {
             today&apos;s log
           </p>
 
-          {eodSummary.didntMakeIt.length > 0 && (
+          {eodData.didntMakeIt.length > 0 && (
             <div style={{ width: "100%", maxWidth: "320px", marginTop: "24px" }}>
               <p style={{ margin: "0 0 12px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#666" }}>
                 didn&apos;t make it
               </p>
-              {eodSummary.didntMakeIt.map((f) => (
+              {eodData.didntMakeIt.map((f) => (
                 <div key={f.userId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1a1a1a" }}>
                   <span style={{ color: "#fff", fontSize: "15px", fontWeight: 600 }}>@{f.username}</span>
                   <span style={{ color: "#555", fontSize: "13px" }}>{f.missedThisMonth} missed this month</span>
@@ -557,12 +574,12 @@ function HomeInner() {
             </div>
           )}
 
-          {eodSummary.onFire.length > 0 && (
+          {eodData.onFire.length > 0 && (
             <div style={{ width: "100%", maxWidth: "320px", marginTop: "28px" }}>
               <p style={{ margin: "0 0 12px", fontSize: "11px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#666" }}>
                 on fire 🔥
               </p>
-              {eodSummary.onFire.map((f) => (
+              {eodData.onFire.map((f) => (
                 <div key={f.userId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1a1a1a" }}>
                   <span style={{ color: "#fff", fontSize: "15px", fontWeight: 600 }}>@{f.username}</span>
                   <span style={{ color: "#e8a838", fontSize: "13px", fontWeight: 700 }}>{f.streak} day streak</span>
