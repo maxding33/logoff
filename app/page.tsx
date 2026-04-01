@@ -449,7 +449,7 @@ function HomeInner() {
               marginBottom: "-1px",
             }}
           >
-            {tab === "challenge" ? "challenge" : challengeTimer ? "map" : "free"}
+            {tab === "challenge" ? "challenge" : challengeTimer ? "map" : "log"}
           </button>
         ))}
       </div>
