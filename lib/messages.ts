@@ -185,12 +185,14 @@ export async function getUnreadCount(userId: string): Promise<number> {
     .in("conversation_id", convIds).neq("sender_id", userId);
   if (e2 || !messages) return 0;
 
+  // Count conversations with at least one unread message (not total messages)
   let count = 0;
   for (const m of memberships) {
     const lastRead = new Date(m.last_read_at);
-    count += messages.filter(
+    const hasUnread = messages.some(
       (msg: any) => msg.conversation_id === m.conversation_id && new Date(msg.created_at) > lastRead
-    ).length;
+    );
+    if (hasUnread) count++;
   }
   return count;
 }
