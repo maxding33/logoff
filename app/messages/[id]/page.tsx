@@ -6,6 +6,9 @@ import { supabase } from "../../../lib/supabase";
 import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLastSeen, isOnline, type Message, type ConversationMember } from "../../../lib/messages";
 import Avatar from "../../Avatar";
 
+const MESSAGE_CACHE = new Map<string, Message[]>();
+const MEMBERS_CACHE = new Map<string, ConversationMember[]>();
+
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
@@ -38,8 +41,8 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const { id: conversationId } = use(params);
   const router = useRouter();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [members, setMembers] = useState<ConversationMember[]>([]);
+  const [messages, setMessages] = useState<Message[]>(MESSAGE_CACHE.get(conversationId) ?? []);
+  const [members, setMembers] = useState<ConversationMember[]>(MEMBERS_CACHE.get(conversationId) ?? []);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,6 +62,8 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         ]);
         setMessages(msgs);
         setMembers(mems);
+        MESSAGE_CACHE.set(conversationId, msgs.slice(-20));
+        MEMBERS_CACHE.set(conversationId, mems);
         await markAsRead(conversationId, user.id);
         await updateLastSeen(user.id);
       } catch (err) {
@@ -87,6 +92,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       }, async () => {
         const msgs = await getMessages(conversationId);
         setMessages(msgs);
+        MESSAGE_CACHE.set(conversationId, msgs.slice(-20));
         await markAsRead(conversationId, currentUserId);
       })
       .subscribe();
@@ -99,6 +105,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       }, async () => {
         const mems = await getConversationMembers(conversationId);
         setMembers(mems);
+        MEMBERS_CACHE.set(conversationId, mems);
       })
       .subscribe();
 
