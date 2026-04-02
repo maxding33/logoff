@@ -81,7 +81,6 @@ export default function GamePicker({ onClose }: { onClose: () => void }) {
               key={game.slug}
               onClick={() => {
                 if (!game.available) return;
-                onClose();
                 router.push(`/game/${game.slug}`);
               }}
               disabled={!game.available}
