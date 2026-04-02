@@ -58,8 +58,8 @@ export default function LogReel({
   const [index, setIndex] = useState(startIndex);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [translateY, setTranslateY] = useState(0);
-  const [transitioning, setTransitioning] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [snapping, setSnapping] = useState(false);
   const touchStartY = useRef(0);
   const dragging = useRef(false);
 
@@ -74,38 +74,40 @@ export default function LogReel({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  const goTo = (newIndex: number) => {
-    if (newIndex < 0 || newIndex >= posts.length) return;
-    const dir = newIndex > index ? -1 : 1;
-    setTranslateY(dir * -80);
-    setTransitioning(true);
-    setTimeout(() => {
-      setIndex(newIndex);
-      setTranslateY(dir * 80);
-      setTransitioning(false);
-      setTimeout(() => setTranslateY(0), 20);
-    }, 150);
+  // containerY = -(index * 100vh) + dragOffset
+  // Each post is at top: i * 100vh inside the container
+
+  const snapTo = (newIndex: number) => {
+    const clamped = Math.max(0, Math.min(posts.length - 1, newIndex));
+    setSnapping(true);
+    setDragOffset(0);
+    setIndex(clamped);
+    setTimeout(() => setSnapping(false), 320);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (showComments) return;
     touchStartY.current = e.touches[0].clientY;
     dragging.current = true;
+    setSnapping(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!dragging.current || showComments) return;
     const delta = e.touches[0].clientY - touchStartY.current;
-    setTranslateY(delta * 0.3);
+    // Resist at edges
+    const atStart = index === 0 && delta > 0;
+    const atEnd = index === posts.length - 1 && delta < 0;
+    setDragOffset(atStart || atEnd ? delta * 0.15 : delta);
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!dragging.current || showComments) return;
     dragging.current = false;
     const delta = e.changedTouches[0].clientY - touchStartY.current;
-    if (delta < -50) goTo(index + 1);
-    else if (delta > 50) goTo(index - 1);
-    else setTranslateY(0);
+    if (delta < -60) snapTo(index + 1);
+    else if (delta > 60) snapTo(index - 1);
+    else snapTo(index);
   };
 
   const handleSubmitComment = () => {
@@ -115,157 +117,99 @@ export default function LogReel({
     setCommentText("");
   };
 
-  const bubblePositions = getShuffledPositions(
-    post.id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  );
-
-  const shortComments = post.comments.filter((c) => c.text.trim().length <= 20).slice(0, 4);
-
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 600, background: "#000", touchAction: "none" }}
+      style={{ position: "fixed", inset: 0, zIndex: 600, background: "#000", overflow: "hidden", touchAction: "none" }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Photo */}
+      {/* Stacked posts container — translates as one unit */}
       <div style={{
-        position: "absolute", inset: 0,
-        transform: `translateY(${translateY}px)`,
-        transition: transitioning ? "none" : translateY === 0 ? "transform 0.25s cubic-bezier(0.32,0.72,0,1)" : "none",
+        position: "absolute", left: 0, right: 0, top: 0,
+        transform: `translateY(calc(-${index * 100}vh + ${dragOffset}px))`,
+        transition: snapping ? "transform 0.32s cubic-bezier(0.32,0.72,0,1)" : "none",
+        willChange: "transform",
       }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={post.image}
-          alt={post.caption}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
-
-        {/* Gradient overlay bottom */}
-        <div style={{
-          position: "absolute", inset: 0,
-          background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)",
-          pointerEvents: "none",
-        }} />
-
-        {/* Floating comment bubbles */}
-        {shortComments.map((comment, i) => (
-          <div
-            key={comment.id}
-            style={{
-              position: "absolute",
-              left: bubblePositions[i]?.left,
-              top: bubblePositions[i]?.top,
-              display: "flex", alignItems: "center", gap: "5px",
-              backgroundColor: "rgba(255,255,255,0.15)",
-              backdropFilter: "blur(16px) saturate(180%)",
-              WebkitBackdropFilter: "blur(16px) saturate(180%)",
-              borderRadius: "20px", padding: "4px 10px 4px 4px",
-              border: "1px solid rgba(255,255,255,0.35)",
-              boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
-              animation: "fadeInBubble 0.4s ease forwards",
-              animationDelay: `${i * 0.1}s`,
-              opacity: 0, pointerEvents: "none", maxWidth: "140px",
-            }}
-          >
-            <div style={{
-              width: "20px", height: "20px", borderRadius: "50%",
-              backgroundColor: getAvatarColor(comment.user),
-              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            }}>
-              <span style={{ color: "#fff", fontSize: "8px", fontWeight: 700, lineHeight: 1 }}>
-                {getInitials(comment.user)}
-              </span>
+        {posts.map((p, i) => {
+          const pBubblePositions = getShuffledPositions(p.id.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0));
+          const pShortComments = p.comments.filter((c) => c.text.trim().length <= 20).slice(0, 4);
+          return (
+            <div key={p.id} style={{ position: "relative", height: "100vh", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.image} alt={p.caption} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)", pointerEvents: "none" }} />
+              {/* Floating bubbles per post */}
+              {i === index && pShortComments.map((comment, ci) => (
+                <div key={comment.id} style={{
+                  position: "absolute", left: pBubblePositions[ci]?.left, top: pBubblePositions[ci]?.top,
+                  display: "flex", alignItems: "center", gap: "5px",
+                  backgroundColor: "rgba(255,255,255,0.15)", backdropFilter: "blur(16px) saturate(180%)",
+                  WebkitBackdropFilter: "blur(16px) saturate(180%)", borderRadius: "20px",
+                  padding: "4px 10px 4px 4px", border: "1px solid rgba(255,255,255,0.35)",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.12)", animation: "fadeInBubble 0.4s ease forwards",
+                  animationDelay: `${ci * 0.1}s`, opacity: 0, pointerEvents: "none", maxWidth: "140px",
+                }}>
+                  <div style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: getAvatarColor(comment.user), display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <span style={{ color: "#fff", fontSize: "8px", fontWeight: 700, lineHeight: 1 }}>{getInitials(comment.user)}</span>
+                  </div>
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>{comment.text}</span>
+                </div>
+              ))}
             </div>
-            <span style={{ fontSize: "11px", fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
-              {comment.text}
-            </span>
-          </div>
-        ))}
+          );
+        })}
+      </div>
 
-        {/* Bottom left: avatar + username + caption */}
-        <div style={{ position: "absolute", bottom: "80px", left: "16px", right: "72px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-            {post.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.avatarUrl} alt={post.user} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid #fff" }} />
-            ) : (
-              <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: getAvatarColor(post.user), display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #fff", flexShrink: 0 }}>
-                <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{getInitials(post.user)}</span>
-              </div>
-            )}
-            <span style={{ color: "#fff", fontSize: "14px", fontWeight: 700, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-              @{post.user}
-            </span>
-          </div>
-          {post.caption && post.caption.trim() && post.caption.trim() !== " " && (
-            <p style={{ margin: 0, color: "#fff", fontSize: "13px", lineHeight: 1.4, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-              {post.caption}
-            </p>
+      {/* Fixed overlay UI — always shows current post's data */}
+      {/* Bottom left: avatar + username + caption */}
+      <div style={{ position: "fixed", bottom: "80px", left: "16px", right: "72px", zIndex: 5, pointerEvents: "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+          {post.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={post.avatarUrl} alt={post.user} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid #fff" }} />
+          ) : (
+            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: getAvatarColor(post.user), display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #fff", flexShrink: 0 }}>
+              <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{getInitials(post.user)}</span>
+            </div>
           )}
+          <span style={{ color: "#fff", fontSize: "14px", fontWeight: 700, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>@{post.user}</span>
         </div>
+        {post.caption && post.caption.trim() && post.caption.trim() !== " " && (
+          <p style={{ margin: 0, color: "#fff", fontSize: "13px", lineHeight: 1.4, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{post.caption}</p>
+        )}
+      </div>
 
-        {/* Right side: like + comment */}
-        <div style={{
-          position: "absolute", bottom: "80px", right: "16px",
-          display: "flex", flexDirection: "column", alignItems: "center", gap: "20px",
-        }}>
-          {/* Like */}
-          <button
-            type="button"
-            onClick={() => onToggleLike(post.id)}
-            style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24"
-              fill={post.liked ? "#4a7c59" : "none"}
-              stroke={post.liked ? "#4a7c59" : "#fff"} strokeWidth="1.75"
-              strokeLinecap="round" strokeLinejoin="round"
-            >
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      {/* Right side: like + comment + delete */}
+      <div style={{ position: "fixed", bottom: "80px", right: "16px", zIndex: 5, display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
+        <button type="button" onClick={() => onToggleLike(post.id)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill={post.liked ? "#4a7c59" : "none"} stroke={post.liked ? "#4a7c59" : "#fff"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+          <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{post.likes}</span>
+        </button>
+        <button type="button" onClick={() => setShowComments(true)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{post.comments.length}</span>
+        </button>
+        {post.userId === currentUserId && (
+          <button type="button" onClick={() => { onDeletePost(post.id); onClose(); }} style={{ background: "none", border: "none", cursor: "pointer", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
             </svg>
-            <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{post.likes}</span>
           </button>
+        )}
+      </div>
 
-          {/* Comment */}
-          <button
-            type="button"
-            onClick={() => setShowComments(true)}
-            style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{post.comments.length}</span>
-          </button>
-
-          {/* Delete (own post) */}
-          {post.userId === currentUserId && (
-            <button
-              type="button"
-              onClick={() => { onDeletePost(post.id); onClose(); }}
-              style={{ background: "none", border: "none", cursor: "pointer", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
-              </svg>
-            </button>
-          )}
-        </div>
-
-        {/* Post counter */}
-        <div style={{ position: "absolute", top: "56px", left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-          <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 600 }}>
-            {index + 1} / {posts.length}
-          </span>
-        </div>
+      {/* Counter */}
+      <div style={{ position: "fixed", top: "56px", left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 5, pointerEvents: "none" }}>
+        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 600 }}>{index + 1} / {posts.length}</span>
       </div>
 
       {/* Close button */}
-      <button
-        type="button"
-        onClick={onClose}
-        style={{ position: "fixed", top: "16px", right: "16px", background: "none", border: "none", color: "#fff", fontSize: "28px", cursor: "pointer", lineHeight: 1, zIndex: 10, touchAction: "manipulation" }}
-      >×</button>
+      <button type="button" onClick={onClose} style={{ position: "fixed", top: "16px", right: "16px", background: "none", border: "none", color: "#fff", fontSize: "28px", cursor: "pointer", lineHeight: 1, zIndex: 10, touchAction: "manipulation" }}>×</button>
 
       {/* Comments sheet */}
       {showComments && (
