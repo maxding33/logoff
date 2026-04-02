@@ -65,7 +65,7 @@ export default function ProfilePage() {
       try {
         const [profile, userPosts, friends, requests, streak] = await Promise.all([
           fetchProfile(user.id),
-          fetchPosts(user.id, user.id),
+          fetchPosts(user.id, user.id, true),
           getFriendsCount(user.id),
           getPendingRequests(user.id),
           getStreak(user.id),

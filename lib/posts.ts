@@ -107,7 +107,7 @@ export async function fetchFreePosts(currentUserId: string): Promise<Post[]> {
   return (data ?? []).map((p) => mapPost(p as unknown as RawPost, currentUserId));
 }
 
-export async function fetchPosts(currentUserId: string, filterUserId?: string): Promise<Post[]> {
+export async function fetchPosts(currentUserId: string, filterUserId?: string, challengeOnly = false): Promise<Post[]> {
   const client = getClient();
 
   let query = client
@@ -116,6 +116,7 @@ export async function fetchPosts(currentUserId: string, filterUserId?: string): 
     .order("created_at", { ascending: false });
 
   if (filterUserId) query = query.eq("user_id", filterUserId);
+  if (challengeOnly) query = query.eq("is_challenge", true);
 
   const { data, error } = await query;
   if (error) throw error;
