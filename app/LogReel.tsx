@@ -66,11 +66,19 @@ export default function LogReel({
   const dragging = useRef(false);
   const lastTapRef = useRef(0);
   const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
   const post = posts[index];
 
   // Close comments when post changes
   useEffect(() => { setShowComments(false); setCommentText(""); }, [index]);
+
+  // Focus comment input after sheet animation completes (avoids iOS zoom on immediate focus)
+  useEffect(() => {
+    if (!showComments) return;
+    const t = setTimeout(() => commentInputRef.current?.focus(), 320);
+    return () => clearTimeout(t);
+  }, [showComments]);
 
   // Prevent body scroll while reel is open
   useEffect(() => {
@@ -300,7 +308,7 @@ export default function LogReel({
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
                 placeholder="add a comment..."
-                autoFocus
+                ref={commentInputRef}
                 style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", background: "transparent", minHeight: "44px" }}
               />
               <button
