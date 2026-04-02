@@ -47,18 +47,15 @@ export default function MessagesPage() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
       setCurrentUserId(user.id);
-      try {
-        const [convs, friendList] = await Promise.all([
-          getConversations(user.id),
-          getFriends(user.id),
-        ]);
-        setConversations(convs);
-        setFriends(friendList);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      const [convsResult, friendsResult] = await Promise.allSettled([
+        getConversations(user.id),
+        getFriends(user.id),
+      ]);
+      if (convsResult.status === "fulfilled") setConversations(convsResult.value);
+      else console.error("[messages] getConversations error:", convsResult.reason);
+      if (friendsResult.status === "fulfilled") setFriends(friendsResult.value);
+      else console.error("[messages] getFriends error:", friendsResult.reason);
+      setLoading(false);
     });
   }, []);
 
