@@ -73,7 +73,6 @@ function HomeInner() {
       return;
     }
     if (!prevChallengeTimer.current && challengeTimer) {
-      setActiveTab("free");
       setShowMapToast(true);
       setMapTabFlash(true);
       setTimeout(() => setShowMapToast(false), 3500);
