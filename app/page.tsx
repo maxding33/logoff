@@ -10,6 +10,7 @@ import { supabase } from "../lib/supabase";
 import { fetchFeedPosts, fetchFreePosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
 import FreePostGrid from "./FreePostGrid";
 import FriendsMap from "./FriendsMap";
+import LogReel from "./LogReel";
 import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
 import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
@@ -26,7 +27,7 @@ function HomeInner() {
   const [posts, setPosts] = useState<Post[]>(cachedPosts);
   const [freePosts, setFreePosts] = useState<Post[]>(cachedFreePosts);
   const [activeTab, setActiveTab] = useState<"challenge" | "free">("challenge");
-  const [expandedFreePost, setExpandedFreePost] = useState<Post | null>(null);
+  const [reelIndex, setReelIndex] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [streak, setStreak] = useState(0);
@@ -315,14 +316,12 @@ function HomeInner() {
       p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p;
     setPosts((cur) => cur.map(update));
     setFreePosts((cur) => cur.map(update));
-    setExpandedFreePost((cur) => cur && cur.id === postId ? update(cur) : cur);
     try {
       await toggleLike(postId, currentUserId, post.liked);
     } catch {
       const revert = (p: typeof post) => p.id === postId ? { ...p, liked: post.liked, likes: post.likes } : p;
       setPosts((cur) => cur.map(revert));
       setFreePosts((cur) => cur.map(revert));
-      setExpandedFreePost((cur) => cur && cur.id === postId ? revert(cur) : cur);
     }
   };
 
@@ -475,7 +474,7 @@ function HomeInner() {
       ) : challengeTimer ? (
         <FriendsMap currentUserId={currentUserId ?? ""} />
       ) : (
-        <FreePostGrid posts={freePosts} onTap={setExpandedFreePost} />
+        <FreePostGrid posts={freePosts} onTap={(post) => setReelIndex(freePosts.findIndex((p) => p.id === post.id))} />
       )}
 
       <UploadModal
@@ -611,29 +610,18 @@ function HomeInner() {
         </div>
       )}
 
-      {/* Free post expanded view */}
-      {expandedFreePost && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.92)", overflowY: "auto" }}
-          onClick={() => setExpandedFreePost(null)}
-        >
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", marginTop: "48px" }}>
-            <FeedPost
-              post={expandedFreePost}
-              currentUsername={currentUsername}
-              currentUserId={currentUserId ?? ""}
-              onToggleLike={handleToggleLike}
-              onAddComment={handleAddComment}
-              onDeletePost={(id) => { handleDeletePost(id); setExpandedFreePost(null); }}
-              onDeleteComment={handleDeleteComment}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => setExpandedFreePost(null)}
-            style={{ position: "fixed", top: "16px", right: "16px", background: "none", border: "none", color: "#fff", fontSize: "28px", cursor: "pointer", lineHeight: 1 }}
-          >×</button>
-        </div>
+      {/* Log reel viewer */}
+      {reelIndex !== null && (
+        <LogReel
+          posts={freePosts}
+          startIndex={reelIndex}
+          currentUserId={currentUserId ?? ""}
+          currentUsername={currentUsername}
+          onClose={() => setReelIndex(null)}
+          onToggleLike={handleToggleLike}
+          onAddComment={handleAddComment}
+          onDeletePost={(id) => { handleDeletePost(id); setReelIndex(null); }}
+        />
       )}
 
       {/* Challenge completion overlay */}
