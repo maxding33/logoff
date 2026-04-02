@@ -56,6 +56,7 @@ export default function ProfilePage() {
   const [expandedPost, setExpandedPost] = useState<Post | null>(null);
   const [showUpdates, setShowUpdates] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAvatarOptions, setShowAvatarOptions] = useState(false);
   const challengeTimer = useChallengeTimer(currentUserId);
 
   // Load user + posts
@@ -293,40 +294,23 @@ export default function ProfilePage() {
 
       {/* Profile info */}
       {loading ? null : <div style={{ padding: "24px 20px 16px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-        <div style={{ position: "relative", cursor: "pointer" }} onClick={() => avatarInputRef.current?.click()}>
+        <div style={{ position: "relative", cursor: "pointer" }} onClick={() => avatarUploading ? null : setShowAvatarOptions(true)}>
           <Avatar name={name} size={80} avatarUrl={avatarUrl} />
-          {(!avatarUrl || avatarUploading) && (
-            <div style={{
-              position: "absolute", inset: 0, borderRadius: "50%",
-              background: "rgba(0,0,0,0.25)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {avatarUploading ? (
-                <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>...</span>
-              ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              )}
-            </div>
-          )}
+          <div style={{
+            position: "absolute", inset: 0, borderRadius: "50%",
+            background: "rgba(0,0,0,0.18)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {avatarUploading ? (
+              <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>...</span>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            )}
+          </div>
           <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
-        </div>
-        {avatarUrl && (
-          <button
-            onClick={async () => {
-              if (!currentUserId) return;
-              try { await removeAvatar(currentUserId); } catch {}
-              setAvatarUrl(null);
-              if (cachedProfile) cachedProfile = { ...cachedProfile, avatarUrl: null };
-            }}
-            style={{ background: "none", border: "none", color: "#999", fontSize: "12px", cursor: "pointer", padding: 0 }}
-          >
-            remove photo
-          </button>
-        )}
         </div>
 
         {/* Display name */}
@@ -365,7 +349,7 @@ export default function ProfilePage() {
           />
         ) : (
           <button onClick={() => setEditingName(true)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            <p style={{ margin: 0, fontSize: "12px", color: "#aaa" }}>tap to change username</p>
+            <p style={{ margin: 0, fontSize: "13px", color: "#aaa" }}>@{name}</p>
           </button>
         )}
 
@@ -610,6 +594,45 @@ export default function ProfilePage() {
               {expandedPost.caption}
             </p>
           )}
+        </div>
+      )}
+      {/* Avatar options sheet */}
+      {showAvatarOptions && (
+        <div onClick={() => setShowAvatarOptions(false)} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            position: "absolute", bottom: 0, left: 0, right: 0,
+            background: "#fff", borderRadius: "16px 16px 0 0",
+            padding: "0 0 40px",
+            animation: "slideUpSheet 0.28s cubic-bezier(0.32,0.72,0,1)",
+          }}>
+            <style>{`@keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
+            <button
+              onClick={() => { setShowAvatarOptions(false); avatarInputRef.current?.click(); }}
+              style={{ width: "100%", padding: "18px 20px", background: "none", border: "none", borderBottom: "1px solid #f0f0f0", fontSize: "15px", fontWeight: 600, cursor: "pointer", textAlign: "left" }}
+            >
+              change photo
+            </button>
+            {avatarUrl && (
+              <button
+                onClick={async () => {
+                  setShowAvatarOptions(false);
+                  if (!currentUserId) return;
+                  try { await removeAvatar(currentUserId); } catch {}
+                  setAvatarUrl(null);
+                  if (cachedProfile) cachedProfile = { ...cachedProfile, avatarUrl: null };
+                }}
+                style={{ width: "100%", padding: "18px 20px", background: "none", border: "none", borderBottom: "1px solid #f0f0f0", fontSize: "15px", fontWeight: 600, cursor: "pointer", textAlign: "left", color: "#e53935" }}
+              >
+                remove photo
+              </button>
+            )}
+            <button
+              onClick={() => setShowAvatarOptions(false)}
+              style={{ width: "100%", padding: "18px 20px", background: "none", border: "none", fontSize: "15px", cursor: "pointer", textAlign: "left", color: "#aaa" }}
+            >
+              cancel
+            </button>
+          </div>
         </div>
       )}
     </main>
