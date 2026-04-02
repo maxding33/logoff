@@ -14,6 +14,7 @@ import LogReel from "./LogReel";
 import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
 import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
+import { getUnreadCount, updateLastSeen } from "../lib/messages";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
@@ -40,6 +41,7 @@ function HomeInner() {
   const [showCompletion, setShowCompletion] = useState(false);
   const [showMapToast, setShowMapToast] = useState(false);
   const [mapTabFlash, setMapTabFlash] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const currentUserIdRef = useRef<string | null>(null);
   const challengeTimer = useChallengeTimer(currentUserId);
   const prevChallengeTimer = useRef<string | null | undefined>(undefined);
@@ -141,6 +143,8 @@ function HomeInner() {
   useEffect(() => {
     if (!currentUserId) return;
     getStreak(currentUserId).then(({ current }) => setStreak(current));
+    getUnreadCount(currentUserId).then(setUnreadMessages).catch(() => {});
+    updateLastSeen(currentUserId).catch(() => {});
   }, [currentUserId]);
 
   const loadPosts = useCallback(async (userId: string, quiet = false) => {
@@ -479,6 +483,21 @@ function HomeInner() {
             style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
           >eod</button>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{streak} 🔥</span>
+          <Link href="/messages" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", color: "#000", minWidth: "32px", minHeight: "32px" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            {unreadMessages > 0 && (
+              <span style={{
+                position: "absolute", top: "-4px", right: "-4px",
+                background: "#e53935", color: "#fff",
+                borderRadius: "999px", fontSize: "10px", fontWeight: 700,
+                minWidth: "16px", height: "16px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: "0 4px",
+              }}>{unreadMessages > 9 ? "9+" : unreadMessages}</span>
+            )}
+          </Link>
         </span>
       </header>
 

@@ -87,6 +87,23 @@ export async function getFriendsCount(userId: string): Promise<number> {
   return count ?? 0;
 }
 
+export async function getFriends(userId: string): Promise<{ id: string; username: string; avatarUrl: string | null }[]> {
+  if (!supabase) return [];
+
+  const { data: iFollow } = await supabase
+    .from("follows").select("following_id").eq("follower_id", userId).eq("status", "accepted");
+  if (!iFollow?.length) return [];
+
+  const followingIds = iFollow.map((r) => r.following_id);
+  const { data: mutuals } = await supabase
+    .from("follows").select("follower_id").eq("status", "accepted").in("follower_id", followingIds).eq("following_id", userId);
+  if (!mutuals?.length) return [];
+
+  const friendIds = mutuals.map((r) => r.follower_id);
+  const { data: users } = await supabase.from("users").select("id, username, avatar_url").in("id", friendIds);
+  return (users || []).map((u: any) => ({ id: u.id, username: u.username, avatarUrl: u.avatar_url ?? null }));
+}
+
 export async function getPendingRequests(userId: string): Promise<{ id: string; username: string }[]> {
   if (!supabase) return [];
 
