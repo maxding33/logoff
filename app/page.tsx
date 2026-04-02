@@ -193,6 +193,18 @@ function HomeInner() {
     return () => { supabase!.removeChannel(channel); };
   }, [currentUserId, loadPosts]);
 
+  // Realtime unread message count
+  useEffect(() => {
+    if (!supabase || !currentUserId) return;
+    const channel = supabase
+      .channel("home-messages")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+        getUnreadCount(currentUserId).then(setUnreadMessages).catch(() => {});
+      })
+      .subscribe();
+    return () => { supabase!.removeChannel(channel); };
+  }, [currentUserId]);
+
   // Pull-to-refresh handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     if (window.scrollY === 0) {
