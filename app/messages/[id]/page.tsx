@@ -42,7 +42,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const [members, setMembers] = useState<ConversationMember[]>(getCachedMembers(conversationId));
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(getCachedMessages(conversationId).length === 0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastSeenInterval = useRef<ReturnType<typeof setInterval> | null>(null);
