@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLastSeen, isOnline, getCachedMessages, getCachedMembers, setCachedMessages, setCachedMembers, type Message, type ConversationMember } from "../../../lib/messages";
@@ -44,6 +44,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(getCachedMessages(conversationId).length === 0);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const initialScrollDone = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastSeenInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -113,12 +114,18 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     };
   }, [conversationId, currentUserId]);
 
-  // Scroll to bottom — instant on first render, smooth for new messages
-  useEffect(() => {
-    if (!initialScrollDone.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+  // Sync scroll to bottom before paint on first render
+  useLayoutEffect(() => {
+    if (!initialScrollDone.current && messages.length > 0) {
+      const el = scrollContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
       initialScrollDone.current = true;
-    } else {
+    }
+  }, [messages]);
+
+  // Smooth scroll for new messages after initial render
+  useEffect(() => {
+    if (initialScrollDone.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
@@ -201,7 +208,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       </header>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
+      <div ref={scrollContainerRef} style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
         {loading ? (
           <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>loading...</p>
         ) : messages.length === 0 ? (
