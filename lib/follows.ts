@@ -90,17 +90,21 @@ export async function getFriendsCount(userId: string): Promise<number> {
 export async function getFriends(userId: string): Promise<{ id: string; username: string; avatarUrl: string | null }[]> {
   if (!supabase) return [];
 
-  const { data: iFollow } = await supabase
+  const { data: iFollow, error: e1 } = await supabase
     .from("follows").select("following_id").eq("follower_id", userId).eq("status", "accepted");
+  console.log("[getFriends] iFollow", iFollow, e1);
   if (!iFollow?.length) return [];
 
   const followingIds = iFollow.map((r) => r.following_id);
-  const { data: mutuals } = await supabase
-    .from("follows").select("follower_id").eq("status", "accepted").in("follower_id", followingIds).eq("following_id", userId);
-  if (!mutuals?.length) return [];
+  const { data: theyFollow, error: e2 } = await supabase
+    .from("follows").select("follower_id")
+    .eq("following_id", userId).eq("status", "accepted").in("follower_id", followingIds);
+  console.log("[getFriends] theyFollow", theyFollow, e2);
+  if (!theyFollow?.length) return [];
 
-  const friendIds = mutuals.map((r) => r.follower_id);
-  const { data: users } = await supabase.from("users").select("id, username, avatar_url").in("id", friendIds);
+  const friendIds = theyFollow.map((r) => r.follower_id);
+  const { data: users, error: e3 } = await supabase.from("users").select("id, username, avatar_url").in("id", friendIds);
+  console.log("[getFriends] users", users, e3);
   return (users || []).map((u: any) => ({ id: u.id, username: u.username, avatarUrl: u.avatar_url ?? null }));
 }
 
