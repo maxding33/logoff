@@ -329,11 +329,10 @@ function HomeInner() {
     if (!currentUserId) return;
     try {
       const newComment = await addComment(postId, currentUserId, text, currentUsername);
-      setPosts((cur) =>
-        cur.map((p) =>
-          p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p
-        )
-      );
+      const applyComment = (cur: Post[]) =>
+        cur.map((p) => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p);
+      setPosts(applyComment);
+      setFreePosts(applyComment);
     } catch (err) {
       console.error("Failed to add comment:", err);
     }
@@ -342,9 +341,11 @@ function HomeInner() {
   const handleDeleteComment = async (postId: string, commentId: string) => {
     try {
       await deleteComment(commentId);
-      setPosts((cur) => cur.map((p) => p.id !== postId ? p : {
+      const applyDelete = (cur: Post[]) => cur.map((p) => p.id !== postId ? p : {
         ...p, comments: p.comments.filter((c) => c.id !== commentId),
-      }));
+      });
+      setPosts(applyDelete);
+      setFreePosts(applyDelete);
     } catch (err) {
       console.error("Failed to delete comment:", err);
     }
@@ -354,6 +355,7 @@ function HomeInner() {
     try {
       await deletePost(postId);
       setPosts((cur) => cur.filter((p) => p.id !== postId));
+      setFreePosts((cur) => cur.filter((p) => p.id !== postId));
     } catch (err) {
       console.error("Failed to delete post:", err);
     }
@@ -620,6 +622,7 @@ function HomeInner() {
           onClose={() => setReelIndex(null)}
           onToggleLike={handleToggleLike}
           onAddComment={handleAddComment}
+          onDeleteComment={handleDeleteComment}
           onDeletePost={(id) => { handleDeletePost(id); setReelIndex(null); }}
         />
       )}

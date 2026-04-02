@@ -42,6 +42,7 @@ type Props = {
   onClose: () => void;
   onToggleLike: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
+  onDeleteComment: (postId: string, commentId: string) => void;
   onDeletePost: (postId: string) => void;
 };
 
@@ -53,6 +54,7 @@ export default function LogReel({
   onClose,
   onToggleLike,
   onAddComment,
+  onDeleteComment,
   onDeletePost,
 }: Props) {
   const [index, setIndex] = useState(startIndex);
@@ -225,9 +227,21 @@ export default function LogReel({
         )}
       </div>
 
-      {/* Counter */}
-      <div style={{ position: "fixed", top: "56px", left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 5, pointerEvents: "none" }}>
-        <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 600 }}>{index + 1} / {posts.length}</span>
+      {/* Progress dots */}
+      <div style={{ position: "fixed", top: "20px", left: 0, right: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: "5px", zIndex: 5, pointerEvents: "none" }}>
+        {posts.length <= 12 ? (
+          posts.map((_, i) => (
+            <div key={i} style={{
+              width: i === index ? "16px" : "6px",
+              height: "6px",
+              borderRadius: "3px",
+              background: i === index ? "#fff" : "rgba(255,255,255,0.35)",
+              transition: "width 0.2s ease, background 0.2s ease",
+            }} />
+          ))
+        ) : (
+          <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 600 }}>{index + 1} / {posts.length}</span>
+        )}
       </div>
 
       {/* Close button */}
@@ -263,9 +277,14 @@ export default function LogReel({
                 <p style={{ color: "#bbb", fontSize: "13px", textAlign: "center", padding: "24px 0" }}>no comments yet</p>
               ) : (
                 post.comments.map((c) => (
-                  <div key={c.id} style={{ padding: "8px 0", borderBottom: "1px solid #f5f5f5", fontSize: "13px" }}>
-                    <span style={{ fontWeight: 700, color: "#000" }}>{c.user}</span>{" "}
-                    <span style={{ color: "#444" }}>{c.text}</span>
+                  <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
+                    <p style={{ margin: 0, fontSize: "13px" }}>
+                      <span style={{ fontWeight: 700, color: "#000" }}>{c.user}</span>{" "}
+                      <span style={{ color: "#444" }}>{c.text}</span>
+                    </p>
+                    {c.userId === currentUserId && (
+                      <button type="button" onClick={() => onDeleteComment(post.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: "18px", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0, touchAction: "manipulation" }}>×</button>
+                    )}
                   </div>
                 ))
               )}
