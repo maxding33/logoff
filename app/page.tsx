@@ -38,8 +38,11 @@ function HomeInner() {
   const [postError, setPostError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showMapToast, setShowMapToast] = useState(false);
+  const [mapTabFlash, setMapTabFlash] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
   const challengeTimer = useChallengeTimer(currentUserId);
+  const prevChallengeTimer = useRef<string | null | undefined>(undefined);
   const { failed: challengeFailedReal, failedDate } = useChallengeFailed(currentUserId);
   const [testFail, setTestFail] = useState(false);
   const [testEod, setTestEod] = useState(false);
@@ -62,6 +65,22 @@ function HomeInner() {
     if (!failKey) { setFailDismissedState(false); return; }
     setFailDismissedState(localStorage.getItem(failKey) === "1");
   }, [failKey]);
+
+  // Detect challenge window opening — auto-switch to map, show toast + tab flash
+  useEffect(() => {
+    if (prevChallengeTimer.current === undefined) {
+      prevChallengeTimer.current = challengeTimer;
+      return;
+    }
+    if (!prevChallengeTimer.current && challengeTimer) {
+      setActiveTab("free");
+      setShowMapToast(true);
+      setMapTabFlash(true);
+      setTimeout(() => setShowMapToast(false), 3500);
+      setTimeout(() => setMapTabFlash(false), 1500);
+    }
+    prevChallengeTimer.current = challengeTimer;
+  }, [challengeTimer]);
 
   // End-of-day summary
   const { shouldShow: eodShouldShow, summary: eodSummary } = useEndOfDaySummary(currentUserId);
@@ -368,6 +387,41 @@ function HomeInner() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      <style>{`
+        @keyframes toastSlideDown {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes toastFadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+        @keyframes tabFlash {
+          0%, 100% { color: #4a7c59; }
+          50% { color: #7bc47f; }
+        }
+      `}</style>
+
+      {/* Map live toast */}
+      {showMapToast && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 900,
+          display: "flex", justifyContent: "center", padding: "12px 16px",
+          pointerEvents: "none",
+        }}>
+          <div style={{
+            background: "#4a7c59", color: "#fff",
+            fontSize: "13px", fontWeight: 700,
+            padding: "10px 20px", borderRadius: "24px",
+            letterSpacing: "0.04em",
+            animation: "toastSlideDown 0.3s ease, toastFadeOut 0.5s ease 3s forwards",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.18)",
+          }}>
+            outdoor hour started. map is live
+          </div>
+        </div>
+      )}
+
       {/* Pull-to-refresh indicator */}
       <div style={{
         overflow: "hidden",
@@ -442,7 +496,8 @@ function HomeInner() {
               background: "none",
               border: "none",
               borderBottom: activeTab === tab ? "2px solid #000" : "2px solid transparent",
-              color: activeTab === tab ? "#000" : "#aaa",
+              color: tab === "free" && mapTabFlash ? "#4a7c59" : activeTab === tab ? "#000" : "#aaa",
+              animation: tab === "free" && mapTabFlash ? "tabFlash 0.5s ease 3" : "none",
               cursor: "pointer",
               marginBottom: "-1px",
             }}
