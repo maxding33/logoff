@@ -30,14 +30,17 @@ function getConvAvatar(conv: Conversation): { name: string; avatarUrl: string | 
   return { name: other?.username ?? "?", avatarUrl: other?.avatarUrl ?? null };
 }
 
+let cachedConversations: Conversation[] = [];
+let cachedFriends: { id: string; username: string; avatarUrl: string | null }[] = [];
+
 export default function MessagesPage() {
   const router = useRouter();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [conversations, setConversations] = useState<Conversation[]>(cachedConversations);
+  const [loading, setLoading] = useState(cachedConversations.length === 0);
   const [showNewDM, setShowNewDM] = useState(false);
   const [showNewGroup, setShowNewGroup] = useState(false);
-  const [friends, setFriends] = useState<{ id: string; username: string; avatarUrl: string | null }[]>([]);
+  const [friends, setFriends] = useState<{ id: string; username: string; avatarUrl: string | null }[]>(cachedFriends);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [groupName, setGroupName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -51,9 +54,9 @@ export default function MessagesPage() {
         getConversations(user.id),
         getFriends(user.id),
       ]);
-      if (convsResult.status === "fulfilled") setConversations(convsResult.value);
+      if (convsResult.status === "fulfilled") { setConversations(convsResult.value); cachedConversations = convsResult.value; }
       else console.error("[messages] getConversations error:", convsResult.reason);
-      if (friendsResult.status === "fulfilled") setFriends(friendsResult.value);
+      if (friendsResult.status === "fulfilled") { setFriends(friendsResult.value); cachedFriends = friendsResult.value; }
       else console.error("[messages] getFriends error:", friendsResult.reason);
       setLoading(false);
     });
@@ -65,7 +68,7 @@ export default function MessagesPage() {
     const channel = supabase
       .channel("messages-list")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
-        getConversations(currentUserId).then(setConversations).catch(console.error);
+        getConversations(currentUserId).then((convs) => { setConversations(convs); cachedConversations = convs; }).catch(console.error);
       })
       .subscribe();
     return () => { supabase!.removeChannel(channel); };
