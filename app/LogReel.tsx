@@ -187,40 +187,40 @@ export default function LogReel({
 
       {/* Fixed overlay UI — always shows current post's data */}
       {/* Bottom left: avatar + username + caption */}
-      <div style={{ position: "fixed", bottom: "80px", left: "16px", right: "72px", zIndex: 5, pointerEvents: "none" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+      <div style={{ position: "fixed", bottom: "48px", left: "20px", right: "88px", zIndex: 5, pointerEvents: "none" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
           {post.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={post.avatarUrl} alt={post.user} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid #fff" }} />
+            <img src={post.avatarUrl} alt={post.user} style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover", border: "2px solid #fff" }} />
           ) : (
-            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: getAvatarColor(post.user), display: "flex", alignItems: "center", justifyContent: "center", border: "1.5px solid #fff", flexShrink: 0 }}>
-              <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700 }}>{getInitials(post.user)}</span>
+            <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: getAvatarColor(post.user), display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff", flexShrink: 0 }}>
+              <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{getInitials(post.user)}</span>
             </div>
           )}
-          <span style={{ color: "#fff", fontSize: "14px", fontWeight: 700, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>@{post.user}</span>
+          <span style={{ color: "#fff", fontSize: "16px", fontWeight: 700, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>@{post.user}</span>
         </div>
         {post.caption && post.caption.trim() && post.caption.trim() !== " " && (
-          <p style={{ margin: 0, color: "#fff", fontSize: "13px", lineHeight: 1.4, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{post.caption}</p>
+          <p style={{ margin: 0, color: "#fff", fontSize: "14px", lineHeight: 1.5, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>{post.caption}</p>
         )}
       </div>
 
       {/* Right side: like + comment + delete */}
-      <div style={{ position: "fixed", bottom: "80px", right: "16px", zIndex: 5, display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
-        <button type="button" onClick={() => onToggleLike(post.id)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill={post.liked ? "#4a7c59" : "none"} stroke={post.liked ? "#4a7c59" : "#fff"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <div style={{ position: "fixed", bottom: "48px", right: "20px", zIndex: 5, display: "flex", flexDirection: "column", alignItems: "center", gap: "28px" }}>
+        <button type="button" onClick={() => onToggleLike(post.id)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill={post.liked ? "#4a7c59" : "none"} stroke={post.liked ? "#4a7c59" : "#fff"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
-          <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{post.likes}</span>
+          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{post.likes}</span>
         </button>
-        <button type="button" onClick={() => setShowComments(true)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        <button type="button" onClick={() => setShowComments(true)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          <span style={{ color: "#fff", fontSize: "12px", fontWeight: 700 }}>{post.comments.length}</span>
+          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{post.comments.length}</span>
         </button>
         {post.userId === currentUserId && (
           <button type="button" onClick={() => { onDeletePost(post.id); onClose(); }} style={{ background: "none", border: "none", cursor: "pointer", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
             </svg>
           </button>
