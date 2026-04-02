@@ -620,7 +620,7 @@ function HomeInner() {
           style={{ position: "fixed", inset: 0, zIndex: 500, background: "rgba(0,0,0,0.92)", overflowY: "auto" }}
           onClick={() => setExpandedFreePost(null)}
         >
-          <div onClick={(e) => e.stopPropagation()}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", marginTop: "48px" }}>
             <FeedPost
               post={expandedFreePost}
               currentUsername={currentUsername}
