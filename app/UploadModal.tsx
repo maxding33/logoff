@@ -128,7 +128,7 @@ export default function UploadModal({
           border: "none",
           borderTop: "1px solid #e5e5e5",
           padding: "14px 16px",
-          fontSize: "14px",
+          fontSize: "16px",
           resize: "none",
           outline: "none",
           fontFamily: "inherit",

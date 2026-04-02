@@ -430,7 +430,7 @@ export default function FeedPost({
                 flex: 1,
                 border: "none",
                 outline: "none",
-                fontSize: "13px",
+                fontSize: "16px",
                 color: "#000",
                 background: "transparent",
                 minHeight: "44px",

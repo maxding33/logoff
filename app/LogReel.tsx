@@ -278,7 +278,7 @@ export default function LogReel({
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
                 placeholder="add a comment..."
                 autoFocus
-                style={{ flex: 1, border: "none", outline: "none", fontSize: "13px", background: "transparent", minHeight: "44px" }}
+                style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", background: "transparent", minHeight: "44px" }}
               />
               <button
                 type="button"
