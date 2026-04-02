@@ -11,6 +11,7 @@ import { fetchFeedPosts, fetchFreePosts, uploadPhoto, createPost, toggleLike, ad
 import FreePostGrid from "./FreePostGrid";
 import FriendsMap from "./FriendsMap";
 import LogReel from "./LogReel";
+import GamePicker from "./GamePicker";
 import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
 import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
@@ -42,6 +43,7 @@ function HomeInner() {
   const [showMapToast, setShowMapToast] = useState(false);
   const [mapTabFlash, setMapTabFlash] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [showGamePicker, setShowGamePicker] = useState(false);
   const currentUserIdRef = useRef<string | null>(null);
   const challengeTimer = useChallengeTimer(currentUserId);
   const prevChallengeTimer = useRef<string | null | undefined>(undefined);
@@ -578,7 +580,14 @@ function HomeInner() {
         error={postError}
       />
 
-      <BottomNav fileInputRef={fileInputRef} handlePhotoChange={handlePhotoChange} cameraOnly={!!challengeTimer} />
+      <BottomNav
+        fileInputRef={fileInputRef}
+        handlePhotoChange={handlePhotoChange}
+        cameraOnly={!!challengeTimer}
+        onGamePress={!challengeTimer && activeTab === "challenge" ? () => setShowGamePicker(true) : undefined}
+      />
+
+      {showGamePicker && <GamePicker onClose={() => setShowGamePicker(false)} />}
 
       {/* Challenge fail overlay */}
       {challengeFailed && !failDismissed && (
