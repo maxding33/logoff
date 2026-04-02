@@ -79,8 +79,8 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   // Realtime messages
   useEffect(() => {
     if (!supabase || !currentUserId) return;
-    const channel = supabase
-      .channel(`conv-${conversationId}`)
+    const msgChannel = supabase
+      .channel(`conv-msgs-${conversationId}`)
       .on("postgres_changes", {
         event: "INSERT", schema: "public", table: "messages",
         filter: `conversation_id=eq.${conversationId}`,
@@ -90,7 +90,22 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         await markAsRead(conversationId, currentUserId);
       })
       .subscribe();
-    return () => { supabase!.removeChannel(channel); };
+
+    const membersChannel = supabase
+      .channel(`conv-members-${conversationId}`)
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "conversation_members",
+        filter: `conversation_id=eq.${conversationId}`,
+      }, async () => {
+        const mems = await getConversationMembers(conversationId);
+        setMembers(mems);
+      })
+      .subscribe();
+
+    return () => {
+      supabase!.removeChannel(msgChannel);
+      supabase!.removeChannel(membersChannel);
+    };
   }, [conversationId, currentUserId]);
 
   // Scroll to bottom on new messages
