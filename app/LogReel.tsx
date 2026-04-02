@@ -62,6 +62,8 @@ export default function LogReel({
   const [snapping, setSnapping] = useState(false);
   const touchStartY = useRef(0);
   const dragging = useRef(false);
+  const lastTapRef = useRef(0);
+  const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
 
   const post = posts[index];
 
@@ -110,6 +112,18 @@ export default function LogReel({
     else snapTo(index);
   };
 
+  const handleDoubleTap = (e: React.TouchEvent) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!post.liked) onToggleLike(post.id);
+      const touch = e.changedTouches[0];
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      setFloatingHeart({ x: touch.clientX - rect.left, y: touch.clientY - rect.top, key: now });
+      setTimeout(() => setFloatingHeart(null), 800);
+    }
+    lastTapRef.current = now;
+  };
+
   const handleSubmitComment = () => {
     const trimmed = commentText.trim();
     if (!trimmed) return;
@@ -137,7 +151,15 @@ export default function LogReel({
           return (
             <div key={p.id} style={{ position: "relative", height: "100vh", overflow: "hidden" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.image} alt={p.caption} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <img src={p.image} alt={p.caption} onTouchEnd={i === index ? handleDoubleTap : undefined} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              {i === index && floatingHeart && (
+                <svg key={floatingHeart.key} className="float-heart" width="70" height="70" viewBox="0 0 24 24"
+                  fill="#4a7c59" stroke="#4a7c59" strokeWidth="1.5"
+                  style={{ position: "absolute", left: floatingHeart.x, top: floatingHeart.y, pointerEvents: "none" }}
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              )}
               <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)", pointerEvents: "none" }} />
               {/* Floating bubbles per post */}
               {i === index && pShortComments.map((comment, ci) => (
