@@ -73,10 +73,14 @@ function HomeInner() {
       return;
     }
     if (!prevChallengeTimer.current && challengeTimer) {
-      setShowMapToast(true);
-      setMapTabFlash(true);
-      setTimeout(() => setShowMapToast(false), 3500);
-      setTimeout(() => setMapTabFlash(false), 1500);
+      const todayKey = `logoff_map_toast_${new Date().toDateString()}`;
+      if (!localStorage.getItem(todayKey)) {
+        localStorage.setItem(todayKey, "1");
+        setShowMapToast(true);
+        setMapTabFlash(true);
+        setTimeout(() => setShowMapToast(false), 3500);
+        setTimeout(() => setMapTabFlash(false), 1500);
+      }
     }
     prevChallengeTimer.current = challengeTimer;
   }, [challengeTimer]);
