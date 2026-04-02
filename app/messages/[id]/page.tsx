@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLastSeen, isOnline, getCachedMessages, getCachedMembers, setCachedMessages, setCachedMembers, type Message, type ConversationMember } from "../../../lib/messages";
@@ -44,8 +44,6 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(getCachedMessages(conversationId).length === 0);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const initialScrollDone = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastSeenInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -114,20 +112,13 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     };
   }, [conversationId, currentUserId]);
 
-  // Sync scroll to bottom before paint on first render
-  useLayoutEffect(() => {
-    if (!initialScrollDone.current && messages.length > 0) {
-      const el = scrollContainerRef.current;
-      if (el) el.scrollTop = el.scrollHeight;
-      initialScrollDone.current = true;
-    }
-  }, [messages]);
-
-  // Smooth scroll for new messages after initial render
+  // Smooth scroll to bottom only for new incoming messages
+  const prevMessageCount = useRef(messages.length);
   useEffect(() => {
-    if (initialScrollDone.current) {
+    if (messages.length > prevMessageCount.current) {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
+    prevMessageCount.current = messages.length;
   }, [messages]);
 
   const handleSend = async () => {
@@ -208,7 +199,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       </header>
 
       {/* Messages */}
-      <div ref={scrollContainerRef} style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 0", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
         {loading ? (
           <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>loading...</p>
         ) : messages.length === 0 ? (
