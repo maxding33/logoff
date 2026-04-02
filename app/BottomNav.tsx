@@ -8,10 +8,9 @@ type BottomNavProps = {
   fileInputRef: RefObject<HTMLInputElement | null>;
   handlePhotoChange: (event: ChangeEvent<HTMLInputElement>) => void;
   cameraOnly?: boolean;
-  onGamePress?: () => void;
 };
 
-export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly, onGamePress }: BottomNavProps) {
+export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly }: BottomNavProps) {
   const pathname = usePathname();
   const [tapped, setTapped] = useState<"home" | "profile" | null>(null);
 
@@ -64,50 +63,35 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
         </svg>
       </Link>
 
-      {/* Center button — game icon or upload */}
-      {onGamePress ? (
-        <button
-          onClick={onGamePress}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: "44px", height: "44px", borderRadius: "50%",
-            backgroundColor: "#000", color: "#fff",
-            border: "none", cursor: "pointer",
-            touchAction: "manipulation",
-            WebkitTapHighlightColor: "transparent",
-          }}
-          aria-label="Open games"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="2" width="9" height="9" rx="2" />
-            <rect x="13" y="2" width="9" height="9" rx="2" />
-            <rect x="2" y="13" width="9" height="9" rx="2" />
-            <rect x="13" y="13" width="9" height="9" rx="2" />
-          </svg>
-        </button>
-      ) : (
-        <label
-          htmlFor="photo-upload"
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: "44px", height: "44px", borderRadius: "50%",
-            backgroundColor: "#000000", color: "#ffffff",
-            fontSize: "24px", cursor: "pointer", lineHeight: 1,
-          }}
-          aria-label="Upload a photo"
-        >
-          <span aria-hidden="true">+</span>
-          <input
-            ref={fileInputRef}
-            id="photo-upload"
-            type="file"
-            accept="image/*"
-            {...(cameraOnly ? { capture: "environment" } : {})}
-            onChange={handlePhotoChange}
-            style={{ display: "none" }}
-          />
-        </label>
-      )}
+      {/* Upload */}
+      <label
+        htmlFor="photo-upload"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "44px",
+          height: "44px",
+          borderRadius: "50%",
+          backgroundColor: "#000000",
+          color: "#ffffff",
+          fontSize: "24px",
+          cursor: "pointer",
+          lineHeight: 1,
+        }}
+        aria-label="Upload a photo"
+      >
+        <span aria-hidden="true">+</span>
+        <input
+          ref={fileInputRef}
+          id="photo-upload"
+          type="file"
+          accept="image/*"
+          {...(cameraOnly ? { capture: "environment" } : {})}
+          onChange={handlePhotoChange}
+          style={{ display: "none" }}
+        />
+      </label>
 
       {/* Profile */}
       <Link
