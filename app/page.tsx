@@ -309,23 +309,20 @@ function HomeInner() {
 
   const handleToggleLike = async (postId: string) => {
     if (!currentUserId) return;
-    const post = posts.find((p) => p.id === postId);
+    const post = posts.find((p) => p.id === postId) ?? freePosts.find((p) => p.id === postId);
     if (!post) return;
-    setPosts((cur) =>
-      cur.map((p) =>
-        p.id === postId
-          ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
-          : p
-      )
-    );
+    const update = (p: typeof post) =>
+      p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p;
+    setPosts((cur) => cur.map(update));
+    setFreePosts((cur) => cur.map(update));
+    setExpandedFreePost((cur) => cur && cur.id === postId ? update(cur) : cur);
     try {
       await toggleLike(postId, currentUserId, post.liked);
     } catch {
-      setPosts((cur) =>
-        cur.map((p) =>
-          p.id === postId ? { ...p, liked: post.liked, likes: post.likes } : p
-        )
-      );
+      const revert = (p: typeof post) => p.id === postId ? { ...p, liked: post.liked, likes: post.likes } : p;
+      setPosts((cur) => cur.map(revert));
+      setFreePosts((cur) => cur.map(revert));
+      setExpandedFreePost((cur) => cur && cur.id === postId ? revert(cur) : cur);
     }
   };
 
