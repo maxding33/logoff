@@ -38,6 +38,22 @@ export function isOnline(lastSeen: string | null): boolean {
   return Date.now() - new Date(lastSeen).getTime() < 5 * 60 * 1000;
 }
 
+const MESSAGE_CACHE = new Map<string, Message[]>();
+const MEMBERS_CACHE = new Map<string, ConversationMember[]>();
+
+export function getCachedMessages(conversationId: string): Message[] {
+  return MESSAGE_CACHE.get(conversationId) ?? [];
+}
+export function getCachedMembers(conversationId: string): ConversationMember[] {
+  return MEMBERS_CACHE.get(conversationId) ?? [];
+}
+export function setCachedMessages(conversationId: string, msgs: Message[]): void {
+  MESSAGE_CACHE.set(conversationId, msgs.slice(-20));
+}
+export function setCachedMembers(conversationId: string, mems: ConversationMember[]): void {
+  MEMBERS_CACHE.set(conversationId, mems);
+}
+
 export async function getConversations(userId: string): Promise<Conversation[]> {
   const db = getClient();
 
