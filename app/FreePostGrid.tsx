@@ -10,6 +10,13 @@ function timeLeft(expiresAt: string): string {
   return `${Math.floor(mins / 60)}h`;
 }
 
+function timerColor(expiresAt: string): string {
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (ms < 2 * 60 * 60 * 1000) return "rgba(220,80,80,0.9)";
+  if (ms < 5 * 60 * 60 * 1000) return "rgba(210,160,40,0.9)";
+  return "rgba(0,0,0,0.55)";
+}
+
 function opacity(expiresAt: string): number {
   const ms = new Date(expiresAt).getTime() - Date.now();
   const totalMs = 24 * 60 * 60 * 1000;
@@ -43,9 +50,7 @@ export default function FreePostGrid({ posts, onTap }: Props) {
       {posts.map((post) => {
         const label = post.expiresAt ? timeLeft(post.expiresAt) : null;
         const op = post.expiresAt ? opacity(post.expiresAt) : 1;
-        const nearExpiry = post.expiresAt
-          ? new Date(post.expiresAt).getTime() - Date.now() < 2 * 60 * 60 * 1000
-          : false;
+        const tColor = post.expiresAt ? timerColor(post.expiresAt) : "rgba(0,0,0,0.55)";
 
         return (
           <div
@@ -91,7 +96,7 @@ export default function FreePostGrid({ posts, onTap }: Props) {
                 position: "absolute",
                 bottom: "6px",
                 right: "6px",
-                background: nearExpiry ? "rgba(220,38,38,0.85)" : "rgba(0,0,0,0.55)",
+                background: tColor,
                 color: "#fff",
                 fontSize: "11px",
                 fontWeight: 700,
