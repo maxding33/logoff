@@ -19,6 +19,9 @@ import { getStreak } from "../../lib/streak";
 let cachedProfile: { name: string; displayName: string | null; bio: string; joinDate: string; avatarUrl: string | null } | null = null;
 let cachedPosts: Post[] = [];
 let cachedUserId: string | null = null;
+let cachedFriendsCount = 0;
+let cachedCurrentStreak = 0;
+let cachedBestStreak = 0;
 
 export default function ProfilePage() {
   const [posts, setPosts] = useState<Post[]>(cachedPosts);
@@ -34,9 +37,9 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
   const [loading, setLoading] = useState(cachedProfile === null);
-  const [friendsCount, setFriendsCount] = useState(0);
-  const [currentStreak, setCurrentStreak] = useState(0);
-  const [bestStreak, setBestStreak] = useState(0);
+  const [friendsCount, setFriendsCount] = useState(cachedFriendsCount);
+  const [currentStreak, setCurrentStreak] = useState(cachedCurrentStreak);
+  const [bestStreak, setBestStreak] = useState(cachedBestStreak);
   const [pendingRequests, setPendingRequests] = useState<{ id: string; username: string }[]>([]);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
@@ -80,6 +83,9 @@ export default function ProfilePage() {
         setPendingRequests(requests);
         setCurrentStreak(streak.current);
         setBestStreak(streak.best);
+        cachedFriendsCount = friends;
+        cachedCurrentStreak = streak.current;
+        cachedBestStreak = streak.best;
         cachedProfile = { name: profile.username, displayName: profile.displayName, bio: profile.bio, joinDate: profile.joinDate, avatarUrl: profile.avatarUrl };
         cachedPosts = userPosts;
       } catch (err) {
