@@ -44,6 +44,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(getCachedMessages(conversationId).length === 0);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const initialScrollDone = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastSeenInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -112,9 +113,14 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     };
   }, [conversationId, currentUserId]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom — instant on first render, smooth for new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!initialScrollDone.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "instant" });
+      initialScrollDone.current = true;
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   const handleSend = async () => {
