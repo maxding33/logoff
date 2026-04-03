@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 type UploadModalProps = {
   preview: string | null;
   caption: string;
@@ -19,7 +21,15 @@ export default function UploadModal({
   posting = false,
   error = null,
 }: UploadModalProps) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [preview]);
+
   if (!preview) return null;
+
+  const ready = imageLoaded && !posting;
 
   return (
     <div
@@ -75,39 +85,58 @@ export default function UploadModal({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={posting}
+          disabled={!ready}
           style={{
             border: "none",
             background: "#000",
             color: "#fff",
             fontSize: "13px",
             fontWeight: 700,
-            cursor: posting ? "not-allowed" : "pointer",
+            cursor: ready ? "pointer" : "default",
             padding: "8px 18px",
             borderRadius: "999px",
             minHeight: "36px",
             touchAction: "manipulation",
             WebkitTapHighlightColor: "transparent",
             letterSpacing: "0.03em",
-            opacity: posting ? 0.5 : 1,
+            opacity: ready ? 1 : 0.4,
+            transition: "opacity 0.2s ease",
           }}
         >
-          {posting ? "uploading..." : "share"}
+          {posting ? "uploading..." : !imageLoaded ? "loading..." : "share"}
         </button>
       </div>
 
       {/* Photo */}
-      <img
-        src={preview}
-        alt="Preview"
-        style={{
-          width: "100%",
-          aspectRatio: "1 / 1",
-          objectFit: "cover",
-          display: "block",
-          backgroundColor: "#f0f0f0",
-        }}
-      />
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", backgroundColor: "#f0f0f0" }}>
+        <img
+          src={preview}
+          alt="Preview"
+          onLoad={() => setImageLoaded(true)}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
+            opacity: imageLoaded ? 1 : 0,
+            transition: "opacity 0.2s ease",
+          }}
+        />
+        {!imageLoaded && (
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <div style={{
+              width: "24px", height: "24px", borderRadius: "50%",
+              border: "2px solid #e5e5e5",
+              borderTopColor: "#000",
+              animation: "uploadSpin 0.7s linear infinite",
+            }} />
+            <style>{`@keyframes uploadSpin { to { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+      </div>
 
       {/* Error */}
       {error && (
