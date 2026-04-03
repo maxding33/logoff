@@ -10,7 +10,9 @@ import { supabase } from "../../lib/supabase";
 import { signOut } from "../../lib/auth";
 import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
 import { fetchProfile, updateProfile, uploadAvatar, removeAvatar } from "../../lib/profile";
+import { fetchCalendarPosts, type CalendarPost } from "../../lib/posts";
 import { registerAndSubscribe } from "../../lib/notifications";
+import ProfileCalendar from "../ProfileCalendar";
 import { useChallengeTimer } from "../../lib/useChallengeTimer";
 import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../lib/follows";
 import { getStreak } from "../../lib/streak";
@@ -57,6 +59,9 @@ export default function ProfilePage() {
   const [showUpdates, setShowUpdates] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAvatarOptions, setShowAvatarOptions] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarPosts, setCalendarPosts] = useState<CalendarPost[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
   const challengeTimer = useChallengeTimer(currentUserId);
 
   // Load user + posts
@@ -204,6 +209,21 @@ export default function ProfilePage() {
     }
   };
 
+  const openCalendar = async () => {
+    setShowCalendar(true);
+    if (calendarPosts.length === 0 && currentUserId) {
+      setCalendarLoading(true);
+      try {
+        const p = await fetchCalendarPosts(currentUserId);
+        setCalendarPosts(p);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCalendarLoading(false);
+      }
+    }
+  };
+
   const resetComposer = () => {
     setPreviewImage(null);
     setCaption("");
@@ -269,6 +289,18 @@ export default function ProfilePage() {
         <p style={{ margin: 0, fontSize: challengeTimer ? "17px" : "15px", fontWeight: 700, letterSpacing: challengeTimer ? "0.04em" : "0.08em", color: challengeTimer ? "#4a7c59" : "#000", fontVariantNumeric: "tabular-nums", position: "absolute", left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap" }}>
           {challengeTimer ?? (name ? `@${name}` : "")}
         </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+        <button
+          onClick={openCalendar}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", minWidth: "36px", minHeight: "44px" }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </button>
         <button
           onClick={() => setShowUpdates(true)}
           style={{ background: "none", border: "none", cursor: "pointer", padding: 0, position: "relative", display: "flex", alignItems: "center" }}
@@ -290,6 +322,7 @@ export default function ProfilePage() {
             </span>
           )}
         </button>
+        </div>
       </header>
 
       {/* Profile info */}
@@ -634,6 +667,12 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
+      )}
+      {showCalendar && (
+        <ProfileCalendar
+          posts={calendarLoading ? [] : calendarPosts}
+          onClose={() => setShowCalendar(false)}
+        />
       )}
     </main>
   );

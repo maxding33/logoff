@@ -154,6 +154,31 @@ export async function uploadPhoto(file: File, userId: string): Promise<string> {
   return data.publicUrl;
 }
 
+export type CalendarPost = {
+  id: string;
+  imageUrl: string;
+  caption: string;
+  createdAt: string; // raw ISO string
+  isChallenge: boolean;
+};
+
+export async function fetchCalendarPosts(userId: string): Promise<CalendarPost[]> {
+  const client = getClient();
+  const { data, error } = await client
+    .from("posts")
+    .select("id, image_url, caption, created_at, is_challenge")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map((p: any) => ({
+    id: p.id,
+    imageUrl: p.image_url,
+    caption: p.caption,
+    createdAt: p.created_at,
+    isChallenge: p.is_challenge,
+  }));
+}
+
 export async function createPost(userId: string, imageUrl: string, caption: string, isChallenge: boolean): Promise<void> {
   const client = getClient();
   const expiresAt = isChallenge ? null : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
