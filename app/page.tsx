@@ -7,7 +7,7 @@ import FeedPost from "./FeedPost";
 import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
-import { fetchFeedPosts, fetchFreePosts, uploadPhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
+import { fetchFeedPosts, fetchFreePosts, uploadPhoto, preparePhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
 import FreePostGrid from "./FreePostGrid";
 import FriendsMap from "./FriendsMap";
 import LogReel from "./LogReel";
@@ -26,6 +26,8 @@ let cachedUsername = "You";
 function HomeInner() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileObjectRef = useRef<File | null>(null);
+  const preparedBlobRef = useRef<Blob | null>(null);
+  const [imageReady, setImageReady] = useState(false);
   const [posts, setPosts] = useState<Post[]>(cachedPosts);
   const [freePosts, setFreePosts] = useState<Post[]>(cachedFreePosts);
   const [activeTab, setActiveTab] = useState<"challenge" | "free">("challenge");
@@ -234,7 +236,9 @@ function HomeInner() {
     setPreviewImage(null);
     setCaption("");
     setPostError(null);
+    setImageReady(false);
     fileObjectRef.current = null;
+    preparedBlobRef.current = null;
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -242,9 +246,22 @@ function HomeInner() {
     const file = event.target.files?.[0];
     if (!file) return;
     fileObjectRef.current = file;
+    preparedBlobRef.current = null;
+    setImageReady(false);
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === "string") setPreviewImage(reader.result);
+      if (typeof reader.result === "string") {
+        const dataUrl = reader.result;
+        setPreviewImage(dataUrl);
+        // Eagerly compress so the file is fully in memory before upload
+        preparePhoto(dataUrl).then((blob) => {
+          preparedBlobRef.current = blob;
+          setImageReady(true);
+        }).catch(() => {
+          // Fallback — still allow upload attempt
+          setImageReady(true);
+        });
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -266,6 +283,7 @@ function HomeInner() {
 
   const handleSubmitPost = async () => {
     const file = fileObjectRef.current;
+    const blob = preparedBlobRef.current;
     if (!file || !currentUserId) return;
     setPosting(true);
     setPostError(null);
@@ -296,10 +314,10 @@ function HomeInner() {
       }
     }
 
-    // Step 2: upload photo
+    // Step 2: upload photo (use pre-prepared blob if available)
     let imageUrl: string;
     try {
-      imageUrl = await uploadPhoto(file, currentUserId);
+      imageUrl = await uploadPhoto(blob ?? file, currentUserId);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("Upload failed:", msg);
@@ -578,6 +596,7 @@ function HomeInner() {
         onSubmit={handleSubmitPost}
         posting={posting}
         error={postError}
+        imageReady={imageReady}
       />
 
       <BottomNav

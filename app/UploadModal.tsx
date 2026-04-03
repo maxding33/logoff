@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 type UploadModalProps = {
   preview: string | null;
   caption: string;
@@ -10,6 +8,7 @@ type UploadModalProps = {
   onSubmit: () => void;
   posting?: boolean;
   error?: string | null;
+  imageReady?: boolean;
 };
 
 export default function UploadModal({
@@ -20,16 +19,11 @@ export default function UploadModal({
   onSubmit,
   posting = false,
   error = null,
+  imageReady = false,
 }: UploadModalProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  useEffect(() => {
-    setImageLoaded(false);
-  }, [preview]);
-
   if (!preview) return null;
 
-  const ready = imageLoaded && !posting;
+  const ready = imageReady && !posting;
 
   return (
     <div
@@ -103,7 +97,7 @@ export default function UploadModal({
             transition: "opacity 0.2s ease",
           }}
         >
-          {posting ? "uploading..." : !imageLoaded ? "loading..." : "share"}
+          {posting ? "uploading..." : !imageReady ? "loading..." : "share"}
         </button>
       </div>
 
@@ -112,17 +106,16 @@ export default function UploadModal({
         <img
           src={preview}
           alt="Preview"
-          onLoad={() => setImageLoaded(true)}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
             display: "block",
-            opacity: imageLoaded ? 1 : 0,
+            opacity: imageReady ? 1 : 0,
             transition: "opacity 0.2s ease",
           }}
         />
-        {!imageLoaded && (
+        {!imageReady && (
           <div style={{
             position: "absolute", inset: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
