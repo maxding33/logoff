@@ -76,8 +76,9 @@ export default function OnboardingPage() {
 
   // Profile step
   const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const usernameInputRef = useRef<HTMLInputElement>(null);
+  const displayNameInputRef = useRef<HTMLInputElement>(null);
 
   // Notifications step
   const [prefs, setPrefs] = useState<NotificationPrefs>({ challenge: true, social: true, dms: true });
@@ -85,14 +86,17 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.replace("/auth"); return; }
       setUserId(user.id);
+      // Load existing username to show in avatar
+      const { data } = await supabase.from("users").select("username").eq("id", user.id).single();
+      if (data?.username) setUsername(data.username as string);
     });
   }, [router]);
 
   useEffect(() => {
-    if (step === "profile") usernameInputRef.current?.focus();
+    if (step === "profile") displayNameInputRef.current?.focus();
   }, [step]);
 
   const goNext = () => {
@@ -102,10 +106,10 @@ export default function OnboardingPage() {
 
   // Step 1: save profile
   const saveProfile = async () => {
-    if (!userId || !username.trim()) return;
+    if (!userId) return;
     setSaving(true);
     try {
-      await updateProfile(userId, { username: username.trim(), bio: bio.trim() });
+      await updateProfile(userId, { display_name: displayName.trim() || null, bio: bio.trim() });
       goNext();
     } finally {
       setSaving(false);
@@ -194,26 +198,27 @@ export default function OnboardingPage() {
             <div style={{ flex: 1 }}>
               <div style={{ marginBottom: "32px", display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <Avatar name={username || "?"} size={72} />
+                {username && <p style={{ margin: "8px 0 0", fontSize: "13px", color: "#aaa" }}>@{username}</p>}
               </div>
               <h1 style={{ margin: "0 0 6px", fontSize: "22px", fontWeight: 800, letterSpacing: "-0.01em" }}>
                 Set up your profile
               </h1>
               <p style={{ margin: "0 0 28px", fontSize: "14px", color: "#888", lineHeight: 1.5 }}>
-                What should your friends call you?
+                What&apos;s your name?
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", color: "#999", textTransform: "uppercase", marginBottom: "6px" }}>
-                    Username
+                    Name <span style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>(optional)</span>
                   </label>
                   <input
-                    ref={usernameInputRef}
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter" && username.trim()) saveProfile(); }}
-                    placeholder="your name"
-                    maxLength={30}
+                    ref={displayNameInputRef}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveProfile(); }}
+                    placeholder="your real name"
+                    maxLength={50}
                     style={{
                       width: "100%",
                       fontSize: "17px",
@@ -255,18 +260,17 @@ export default function OnboardingPage() {
 
             <button
               onClick={saveProfile}
-              disabled={!username.trim() || saving}
+              disabled={saving}
               style={{
                 width: "100%",
                 padding: "16px",
-                background: username.trim() ? "#000" : "#e5e5e5",
-                color: username.trim() ? "#fff" : "#aaa",
+                background: "#000",
+                color: "#fff",
                 border: "none",
                 borderRadius: "14px",
                 fontSize: "15px",
                 fontWeight: 700,
-                cursor: username.trim() ? "pointer" : "default",
-                transition: "background 0.2s ease",
+                cursor: "pointer",
                 letterSpacing: "0.04em",
               }}
             >
