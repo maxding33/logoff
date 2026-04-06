@@ -11,13 +11,20 @@ export type UserProfile = {
   bio: string;
   joinDate: string;
   avatarUrl: string | null;
+  onboardingCompleted: boolean;
+};
+
+export type NotificationPrefs = {
+  challenge: boolean;
+  social: boolean;
+  dms: boolean;
 };
 
 export async function fetchProfile(userId: string): Promise<UserProfile> {
   const client = getClient();
   const { data, error } = await client
     .from("users")
-    .select("username, display_name, bio, created_at, avatar_url")
+    .select("username, display_name, bio, created_at, avatar_url, onboarding_completed")
     .eq("id", userId)
     .single();
 
@@ -33,6 +40,7 @@ export async function fetchProfile(userId: string): Promise<UserProfile> {
     bio: (data.bio as string) ?? "",
     joinDate,
     avatarUrl: (data.avatar_url as string | null) ?? null,
+    onboardingCompleted: (data.onboarding_completed as boolean) ?? false,
   };
 }
 
@@ -86,4 +94,27 @@ export async function removeAvatar(userId: string): Promise<void> {
   ]);
   const { error } = await client.from("users").update({ avatar_url: null }).eq("id", userId);
   if (error) throw error;
+}
+
+export async function updateNotificationPrefs(userId: string, prefs: NotificationPrefs): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from("users").update({ notification_prefs: prefs }).eq("id", userId);
+  if (error) throw error;
+}
+
+export async function completeOnboarding(userId: string): Promise<void> {
+  const client = getClient();
+  const { error } = await client.from("users").update({ onboarding_completed: true }).eq("id", userId);
+  if (error) throw error;
+}
+
+export async function checkOnboardingCompleted(userId: string): Promise<boolean> {
+  const client = getClient();
+  const { data, error } = await client
+    .from("users")
+    .select("onboarding_completed")
+    .eq("id", userId)
+    .single();
+  if (error) return true; // default to true so we don't trap users in onboarding on error
+  return (data.onboarding_completed as boolean) ?? false;
 }

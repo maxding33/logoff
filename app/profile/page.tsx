@@ -9,7 +9,7 @@ import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { signOut } from "../../lib/auth";
 import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
-import { fetchProfile, updateProfile, uploadAvatar, removeAvatar } from "../../lib/profile";
+import { fetchProfile, updateProfile, uploadAvatar, removeAvatar, updateNotificationPrefs, type NotificationPrefs } from "../../lib/profile";
 import { fetchCalendarPosts, type CalendarPost } from "../../lib/posts";
 import { registerAndSubscribe } from "../../lib/notifications";
 import ProfileCalendar from "../ProfileCalendar";
@@ -48,6 +48,8 @@ export default function ProfilePage() {
   const [testPushStatus, setTestPushStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [endChallengeStatus, setEndChallengeStatus] = useState<"idle" | "ending" | "done" | "error">("idle");
   const [notifStatus, setNotifStatus] = useState<"unknown" | "granted" | "denied" | "enabling">("unknown");
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>({ challenge: true, social: true, dms: true });
+  const [showNotifSettings, setShowNotifSettings] = useState(false);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const bioInputRef = useRef<HTMLInputElement | null>(null);
   const displayNameInputRef = useRef<HTMLInputElement | null>(null);
@@ -84,6 +86,11 @@ export default function ProfilePage() {
         setBio(profile.bio);
         setJoinDate(profile.joinDate);
         setAvatarUrl(profile.avatarUrl);
+        // Load notification prefs from DB if available
+        if (supabase) {
+          const { data: prefsData } = await supabase.from("users").select("notification_prefs").eq("id", user.id).single();
+          if (prefsData?.notification_prefs) setNotifPrefs(prefsData.notification_prefs as NotificationPrefs);
+        }
         setPosts(userPosts);
         setFriendsCount(friends);
         setPendingRequests(requests);
@@ -221,6 +228,14 @@ export default function ProfilePage() {
       } finally {
         setCalendarLoading(false);
       }
+    }
+  };
+
+  const saveNotifPref = async (key: keyof NotificationPrefs, value: boolean) => {
+    const updated = { ...notifPrefs, [key]: value };
+    setNotifPrefs(updated);
+    if (currentUserId) {
+      try { await updateNotificationPrefs(currentUserId, updated); } catch {}
     }
   };
 
@@ -510,6 +525,27 @@ export default function ProfilePage() {
                 >
                   {testPushStatus === "sending" ? "sending..." : testPushStatus === "sent" ? "✓ check your phone" : testPushStatus === "error" ? "⚠ not found" : "test notification"}
                 </button>
+              )}
+              {/* Notification prefs toggles */}
+              {notifStatus === "granted" && (
+                <div style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "0" }}>
+                  {([
+                    { key: "challenge" as const, label: "Daily challenge" },
+                    { key: "social" as const, label: "Likes & comments" },
+                    { key: "dms" as const, label: "Direct messages" },
+                  ] as const).map(({ key, label }, i, arr) => (
+                    <div key={key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: i < arr.length - 1 ? "1px solid #f5f5f5" : "none" }}>
+                      <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "#000" }}>{label}</p>
+                      <button
+                        type="button"
+                        onClick={() => saveNotifPref(key, !notifPrefs[key])}
+                        style={{ width: "40px", height: "24px", borderRadius: "12px", background: notifPrefs[key] ? "#000" : "#ccc", border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s ease", flexShrink: 0 }}
+                      >
+                        <div style={{ position: "absolute", top: "2px", left: notifPrefs[key] ? "18px" : "2px", width: "20px", height: "20px", borderRadius: "50%", background: "#fff", transition: "left 0.2s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
