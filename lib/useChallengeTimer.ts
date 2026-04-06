@@ -4,10 +4,19 @@ let cachedEndsAt: Date | null = null;
 let cachedFailed: boolean = false;
 let cachedFailedDate: string | null = null;
 let fetchedAt: number | null = null;
+let cachedUserId: string | null | undefined = undefined;
 const listeners = new Set<(endsAt: Date | null) => void>();
 const failedListeners = new Set<(failed: boolean) => void>();
 
 async function fetchChallengeStatus(userId?: string | null): Promise<{ endsAt: Date | null; failed: boolean; failedDate: string | null }> {
+  // Reset cache when userId changes (e.g. new account, sign-out/sign-in)
+  if (userId !== cachedUserId) {
+    cachedEndsAt = null;
+    cachedFailed = false;
+    cachedFailedDate = null;
+    fetchedAt = null;
+    cachedUserId = userId;
+  }
   if (!userId && cachedEndsAt && fetchedAt && Date.now() - fetchedAt < 60_000) {
     return { endsAt: cachedEndsAt, failed: cachedFailed, failedDate: cachedFailedDate };
   }
@@ -102,6 +111,9 @@ export function useChallengeFailed(userId?: string | null): { failed: boolean; f
   }, []);
 
   useEffect(() => {
+    // Reset local state optimistically before fetch when userId changes
+    setFailed(false);
+    setFailedDate(null);
     fetchChallengeStatus(userId).then(({ failed, failedDate }) => {
       setFailed(failed);
       setFailedDate(failedDate);
