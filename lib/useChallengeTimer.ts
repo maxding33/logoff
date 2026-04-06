@@ -101,34 +101,26 @@ export function useChallengeTimer(userId?: string | null): string | null {
 }
 
 export function useChallengeFailed(userId?: string | null): { failed: boolean; failedDate: string | null } {
-  const [failed, setFailed] = useState<boolean>(false);
-  const [failedDate, setFailedDate] = useState<string | null>(null);
-  // Only true after we've gotten a confirmed response with a real userId
-  const [confirmed, setConfirmed] = useState<boolean>(false);
+  // null = not yet confirmed; false/true = confirmed result
+  const [result, setResult] = useState<{ failed: boolean; failedDate: string | null } | null>(null);
 
   useEffect(() => {
-    failedListeners.add(setFailed);
-    return () => { failedListeners.delete(setFailed); };
-  }, []);
-
-  useEffect(() => {
-    // Don't show anything until we have a real userId
     if (!userId) {
-      setFailed(false);
-      setFailedDate(null);
-      setConfirmed(false);
+      setResult(null);
       return;
     }
-    setConfirmed(false);
+    // Reset to unconfirmed while we fetch
+    setResult(null);
+    let cancelled = false;
     fetchChallengeStatus(userId).then(({ failed, failedDate }) => {
-      setFailed(failed);
-      setFailedDate(failedDate);
-      setConfirmed(true);
+      if (!cancelled) setResult({ failed, failedDate });
     });
+    return () => { cancelled = true; };
   }, [userId]);
 
-  // Only expose failed state once confirmed to prevent any flash from intermediate states
-  return { failed: confirmed && failed, failedDate: confirmed ? failedDate : null };
+  // Never expose failed=true until we have a confirmed result with a real userId
+  if (!result || !userId) return { failed: false, failedDate: null };
+  return result;
 }
 
 // Returns true only if the challenge window is currently active (uses module-level cache)
