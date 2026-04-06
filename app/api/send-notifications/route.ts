@@ -81,18 +81,18 @@ export async function GET(req: NextRequest) {
     .select("id, notification_prefs")
     .in("id", subUserIds);
 
-  const challengeDisabled = new Set(
+  const challengeDisabledIds = new Set(
     (userPrefs ?? [])
       .filter((u) => {
         const prefs = u.notification_prefs as { challenge?: boolean } | null;
-        return prefs !== null && prefs !== undefined && prefs.challenge === false;
+        return prefs != null && prefs.challenge === false;
       })
       .map((u) => u.id)
   );
 
   let sent = 0;
   for (const sub of subs ?? []) {
-    if (challengeDisabled.has(sub.user_id)) continue;
+    if (challengeDisabledIds.has(sub.user_id)) continue;
     try {
       await webpush.sendNotification(
         sub.subscription as webpush.PushSubscription,
