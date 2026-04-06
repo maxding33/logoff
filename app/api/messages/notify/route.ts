@@ -30,11 +30,29 @@ export async function POST(req: NextRequest) {
 
   const memberIds = members.map((m) => m.user_id);
 
+  // Get notification prefs and filter out users who turned off DMs
+  const { data: userPrefs } = await supabase
+    .from("users")
+    .select("id, notification_prefs")
+    .in("id", memberIds);
+
+  const dmEnabledIds = new Set(
+    (userPrefs ?? [])
+      .filter((u) => {
+        const prefs = u.notification_prefs as { dms?: boolean } | null;
+        return prefs === null || prefs === undefined || prefs.dms !== false;
+      })
+      .map((u) => u.id)
+  );
+
+  const filteredMemberIds = memberIds.filter((id) => dmEnabledIds.has(id));
+  if (!filteredMemberIds.length) return NextResponse.json({ ok: true });
+
   // Get their push subscriptions
   const { data: subscriptions } = await supabase
     .from("push_subscriptions")
     .select("user_id, subscription")
-    .in("user_id", memberIds);
+    .in("user_id", filteredMemberIds);
 
   if (!subscriptions?.length) return NextResponse.json({ ok: true });
 
