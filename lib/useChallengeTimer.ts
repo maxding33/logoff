@@ -102,8 +102,9 @@ export function useChallengeTimer(userId?: string | null): string | null {
 }
 
 export function useChallengeFailed(userId?: string | null): { failed: boolean; failedDate: string | null } {
-  const [failed, setFailed] = useState<boolean>(cachedFailed);
-  const [failedDate, setFailedDate] = useState<string | null>(cachedFailedDate);
+  // Always start false — never assume failed from cache to avoid overlay flash on mount
+  const [failed, setFailed] = useState<boolean>(false);
+  const [failedDate, setFailedDate] = useState<string | null>(null);
 
   useEffect(() => {
     failedListeners.add(setFailed);
@@ -111,9 +112,6 @@ export function useChallengeFailed(userId?: string | null): { failed: boolean; f
   }, []);
 
   useEffect(() => {
-    // Reset local state optimistically before fetch when userId changes
-    setFailed(false);
-    setFailedDate(null);
     fetchChallengeStatus(userId).then(({ failed, failedDate }) => {
       setFailed(failed);
       setFailedDate(failedDate);
