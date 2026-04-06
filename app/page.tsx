@@ -56,21 +56,14 @@ function HomeInner() {
 
   // Persist dismissed state in localStorage keyed by failed date so it survives app close
   const failKey = testFail ? "logoff_fail_dismissed_test" : failedDate ? `logoff_fail_dismissed_${failedDate}` : null;
-  const [failDismissed, setFailDismissedState] = useState(() => {
-    if (typeof window === "undefined" || !failKey) return false;
-    return localStorage.getItem(failKey) === "1";
-  });
+  // Derive synchronously — no state/effect gap that causes a one-frame flash
+  const failDismissed = typeof window !== "undefined" && failKey ? localStorage.getItem(failKey) === "1" : true;
+  const [, forceUpdate] = useState(0);
 
   const dismissFail = () => {
     if (failKey) localStorage.setItem(failKey, "1");
-    setFailDismissedState(true);
+    forceUpdate((n) => n + 1);
   };
-
-  // When failedDate arrives from API, re-check localStorage
-  useEffect(() => {
-    if (!failKey) { setFailDismissedState(false); return; }
-    setFailDismissedState(localStorage.getItem(failKey) === "1");
-  }, [failKey]);
 
   // Detect challenge window opening — auto-switch to map, show toast + tab flash
   useEffect(() => {
@@ -506,7 +499,7 @@ function HomeInner() {
         <span style={{ position: "absolute", right: "16px", display: "flex", alignItems: "center", gap: "10px" }}>
           <button
             type="button"
-            onClick={() => { setTestFail(true); setFailDismissedState(false); }}
+            onClick={() => { setTestFail(true); forceUpdate((n) => n + 1); }}
             style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
           >fail</button>
           <button
