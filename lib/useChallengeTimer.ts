@@ -12,12 +12,11 @@ async function fetchChallengeStatus(userId?: string | null): Promise<{ endsAt: D
   // Reset cache when userId changes (e.g. new account, sign-out/sign-in)
   if (userId !== cachedUserId) {
     cachedEndsAt = null;
-    cachedFailed = false;
-    cachedFailedDate = null;
     fetchedAt = null;
     cachedUserId = userId;
+    // Don't reset cachedFailed here — keep it false until API confirms (hooks always init to false)
   }
-  if (!userId && cachedEndsAt && fetchedAt && Date.now() - fetchedAt < 60_000) {
+  if (fetchedAt && Date.now() - fetchedAt < 60_000) {
     return { endsAt: cachedEndsAt, failed: cachedFailed, failedDate: cachedFailedDate };
   }
   const url = userId ? `/api/challenge-status?userId=${userId}` : "/api/challenge-status";
