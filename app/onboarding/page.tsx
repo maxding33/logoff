@@ -90,7 +90,7 @@ export default function OnboardingPage() {
       if (!user) { router.replace("/auth"); return; }
       setUserId(user.id);
       // Load existing username to show in avatar
-      const { data } = await supabase.from("users").select("username").eq("id", user.id).single();
+      const { data } = await supabase!.from("users").select("username").eq("id", user.id).single();
       if (data?.username) setUsername(data.username as string);
     });
   }, [router]);
