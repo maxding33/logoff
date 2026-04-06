@@ -101,9 +101,10 @@ export function useChallengeTimer(userId?: string | null): string | null {
 }
 
 export function useChallengeFailed(userId?: string | null): { failed: boolean; failedDate: string | null } {
-  // Always start false — never assume failed from cache to avoid overlay flash on mount
   const [failed, setFailed] = useState<boolean>(false);
   const [failedDate, setFailedDate] = useState<string | null>(null);
+  // Only true after we've gotten a confirmed response with a real userId
+  const [confirmed, setConfirmed] = useState<boolean>(false);
 
   useEffect(() => {
     failedListeners.add(setFailed);
@@ -111,13 +112,23 @@ export function useChallengeFailed(userId?: string | null): { failed: boolean; f
   }, []);
 
   useEffect(() => {
+    // Don't show anything until we have a real userId
+    if (!userId) {
+      setFailed(false);
+      setFailedDate(null);
+      setConfirmed(false);
+      return;
+    }
+    setConfirmed(false);
     fetchChallengeStatus(userId).then(({ failed, failedDate }) => {
       setFailed(failed);
       setFailedDate(failedDate);
+      setConfirmed(true);
     });
   }, [userId]);
 
-  return { failed, failedDate };
+  // Only expose failed state once confirmed to prevent any flash from intermediate states
+  return { failed: confirmed && failed, failedDate: confirmed ? failedDate : null };
 }
 
 // Returns true only if the challenge window is currently active (uses module-level cache)
