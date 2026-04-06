@@ -52,7 +52,17 @@ function HomeInner() {
   const { failed: challengeFailedReal, failedDate } = useChallengeFailed(currentUserId);
   const [testFail, setTestFail] = useState(false);
   const [testEod, setTestEod] = useState(false);
-  const challengeFailed = challengeFailedReal || testFail;
+
+  // Debounce the fail overlay — only show if failed stays true for 100ms
+  // This eliminates any millisecond-level flash from intermediate states during startup
+  const [stableChallengeFailed, setStableChallengeFailed] = useState(false);
+  useEffect(() => {
+    if (!challengeFailedReal) { setStableChallengeFailed(false); return; }
+    const t = setTimeout(() => setStableChallengeFailed(true), 100);
+    return () => clearTimeout(t);
+  }, [challengeFailedReal]);
+
+  const challengeFailed = stableChallengeFailed || testFail;
 
   // Persist dismissed state in localStorage keyed by failed date so it survives app close
   const failKey = testFail ? "logoff_fail_dismissed_test" : failedDate ? `logoff_fail_dismissed_${failedDate}` : null;
