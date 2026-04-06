@@ -601,8 +601,8 @@ function HomeInner() {
 
       {showGamePicker && <GamePicker onClose={() => setShowGamePicker(false)} />}
 
-      {/* Challenge fail overlay */}
-      {challengeFailed && !failDismissed && (
+      {/* Challenge fail overlay — only show after initial load to avoid flash during auth/data settling */}
+      {!loading && challengeFailed && !failDismissed && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 1000,
           background: "rgba(0,0,0,0.88)",
