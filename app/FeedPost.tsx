@@ -284,20 +284,24 @@ export default function FeedPost({
                 maxWidth: "140px",
               }}
             >
-              <div style={{
-                width: "20px",
-                height: "20px",
-                borderRadius: "50%",
-                backgroundColor: getAvatarColor(comment.user),
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}>
-                <span style={{ color: "#fff", fontSize: "8px", fontWeight: 700, lineHeight: 1 }}>
-                  {getInitials(comment.user)}
-                </span>
-              </div>
+              {comment.avatarUrl ? (
+                <img src={comment.avatarUrl} alt={comment.user} style={{ width: "20px", height: "20px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+              ) : (
+                <div style={{
+                  width: "20px",
+                  height: "20px",
+                  borderRadius: "50%",
+                  backgroundColor: getAvatarColor(comment.user),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <span style={{ color: "#fff", fontSize: "8px", fontWeight: 700, lineHeight: 1 }}>
+                    {getInitials(comment.user)}
+                  </span>
+                </div>
+              )}
               <span style={{ fontSize: "11px", fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>
                 {comment.text}
               </span>
