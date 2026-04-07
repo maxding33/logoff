@@ -8,7 +8,8 @@ import UploadModal from "../UploadModal";
 import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { signOut } from "../../lib/auth";
-import { fetchPosts, uploadPhoto, createPost } from "../../lib/posts";
+import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deleteComment, deletePost } from "../../lib/posts";
+import LogReel from "../LogReel";
 import { fetchProfile, updateProfile, uploadAvatar, removeAvatar, updateNotificationPrefs, type NotificationPrefs } from "../../lib/profile";
 import { fetchCalendarPosts, type CalendarPost } from "../../lib/posts";
 import { registerAndSubscribe } from "../../lib/notifications";
@@ -57,7 +58,7 @@ export default function ProfilePage() {
   const fileObjectRef = useRef<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
-  const [expandedPost, setExpandedPost] = useState<Post | null>(null);
+  const [reelIndex, setReelIndex] = useState<number | null>(null);
   const [showUpdates, setShowUpdates] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAvatarOptions, setShowAvatarOptions] = useState(false);
@@ -237,6 +238,29 @@ export default function ProfilePage() {
     if (currentUserId) {
       try { await updateNotificationPrefs(currentUserId, updated); } catch {}
     }
+  };
+
+  const handleToggleLike = async (postId: string) => {
+    if (!currentUserId) return;
+    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p));
+    const post = posts.find((p) => p.id === postId);
+    if (post) await toggleLike(postId, currentUserId, post.liked).catch(() => {});
+  };
+
+  const handleAddComment = async (postId: string, text: string) => {
+    if (!currentUserId || !name) return;
+    const comment = await addComment(postId, currentUserId, text, name);
+    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, comments: [...p.comments, comment] } : p));
+  };
+
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    await deleteComment(commentId).catch(() => {});
+    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, comments: p.comments.filter((c) => c.id !== commentId) } : p));
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    await deletePost(postId).catch(() => {});
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
   };
 
   const resetComposer = () => {
@@ -459,12 +483,12 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "2px" }}>
-          {posts.map((post) => (
+          {posts.map((post, i) => (
             <img
               key={post.id}
               src={post.image}
               alt={post.caption}
-              onClick={() => setExpandedPost(post)}
+              onClick={() => setReelIndex(i)}
               style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block", cursor: "pointer" }}
             />
           ))}
@@ -642,28 +666,19 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Post lightbox */}
-      {expandedPost && (
-        <div
-          onClick={() => setExpandedPost(null)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 1000,
-            background: "rgba(0,0,0,0.85)",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            gap: "12px", padding: "24px",
-          }}
-        >
-          <img
-            src={expandedPost.image}
-            alt={expandedPost.caption}
-            style={{ width: "100%", maxWidth: "480px", borderRadius: "4px", objectFit: "contain", maxHeight: "70vh" }}
-          />
-          {expandedPost.caption && (
-            <p style={{ margin: 0, color: "#fff", fontSize: "14px", textAlign: "center", opacity: 0.85 }}>
-              {expandedPost.caption}
-            </p>
-          )}
-        </div>
+      {/* Post viewer */}
+      {reelIndex !== null && currentUserId && (
+        <LogReel
+          posts={posts}
+          startIndex={reelIndex}
+          currentUserId={currentUserId}
+          currentUsername={name}
+          onClose={() => setReelIndex(null)}
+          onToggleLike={handleToggleLike}
+          onAddComment={handleAddComment}
+          onDeleteComment={handleDeleteComment}
+          onDeletePost={(postId) => { handleDeletePost(postId); setReelIndex(null); }}
+        />
       )}
       {/* Avatar options sheet */}
       {showAvatarOptions && (
