@@ -37,6 +37,7 @@ function HomeInner() {
   const [streak, setStreak] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(cachedUserId);
   const [currentUsername, setCurrentUsername] = useState<string>(cachedUsername);
+  const [currentUserAvatarUrl, setCurrentUserAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(cachedPosts.length === 0);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
@@ -130,11 +131,12 @@ function HomeInner() {
         currentUserIdRef.current = user.id;
         supabase!
           .from("users")
-          .select("username")
+          .select("username, avatar_url")
           .eq("id", user.id)
           .single()
           .then(({ data }) => {
             if (data?.username) { setCurrentUsername(data.username); cachedUsername = data.username; }
+            if (data?.avatar_url) setCurrentUserAvatarUrl(data.avatar_url as string);
           });
       }
     });
@@ -380,7 +382,7 @@ function HomeInner() {
   const handleAddComment = async (postId: string, text: string) => {
     if (!currentUserId) return;
     try {
-      const newComment = await addComment(postId, currentUserId, text, currentUsername);
+      const newComment = await addComment(postId, currentUserId, text, currentUsername, currentUserAvatarUrl);
       const applyComment = (cur: Post[]) =>
         cur.map((p) => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p);
       setPosts(applyComment);

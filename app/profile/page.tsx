@@ -249,7 +249,7 @@ export default function ProfilePage() {
 
   const handleAddComment = async (postId: string, text: string) => {
     if (!currentUserId || !name) return;
-    const comment = await addComment(postId, currentUserId, text, name);
+    const comment = await addComment(postId, currentUserId, text, name, avatarUrl);
     setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, comments: [...p.comments, comment] } : p));
   };
 

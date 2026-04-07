@@ -2,6 +2,7 @@ export type Comment = {
   id: string;
   user: string;
   userId: string;
+  avatarUrl?: string | null;
   text: string;
 };
 

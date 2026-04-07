@@ -26,7 +26,7 @@ const POST_SELECT = `
   expires_at,
   users(username, avatar_url),
   likes(id, user_id),
-  comments(id, text, user_id, users(username))
+  comments(id, text, user_id, users(username, avatar_url))
 `;
 
 type RawPost = {
@@ -39,7 +39,7 @@ type RawPost = {
   expires_at: string | null;
   users: { username: string; avatar_url: string | null } | null;
   likes: { user_id: string }[];
-  comments: { id: string; text: string; user_id: string; users: { username: string } | null }[];
+  comments: { id: string; text: string; user_id: string; users: { username: string; avatar_url: string | null } | null }[];
 };
 
 function mapPost(post: RawPost, currentUserId: string): Post {
@@ -57,6 +57,7 @@ function mapPost(post: RawPost, currentUserId: string): Post {
       id: c.id,
       user: c.users?.username ?? "Unknown",
       userId: c.user_id,
+      avatarUrl: c.users?.avatar_url ?? null,
       text: c.text,
     })),
     isChallenge: post.is_challenge,
@@ -202,7 +203,7 @@ export async function toggleLike(postId: string, userId: string, currentlyLiked:
   }
 }
 
-export async function addComment(postId: string, userId: string, text: string, username: string): Promise<Comment> {
+export async function addComment(postId: string, userId: string, text: string, username: string, avatarUrl?: string | null): Promise<Comment> {
   const client = getClient();
   const { data, error } = await client
     .from("comments")
@@ -210,7 +211,7 @@ export async function addComment(postId: string, userId: string, text: string, u
     .select("id, text")
     .single();
   if (error) throw error;
-  return { id: data.id as string, user: username, userId, text: data.text as string };
+  return { id: data.id as string, user: username, userId, avatarUrl: avatarUrl ?? null, text: data.text as string };
 }
 
 export async function deleteComment(commentId: string): Promise<void> {

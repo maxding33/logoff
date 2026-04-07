@@ -282,8 +282,17 @@ export default function LogReel({
                 <p style={{ color: "#bbb", fontSize: "13px", textAlign: "center", padding: "24px 0" }}>no comments yet</p>
               ) : (
                 post.comments.map((c) => (
-                  <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
-                    <p style={{ margin: 0, fontSize: "13px" }}>
+                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
+                    <div style={{ flexShrink: 0 }}>
+                      {c.avatarUrl ? (
+                        <img src={c.avatarUrl} alt={c.user} style={{ width: "30px", height: "30px", borderRadius: "50%", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: getAvatarColor(c.user), display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, lineHeight: 1 }}>{getInitials(c.user)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p style={{ margin: 0, fontSize: "13px", flex: 1 }}>
                       <span style={{ fontWeight: 700, color: "#000" }}>{c.user}</span>{" "}
                       <span style={{ color: "#444" }}>{c.text}</span>
                     </p>
