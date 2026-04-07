@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "../Avatar";
 import { supabase } from "../../lib/supabase";
@@ -9,28 +9,37 @@ type UserResult = { id: string; username: string; display_name: string | null; a
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [allUsers, setAllUsers] = useState<UserResult[]>([]);
+  const [results, setResults] = useState<UserResult[]>([]);
+  const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setCurrentUserId(user.id);
     });
-    supabase.from("users").select("id, username, display_name, avatar_url").then(({ data }) => {
-      if (data) setAllUsers(data);
-    });
   }, []);
 
-  const results = query.trim()
-    ? allUsers.filter((u) => {
-        const q = query.toLowerCase();
-        return u.id !== currentUserId && (
-          u.username.toLowerCase().includes(q) ||
-          (u.display_name ?? "").toLowerCase().includes(q)
-        );
-      })
-    : allUsers.filter((u) => u.id !== currentUserId);
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const trimmed = query.trim();
+    if (!trimmed) { setResults([]); setLoading(false); return; }
+
+    setLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      if (!supabase) return;
+      const { data } = await supabase
+        .from("users")
+        .select("id, username, display_name, avatar_url")
+        .or(`username.ilike.%${trimmed}%,display_name.ilike.%${trimmed}%`)
+        .limit(30);
+      setResults((data ?? []).filter((u) => u.id !== currentUserId));
+      setLoading(false);
+    }, 200);
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, currentUserId]);
 
   return (
     <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
@@ -78,8 +87,16 @@ export default function SearchPage() {
       </header>
 
       <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
-        {results.length === 0 ? (
-          <li style={{ padding: "40px 16px", textAlign: "center", color: "#999", fontSize: "14px" }}>
+        {!query.trim() ? (
+          <li style={{ padding: "48px 16px", textAlign: "center", color: "#bbb", fontSize: "14px" }}>
+            type a name to find people
+          </li>
+        ) : loading ? (
+          <li style={{ padding: "48px 16px", textAlign: "center", color: "#bbb", fontSize: "14px" }}>
+            searching...
+          </li>
+        ) : results.length === 0 ? (
+          <li style={{ padding: "48px 16px", textAlign: "center", color: "#bbb", fontSize: "14px" }}>
             no users found
           </li>
         ) : (
