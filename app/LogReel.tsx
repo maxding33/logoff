@@ -65,6 +65,9 @@ export default function LogReel({
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const dragging = useRef(false);
+  const directionLocked = useRef(false);
+  const horizDragging = useRef(false);
+  const reelRef = useRef<HTMLDivElement>(null);
   const lastTapRef = useRef(0);
   const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
 
@@ -95,25 +98,61 @@ export default function LogReel({
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     dragging.current = true;
+    directionLocked.current = false;
+    horizDragging.current = false;
     setSnapping(false);
+    if (reelRef.current) reelRef.current.style.transition = "none";
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!dragging.current || showComments) return;
-    const delta = e.touches[0].clientY - touchStartY.current;
-    // Resist at edges
-    const atStart = index === 0 && delta > 0;
-    const atEnd = index === posts.length - 1 && delta < 0;
-    setDragOffset(atStart || atEnd ? delta * 0.15 : delta);
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+
+    // Lock direction after 6px
+    if (!directionLocked.current && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      directionLocked.current = true;
+      horizDragging.current = dx > 0 && Math.abs(dx) > Math.abs(dy);
+    }
+
+    if (horizDragging.current) {
+      const offset = Math.max(0, dx);
+      // Rubber-band past halfway
+      const w = window.innerWidth;
+      const clamped = offset > w * 0.5 ? w * 0.5 + (offset - w * 0.5) * 0.2 : offset;
+      if (reelRef.current) reelRef.current.style.transform = `translateX(${clamped}px)`;
+    } else {
+      // Vertical post navigation
+      const atStart = index === 0 && dy > 0;
+      const atEnd = index === posts.length - 1 && dy < 0;
+      setDragOffset(atStart || atEnd ? dy * 0.15 : dy);
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!dragging.current || showComments) return;
     dragging.current = false;
+
+    if (horizDragging.current) {
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      if (dx > window.innerWidth * 0.3) {
+        // Animate off-screen then close
+        if (reelRef.current) {
+          reelRef.current.style.transition = "transform 0.26s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+          reelRef.current.style.transform = `translateX(${window.innerWidth}px)`;
+        }
+        setTimeout(onClose, 260);
+      } else {
+        // Spring back
+        if (reelRef.current) {
+          reelRef.current.style.transition = "transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+          reelRef.current.style.transform = "translateX(0)";
+        }
+      }
+      return;
+    }
+
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
-    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    // Right swipe to close (must be more horizontal than vertical)
-    if (deltaX > 60 && Math.abs(deltaX) > Math.abs(deltaY)) { onClose(); return; }
     if (deltaY < -60) snapTo(index + 1);
     else if (deltaY > 60) snapTo(index - 1);
     else snapTo(index);
@@ -140,6 +179,7 @@ export default function LogReel({
 
   return (
     <div
+      ref={reelRef}
       style={{ position: "fixed", inset: 0, zIndex: 600, background: "#000", overflow: "hidden", touchAction: "none" }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
