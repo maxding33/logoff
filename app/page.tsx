@@ -121,7 +121,16 @@ function HomeInner() {
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
   const pulling = useRef(false);
+  const dragDirection = useRef<"horiz" | "vert" | null>(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
   const [pullDistance, setPullDistance] = useState(0);
+
+  // Keep slider in sync with activeTab (e.g. when tab buttons are tapped)
+  useEffect(() => {
+    if (!sliderRef.current) return;
+    sliderRef.current.style.transition = "transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+    sliderRef.current.style.transform = `translateX(${activeTab === "challenge" ? 0 : -window.innerWidth}px)`;
+  }, [activeTab]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -208,27 +217,53 @@ function HomeInner() {
     return () => { supabase!.removeChannel(channel); };
   }, [currentUserId]);
 
-  // Pull-to-refresh handlers
+  // Pull-to-refresh + fluid tab-swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
+    dragDirection.current = null;
     if (window.scrollY === 0) pulling.current = true;
+    if (sliderRef.current) sliderRef.current.style.transition = "none";
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!pulling.current) return;
-    const dist = Math.max(0, Math.min(80, e.touches[0].clientY - touchStartY.current));
-    setPullDistance(dist);
+    const dx = e.touches[0].clientX - touchStartX.current;
+    const dy = e.touches[0].clientY - touchStartY.current;
+
+    // Lock drag direction after 8px
+    if (dragDirection.current === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      dragDirection.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert";
+    }
+
+    if (dragDirection.current === "horiz" && reelIndex === null) {
+      pulling.current = false;
+      setPullDistance(0);
+      const base = activeTab === "challenge" ? 0 : -window.innerWidth;
+      const raw = base + dx;
+      // Rubber-band at edges
+      const offset = raw > 0 ? raw * 0.2 : raw < -window.innerWidth ? -window.innerWidth + (raw + window.innerWidth) * 0.2 : raw;
+      if (sliderRef.current) sliderRef.current.style.transform = `translateX(${offset}px)`;
+    } else if (dragDirection.current === "vert" && pulling.current) {
+      const dist = Math.max(0, Math.min(80, dy));
+      setPullDistance(dist);
+    }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    const deltaX = touchStartX.current - e.changedTouches[0].clientX;
-    const deltaY = Math.abs(touchStartY.current - e.changedTouches[0].clientY);
+    if (dragDirection.current === "horiz" && reelIndex === null) {
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      const threshold = window.innerWidth * 0.3;
+      let newTab = activeTab;
+      if (dx < -threshold && activeTab === "challenge") newTab = "free";
+      else if (dx > threshold && activeTab === "free") newTab = "challenge";
 
-    // Horizontal tab swipe — must be clearly horizontal, not in reel/modal
-    if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > deltaY * 1.5 && reelIndex === null) {
-      if (deltaX > 0) setActiveTab("free");
-      else setActiveTab("challenge");
+      if (newTab !== activeTab) {
+        setActiveTab(newTab); // triggers useEffect which animates to final position
+      } else if (sliderRef.current) {
+        // Snap back
+        sliderRef.current.style.transition = "transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+        sliderRef.current.style.transform = `translateX(${activeTab === "challenge" ? 0 : -window.innerWidth}px)`;
+      }
       pulling.current = false;
       setPullDistance(0);
       return;
@@ -447,10 +482,6 @@ function HomeInner() {
           0%, 100% { color: #4a7c59; }
           50% { color: #7bc47f; }
         }
-        @keyframes tabFadeIn {
-          from { opacity: 0; transform: translateX(0); }
-          to { opacity: 1; }
-        }
       `}</style>
 
       {/* Map live toast */}
@@ -574,32 +605,42 @@ function HomeInner() {
         ))}
       </div>
 
-      {activeTab === "challenge" ? (
-        <section key="challenge" style={{ display: "grid", gap: 0, animation: "tabFadeIn 0.18s ease" }}>
-          {loading && posts.length === 0 ? (
-            <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>Loading...</p>
-          ) : posts.length === 0 ? (
-            <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>No challenge posts yet. Go outside and share!</p>
-          ) : (
-            posts.map((post) => (
-              <FeedPost
-                key={post.id}
-                post={post}
-                currentUsername={currentUsername}
-                currentUserId={currentUserId ?? ""}
-                onToggleLike={handleToggleLike}
-                onAddComment={handleAddComment}
-                onDeletePost={handleDeletePost}
-                onDeleteComment={handleDeleteComment}
-              />
-            ))
-          )}
-        </section>
-      ) : challengeTimer ? (
-        <FriendsMap key="map" currentUserId={currentUserId ?? ""} />
-      ) : (
-        <FreePostGrid key="log" posts={freePosts} onTap={(post) => setReelIndex(freePosts.findIndex((p) => p.id === post.id))} />
-      )}
+      {/* Sliding panels */}
+      <div style={{ overflow: "hidden" }}>
+        <div ref={sliderRef} style={{ display: "flex", width: "200%", willChange: "transform" }}>
+          {/* Panel 1 — challenge feed */}
+          <div style={{ width: "50%", minWidth: 0 }}>
+            <section style={{ display: "grid", gap: 0 }}>
+              {loading && posts.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>Loading...</p>
+              ) : posts.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>No challenge posts yet. Go outside and share!</p>
+              ) : (
+                posts.map((post) => (
+                  <FeedPost
+                    key={post.id}
+                    post={post}
+                    currentUsername={currentUsername}
+                    currentUserId={currentUserId ?? ""}
+                    onToggleLike={handleToggleLike}
+                    onAddComment={handleAddComment}
+                    onDeletePost={handleDeletePost}
+                    onDeleteComment={handleDeleteComment}
+                  />
+                ))
+              )}
+            </section>
+          </div>
+          {/* Panel 2 — log / map feed */}
+          <div style={{ width: "50%", minWidth: 0 }}>
+            {challengeTimer ? (
+              <FriendsMap currentUserId={currentUserId ?? ""} />
+            ) : (
+              <FreePostGrid posts={freePosts} onTap={(post) => setReelIndex(freePosts.findIndex((p) => p.id === post.id))} />
+            )}
+          </div>
+        </div>
+      </div>
 
       <UploadModal
         preview={previewImage}
