@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CalendarPost } from "../lib/posts";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -38,6 +38,8 @@ function DayView({ dateStr, posts, onClose, onPrevDay, onNextDay, canGoNext }: D
   const [index, setIndex] = useState(0);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
+
+  useEffect(() => { setIndex(0); }, [dateStr]);
 
   const post = posts[index] ?? null;
   const date = new Date(dateStr + "T12:00:00");
@@ -182,7 +184,6 @@ export default function ProfileCalendar({ posts, onClose }: Props) {
     const canGoNext = nextDateStr <= todayStr;
     return (
       <DayView
-        key={selectedDate}
         dateStr={selectedDate}
         posts={dayPosts}
         onClose={() => setSelectedDate(null)}
