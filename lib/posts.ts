@@ -53,18 +53,13 @@ function mapPost(post: RawPost, currentUserId: string): Post {
     createdAt: formatTime(post.created_at),
     liked: (post.likes ?? []).some((l) => l.user_id === currentUserId),
     likes: (post.likes ?? []).length,
-    comments: (post.comments ?? []).map((c) => {
-      if (process.env.NODE_ENV === "development" || typeof window !== "undefined") {
-        console.log("[comment debug]", c.user_id, "users:", c.users);
-      }
-      return {
-        id: c.id,
-        user: c.users?.username ?? "Unknown",
-        userId: c.user_id,
-        avatarUrl: c.users?.avatar_url ?? null,
-        text: c.text,
-      };
-    }),
+    comments: (post.comments ?? []).map((c) => ({
+      id: c.id,
+      user: c.users?.username ?? "Unknown",
+      userId: c.user_id,
+      avatarUrl: c.users?.avatar_url ?? null,
+      text: c.text,
+    })),
     isChallenge: post.is_challenge,
     expiresAt: post.expires_at,
   };
