@@ -53,11 +53,11 @@ function DayView({ dateStr, posts, onClose, onPrevDay, onNextDay, canGoNext }: D
     const deltaX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
     if (Math.abs(deltaY) < 50 || deltaX > Math.abs(deltaY)) return;
     if (deltaY > 0) {
-      // swiped up → previous day
-      onPrevDay();
-    } else {
-      // swiped down → next day
+      // swiped up → next day
       if (canGoNext) onNextDay();
+    } else {
+      // swiped down → previous day
+      onPrevDay();
     }
   };
 
