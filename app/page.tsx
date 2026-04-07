@@ -117,8 +117,9 @@ function HomeInner() {
     ],
   } : null);
 
-  // Pull-to-refresh state
+  // Pull-to-refresh + tab-swipe state
   const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
   const pulling = useRef(false);
   const [pullDistance, setPullDistance] = useState(0);
 
@@ -209,10 +210,9 @@ function HomeInner() {
 
   // Pull-to-refresh handlers
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (window.scrollY === 0) {
-      touchStartY.current = e.touches[0].clientY;
-      pulling.current = true;
-    }
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    if (window.scrollY === 0) pulling.current = true;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -221,7 +221,19 @@ function HomeInner() {
     setPullDistance(dist);
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const deltaX = touchStartX.current - e.changedTouches[0].clientX;
+    const deltaY = Math.abs(touchStartY.current - e.changedTouches[0].clientY);
+
+    // Horizontal tab swipe — must be clearly horizontal, not in reel/modal
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > deltaY * 1.5 && reelIndex === null) {
+      if (deltaX > 0) setActiveTab("free");
+      else setActiveTab("challenge");
+      pulling.current = false;
+      setPullDistance(0);
+      return;
+    }
+
     if (pulling.current && pullDistance >= 60 && currentUserId) {
       setRefreshing(true);
       loadPosts(currentUserId, true);
@@ -435,6 +447,10 @@ function HomeInner() {
           0%, 100% { color: #4a7c59; }
           50% { color: #7bc47f; }
         }
+        @keyframes tabFadeIn {
+          from { opacity: 0; transform: translateX(0); }
+          to { opacity: 1; }
+        }
       `}</style>
 
       {/* Map live toast */}
@@ -547,6 +563,7 @@ function HomeInner() {
               border: "none",
               borderBottom: activeTab === tab ? "2px solid #000" : "2px solid transparent",
               color: tab === "free" && mapTabFlash ? "#4a7c59" : activeTab === tab ? "#000" : "#aaa",
+              transition: "color 0.2s ease, border-color 0.2s ease",
               animation: tab === "free" && mapTabFlash ? "tabFlash 0.5s ease 3" : "none",
               cursor: "pointer",
               marginBottom: "-1px",
@@ -558,7 +575,7 @@ function HomeInner() {
       </div>
 
       {activeTab === "challenge" ? (
-        <section style={{ display: "grid", gap: 0 }}>
+        <section key="challenge" style={{ display: "grid", gap: 0, animation: "tabFadeIn 0.18s ease" }}>
           {loading && posts.length === 0 ? (
             <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>Loading...</p>
           ) : posts.length === 0 ? (
@@ -579,9 +596,9 @@ function HomeInner() {
           )}
         </section>
       ) : challengeTimer ? (
-        <FriendsMap currentUserId={currentUserId ?? ""} />
+        <FriendsMap key="map" currentUserId={currentUserId ?? ""} />
       ) : (
-        <FreePostGrid posts={freePosts} onTap={(post) => setReelIndex(freePosts.findIndex((p) => p.id === post.id))} />
+        <FreePostGrid key="log" posts={freePosts} onTap={(post) => setReelIndex(freePosts.findIndex((p) => p.id === post.id))} />
       )}
 
       <UploadModal
