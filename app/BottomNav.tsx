@@ -45,14 +45,14 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          minWidth: "52px",
-          minHeight: "52px",
+          minWidth: "64px",
+          minHeight: "56px",
           touchAction: "manipulation",
           transition: "color 0.15s ease",
         }}
       >
         <svg
-          width="26" height="26" viewBox="0 0 24 24"
+          width="28" height="28" viewBox="0 0 24 24"
           fill={pathname === "/" ? "currentColor" : "none"}
           stroke="currentColor" strokeWidth="1.75"
           strokeLinecap="round" strokeLinejoin="round"
@@ -70,7 +70,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
           onClick={onGamePress}
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            width: "52px", height: "52px", borderRadius: "50%",
+            width: "54px", height: "54px", borderRadius: "50%",
             backgroundColor: "#000", color: "#fff",
             border: "none", cursor: "pointer",
             touchAction: "manipulation",
@@ -90,7 +90,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
           htmlFor="photo-upload"
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
-            width: "52px", height: "52px", borderRadius: "50%",
+            width: "54px", height: "54px", borderRadius: "50%",
             backgroundColor: "#000000", color: "#ffffff",
             fontSize: "24px", cursor: "pointer", lineHeight: 1,
           }}
@@ -118,14 +118,14 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          minWidth: "52px",
-          minHeight: "52px",
+          minWidth: "64px",
+          minHeight: "56px",
           touchAction: "manipulation",
           transition: "color 0.15s ease",
         }}
       >
         <svg
-          width="26" height="26" viewBox="0 0 24 24"
+          width="28" height="28" viewBox="0 0 24 24"
           fill={pathname === "/profile" ? "currentColor" : "none"}
           stroke="currentColor" strokeWidth="1.75"
           strokeLinecap="round" strokeLinejoin="round"
