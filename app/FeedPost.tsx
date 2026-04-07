@@ -424,6 +424,14 @@ export default function FeedPost({
                   handleSubmitComment();
                 }
               }}
+              onFocus={() => {
+                const viewport = document.querySelector("meta[name=viewport]");
+                if (viewport) viewport.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1");
+              }}
+              onBlur={() => {
+                const viewport = document.querySelector("meta[name=viewport]");
+                if (viewport) viewport.setAttribute("content", "width=device-width, initial-scale=1");
+              }}
               placeholder="add a comment..."
               autoFocus
               style={{
