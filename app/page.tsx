@@ -315,9 +315,8 @@ function HomeInner() {
     try {
       imageUrl = await uploadPhoto(blob ?? file, currentUserId);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("Upload failed:", msg);
-      setPostError("upload failed: " + msg);
+      console.error("Upload failed:", err);
+      setPostError("upload failed — check your connection and try again");
       setPosting(false);
       return;
     }
@@ -327,9 +326,8 @@ function HomeInner() {
     try {
       await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : " "), isChallenge);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error("Create post failed:", msg);
-      setPostError("post failed: " + msg);
+      console.error("Create post failed:", err);
+      setPostError("couldn't save post — check your connection and try again");
       setPosting(false);
       return;
     }
