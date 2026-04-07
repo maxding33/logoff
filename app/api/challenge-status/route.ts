@@ -30,6 +30,19 @@ export async function GET(req: NextRequest) {
   if (now >= endsAt) {
     // Check if user posted during the window — if not, it's a failure
     if (userId) {
+      // Only count as failed if the user existed before the challenge window ended
+      const { data: userRow } = await supabase
+        .from("users")
+        .select("created_at")
+        .eq("id", userId)
+        .single();
+
+      const userCreatedAt = userRow?.created_at ? new Date(userRow.created_at as string) : null;
+      if (userCreatedAt && userCreatedAt >= endsAt) {
+        // User signed up after the window closed — not a failure
+        return NextResponse.json({ active: false });
+      }
+
       const { data: post } = await supabase
         .from("posts")
         .select("id")
