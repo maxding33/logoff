@@ -63,6 +63,7 @@ export default function LogReel({
   const [dragOffset, setDragOffset] = useState(0);
   const [snapping, setSnapping] = useState(false);
   const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
   const dragging = useRef(false);
   const lastTapRef = useRef(0);
   const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
@@ -92,6 +93,7 @@ export default function LogReel({
   const handleTouchStart = (e: React.TouchEvent) => {
     if (showComments) return;
     touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
     dragging.current = true;
     setSnapping(false);
   };
@@ -108,9 +110,12 @@ export default function LogReel({
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!dragging.current || showComments) return;
     dragging.current = false;
-    const delta = e.changedTouches[0].clientY - touchStartY.current;
-    if (delta < -60) snapTo(index + 1);
-    else if (delta > 60) snapTo(index - 1);
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    // Left swipe to close (must be more horizontal than vertical)
+    if (deltaX < -60 && Math.abs(deltaX) > Math.abs(deltaY)) { onClose(); return; }
+    if (deltaY < -60) snapTo(index + 1);
+    else if (deltaY > 60) snapTo(index - 1);
     else snapTo(index);
   };
 
