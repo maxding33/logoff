@@ -112,8 +112,8 @@ export default function LogReel({
     dragging.current = false;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-    // Left swipe to close (must be more horizontal than vertical)
-    if (deltaX < -60 && Math.abs(deltaX) > Math.abs(deltaY)) { onClose(); return; }
+    // Right swipe to close (must be more horizontal than vertical)
+    if (deltaX > 60 && Math.abs(deltaX) > Math.abs(deltaY)) { onClose(); return; }
     if (deltaY < -60) snapTo(index + 1);
     else if (deltaY > 60) snapTo(index - 1);
     else snapTo(index);
