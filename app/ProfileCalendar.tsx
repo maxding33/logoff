@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { CalendarPost } from "../lib/posts";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -19,25 +19,59 @@ function getCalendarDays(year: number, month: number): (number | null)[] {
   return days;
 }
 
+function offsetDateStr(dateStr: string, days: number): string {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 type DayViewProps = {
   dateStr: string;
   posts: CalendarPost[];
   onClose: () => void;
+  onPrevDay: () => void;
+  onNextDay: () => void;
+  canGoNext: boolean;
 };
 
-function DayView({ dateStr, posts, onClose }: DayViewProps) {
+function DayView({ dateStr, posts, onClose, onPrevDay, onNextDay, canGoNext }: DayViewProps) {
   const [index, setIndex] = useState(0);
-  const post = posts[index];
+  const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
+
+  const post = posts[index] ?? null;
   const date = new Date(dateStr + "T12:00:00");
   const label = date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const deltaY = touchStartY.current - e.changedTouches[0].clientY;
+    const deltaX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
+    if (Math.abs(deltaY) < 50 || deltaX > Math.abs(deltaY)) return;
+    if (deltaY > 0) {
+      // swiped up → previous day
+      onPrevDay();
+    } else {
+      // swiped down → next day
+      if (canGoNext) onNextDay();
+    }
+  };
+
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 600,
-      background: "#000",
-      display: "flex", flexDirection: "column",
-      animation: "calDaySlideUp 0.22s ease",
-    }}>
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        position: "fixed", inset: 0, zIndex: 600,
+        background: "#000",
+        display: "flex", flexDirection: "column",
+        animation: "calDaySlideUp 0.22s ease",
+      }}
+    >
       <style>{`
         @keyframes calDaySlideUp {
           from { transform: translateY(30px); opacity: 0; }
@@ -60,32 +94,40 @@ function DayView({ dateStr, posts, onClose }: DayViewProps) {
         </div>
       </div>
 
-      {/* Image */}
-      <div
-        style={{ flex: 1, position: "relative", overflow: "hidden" }}
-        onClick={() => setIndex((i) => (i + 1) % posts.length)}
-      >
-        <img
-          src={post.imageUrl}
-          alt=""
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
-        {post.isChallenge && (
-          <div style={{
-            position: "absolute", top: "16px", right: "16px",
-            background: "rgba(74,124,89,0.9)", color: "#fff",
-            fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em",
-            padding: "4px 10px", borderRadius: "999px",
-          }}>
-            challenge
+      {post ? (
+        <>
+          {/* Image */}
+          <div
+            style={{ flex: 1, position: "relative", overflow: "hidden" }}
+            onClick={() => posts.length > 1 && setIndex((i) => (i + 1) % posts.length)}
+          >
+            <img
+              src={post.imageUrl}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+            {post.isChallenge && (
+              <div style={{
+                position: "absolute", top: "16px", right: "16px",
+                background: "rgba(74,124,89,0.9)", color: "#fff",
+                fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em",
+                padding: "4px 10px", borderRadius: "999px",
+              }}>
+                challenge
+              </div>
+            )}
           </div>
-        )}
-      </div>
-
-      {/* Caption */}
-      {post.caption && post.caption.trim() && (
-        <div style={{ padding: "16px 20px calc(20px + env(safe-area-inset-bottom))", background: "#000", flexShrink: 0 }}>
-          <p style={{ margin: 0, fontSize: "14px", color: "#eee", lineHeight: 1.4 }}>{post.caption}</p>
+          {/* Caption */}
+          {post.caption && post.caption.trim() && (
+            <div style={{ padding: "16px 20px calc(20px + env(safe-area-inset-bottom))", background: "#000", flexShrink: 0 }}>
+              <p style={{ margin: 0, fontSize: "14px", color: "#eee", lineHeight: 1.4 }}>{post.caption}</p>
+            </div>
+          )}
+        </>
+      ) : (
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          <p style={{ margin: 0, fontSize: "15px", color: "#555" }}>no log this day</p>
+          <p style={{ margin: 0, fontSize: "12px", color: "#444" }}>swipe to navigate</p>
         </div>
       )}
     </div>
@@ -127,7 +169,19 @@ export default function ProfileCalendar({ posts, onClose }: Props) {
 
   if (selectedDate) {
     const dayPosts = postsByDate[selectedDate] ?? [];
-    return <DayView dateStr={selectedDate} posts={dayPosts} onClose={() => setSelectedDate(null)} />;
+    const nextDateStr = offsetDateStr(selectedDate, 1);
+    const canGoNext = nextDateStr <= todayStr;
+    return (
+      <DayView
+        key={selectedDate}
+        dateStr={selectedDate}
+        posts={dayPosts}
+        onClose={() => setSelectedDate(null)}
+        onPrevDay={() => setSelectedDate(offsetDateStr(selectedDate, -1))}
+        onNextDay={() => { if (canGoNext) setSelectedDate(nextDateStr); }}
+        canGoNext={canGoNext}
+      />
+    );
   }
 
   return (
