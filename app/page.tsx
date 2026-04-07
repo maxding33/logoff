@@ -230,8 +230,8 @@ function HomeInner() {
     const dx = e.touches[0].clientX - touchStartX.current;
     const dy = e.touches[0].clientY - touchStartY.current;
 
-    // Lock drag direction after 8px
-    if (dragDirection.current === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+    // Lock drag direction after 5px
+    if (dragDirection.current === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
       dragDirection.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert";
     }
 
@@ -252,7 +252,7 @@ function HomeInner() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (dragDirection.current === "horiz" && reelIndex === null) {
       const dx = e.changedTouches[0].clientX - touchStartX.current;
-      const threshold = window.innerWidth * 0.3;
+      const threshold = window.innerWidth * 0.18;
       let newTab = activeTab;
       if (dx < -threshold && activeTab === "challenge") newTab = "free";
       else if (dx > threshold && activeTab === "free") newTab = "challenge";
