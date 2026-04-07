@@ -44,11 +44,18 @@ function DayView({ dateStr, posts, onClose, onPrevDay, onNextDay, canGoNext }: D
   const label = date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
     const deltaY = touchStartY.current - e.changedTouches[0].clientY;
     const deltaX = Math.abs(touchStartX.current - e.changedTouches[0].clientX);
     if (Math.abs(deltaY) < 50 || deltaX > Math.abs(deltaY)) return;
@@ -64,12 +71,14 @@ function DayView({ dateStr, posts, onClose, onPrevDay, onNextDay, canGoNext }: D
   return (
     <div
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
         position: "fixed", inset: 0, zIndex: 600,
         background: "#000",
         display: "flex", flexDirection: "column",
         animation: "calDaySlideUp 0.22s ease",
+        touchAction: "none",
       }}
     >
       <style>{`
