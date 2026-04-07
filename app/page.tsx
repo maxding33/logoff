@@ -97,17 +97,10 @@ function HomeInner() {
   // End-of-day summary
   const { shouldShow: eodShouldShow, summary: eodSummary } = useEndOfDaySummary(currentUserId);
   const eodKey = eodSummary ? `logoff_eod_dismissed_${eodSummary.windowDate}` : null;
-  const [eodDismissed, setEodDismissed] = useState(() => {
-    if (typeof window === "undefined" || !eodKey) return false;
-    return localStorage.getItem(eodKey) === "1";
-  });
-  useEffect(() => {
-    if (!eodKey) { setEodDismissed(false); return; }
-    setEodDismissed(localStorage.getItem(eodKey) === "1");
-  }, [eodKey]);
+  const eodDismissed = typeof window !== "undefined" && eodKey ? localStorage.getItem(eodKey) === "1" : true;
   const dismissEod = () => {
     if (eodKey) localStorage.setItem(eodKey, "1");
-    setEodDismissed(true);
+    forceUpdate((n) => n + 1);
   };
   // Show EoD only after fail screen is dismissed (if there was one)
   const showEod = (eodShouldShow || testEod) && !eodDismissed && (!challengeFailed || failDismissed);
@@ -514,7 +507,7 @@ function HomeInner() {
           >fail</button>
           <button
             type="button"
-            onClick={() => { setTestEod(true); setEodDismissed(false); }}
+            onClick={() => { setTestEod(true); forceUpdate((n) => n + 1); }}
             style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
           >eod</button>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{streak} 🔥</span>
