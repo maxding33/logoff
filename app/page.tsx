@@ -478,7 +478,7 @@ function HomeInner() {
   return (
     <main
       ref={mainRef}
-      style={{ minHeight: "100vh", background: "#ffffff", padding: "0 0 80px", overflowX: "hidden", touchAction: "pan-y" }}
+      style={{ minHeight: "100vh", background: "#ffffff", padding: "0 0 96px", overflowX: "hidden", touchAction: "pan-y" }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
