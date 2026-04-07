@@ -117,9 +117,9 @@ export default function LogReel({
 
     if (horizDragging.current) {
       const offset = Math.max(0, dx);
-      // Rubber-band past halfway
+      // Rubber-band past 35% width
       const w = window.innerWidth;
-      const clamped = offset > w * 0.5 ? w * 0.5 + (offset - w * 0.5) * 0.2 : offset;
+      const clamped = offset > w * 0.35 ? w * 0.35 + (offset - w * 0.35) * 0.2 : offset;
       if (reelRef.current) reelRef.current.style.transform = `translateX(${clamped}px)`;
     } else {
       // Vertical post navigation
@@ -135,7 +135,7 @@ export default function LogReel({
 
     if (horizDragging.current) {
       const dx = e.changedTouches[0].clientX - touchStartX.current;
-      if (dx > window.innerWidth * 0.3) {
+      if (dx > window.innerWidth * 0.18) {
         // Animate off-screen then close
         if (reelRef.current) {
           reelRef.current.style.transition = "transform 0.26s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
