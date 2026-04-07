@@ -123,6 +123,19 @@ function HomeInner() {
   const pulling = useRef(false);
   const dragDirection = useRef<"horiz" | "vert" | null>(null);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Non-passive touchmove listener so we can preventDefault during horizontal drags,
+  // which stops vertical scroll momentum carrying over after a tab swipe.
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (dragDirection.current === "horiz") e.preventDefault();
+    };
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onTouchMove);
+  }, []);
   const [pullDistance, setPullDistance] = useState(0);
 
   // Keep slider in sync with activeTab (e.g. when tab buttons are tapped)
@@ -464,6 +477,7 @@ function HomeInner() {
 
   return (
     <main
+      ref={mainRef}
       style={{ minHeight: "100vh", background: "#ffffff", padding: "0 0 80px", overflowX: "hidden", touchAction: "pan-y" }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
