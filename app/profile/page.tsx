@@ -305,7 +305,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
+    <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px", overflowX: "hidden", touchAction: "pan-y" }}>
       {/* Header */}
       <header style={{
         padding: "0 16px",
