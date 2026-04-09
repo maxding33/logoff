@@ -7,9 +7,7 @@ import FeedPost from "./FeedPost";
 import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
-import { fetchFeedPosts, fetchFreePosts, uploadPhoto, preparePhoto, createPost, toggleReaction, addComment, deletePost, deleteComment } from "../lib/posts";
-import type { ReactionType } from "./types";
-import { reactionCountLabel } from "./types";
+import { fetchFeedPosts, fetchFreePosts, uploadPhoto, preparePhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
 import FreePostGrid from "./FreePostGrid";
 import FriendsMap from "./FriendsMap";
 import LogReel from "./LogReel";
@@ -424,24 +422,18 @@ function HomeInner() {
     }
   };
 
-  const handleReact = async (postId: string, type: ReactionType) => {
+  const handleToggleLike = async (postId: string) => {
     if (!currentUserId) return;
     const post = posts.find((p) => p.id === postId) ?? freePosts.find((p) => p.id === postId);
     if (!post) return;
-    const prev = post.userReaction;
-    const removing = prev === type;
-    const newTotal = removing ? post.reactions.total - 1 : post.reactions.total + (prev ? 0 : 1);
-    const update = (p: typeof post) => p.id !== postId ? p : {
-      ...p,
-      userReaction: removing ? null : type,
-      reactions: { ...p.reactions, total: newTotal, countLabel: reactionCountLabel(newTotal) },
-    };
+    const update = (p: typeof post) =>
+      p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p;
     setPosts((cur) => cur.map(update));
     setFreePosts((cur) => cur.map(update));
     try {
-      await toggleReaction(postId, currentUserId, type, prev);
+      await toggleLike(postId, currentUserId, post.liked);
     } catch {
-      const revert = (p: typeof post) => p.id === postId ? { ...p, userReaction: prev, reactions: post.reactions } : p;
+      const revert = (p: typeof post) => p.id === postId ? { ...p, liked: post.liked, likes: post.likes } : p;
       setPosts((cur) => cur.map(revert));
       setFreePosts((cur) => cur.map(revert));
     }
@@ -644,7 +636,7 @@ function HomeInner() {
                     post={post}
                     currentUsername={currentUsername}
                     currentUserId={currentUserId ?? ""}
-                    onReact={handleReact}
+                    onToggleLike={handleToggleLike}
                     onAddComment={handleAddComment}
                     onDeletePost={handleDeletePost}
                     onDeleteComment={handleDeleteComment}
@@ -813,7 +805,7 @@ function HomeInner() {
           currentUserId={currentUserId ?? ""}
           currentUsername={currentUsername}
           onClose={() => setReelIndex(null)}
-          onReact={handleReact}
+          onToggleLike={handleToggleLike}
           onAddComment={handleAddComment}
           onDeleteComment={handleDeleteComment}
           onDeletePost={(id) => { handleDeletePost(id); setReelIndex(null); }}
