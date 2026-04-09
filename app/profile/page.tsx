@@ -9,6 +9,7 @@ import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { signOut } from "../../lib/auth";
 import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deleteComment, deletePost } from "../../lib/posts";
+import { containsBannedContent } from "../../lib/filter";
 import LogReel from "../LogReel";
 import { fetchProfile, updateProfile, uploadAvatar, removeAvatar, updateNotificationPrefs, type NotificationPrefs } from "../../lib/profile";
 import { fetchCalendarPosts, type CalendarPost } from "../../lib/posts";
@@ -61,6 +62,7 @@ export default function ProfilePage() {
   const [reelIndex, setReelIndex] = useState<number | null>(null);
   const [showUpdates, setShowUpdates] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [deleteStep, setDeleteStep] = useState<"idle" | "confirm" | "deleting">("idle");
   const [showAvatarOptions, setShowAvatarOptions] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarPosts, setCalendarPosts] = useState<CalendarPost[]>([]);
@@ -132,6 +134,7 @@ export default function ProfilePage() {
 
   const saveName = async (value: string) => {
     const trimmed = value.trim().replace(/\s+/g, "").toLowerCase() || name;
+    if (containsBannedContent(trimmed)) { setEditingName(false); return; }
     setName(trimmed);
     setEditingName(false);
     if (currentUserId) {
@@ -263,6 +266,26 @@ export default function ProfilePage() {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
   };
 
+  const handleDeleteAccount = async () => {
+    if (!supabase) return;
+    setDeleteStep("deleting");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("No session");
+      const res = await fetch("/api/delete-account", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed");
+      await supabase.auth.signOut();
+      window.location.href = "/login";
+    } catch {
+      setDeleteStep("idle");
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
   const resetComposer = () => {
     setPreviewImage(null);
     setCaption("");
@@ -284,12 +307,17 @@ export default function ProfilePage() {
   const handleSubmitPost = async () => {
     const file = fileObjectRef.current;
     if (!file || !currentUserId) return;
+    const captionText = caption.trim() || "";
+    if (captionText) {
+      const banned = containsBannedContent(captionText);
+      if (banned) { setPostError(banned); return; }
+    }
     setPosting(true);
     setPostError(null);
     try {
       const imageUrl = await uploadPhoto(file, currentUserId);
       const isChallenge = !!challengeTimer;
-      await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : " "), isChallenge);
+      await createPost(currentUserId, imageUrl, captionText || (isChallenge ? "Went outside today." : " "), isChallenge);
       // Small delay to ensure DB write is committed before refetching
       await new Promise((r) => setTimeout(r, 600));
       const updated = await fetchPosts(currentUserId, currentUserId);
@@ -509,7 +537,7 @@ export default function ProfilePage() {
 
       {/* Settings panel */}
       {showSettings && (
-        <div onClick={() => setShowSettings(false)} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)" }}>
+        <div onClick={() => { setShowSettings(false); setDeleteStep("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)" }}>
           <div onClick={(e) => e.stopPropagation()} style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
             background: "#fff", borderRadius: "16px 16px 0 0",
@@ -517,7 +545,7 @@ export default function ProfilePage() {
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #e5e5e5" }}>
               <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.10em", textTransform: "uppercase" }}>settings</span>
-              <button onClick={() => setShowSettings(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#999", lineHeight: 1, padding: 0 }}>×</button>
+              <button onClick={() => { setShowSettings(false); setDeleteStep("idle"); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#999", lineHeight: 1, padding: 0 }}>×</button>
             </div>
 
             {/* Notifications */}
@@ -589,8 +617,24 @@ export default function ProfilePage() {
               </button>
             </div>
 
+            {/* Support */}
+            <div style={{ padding: "16px 20px", borderTop: "1px solid #f0f0f0" }}>
+              <p style={{ margin: "0 0 10px", fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#999" }}>support</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <a href="mailto:support@logoff.app" style={{ fontSize: "14px", fontWeight: 600, color: "#000", textDecoration: "none" }}>
+                  contact us
+                </a>
+                <a href="https://logoff.app/privacy" target="_blank" rel="noreferrer" style={{ fontSize: "14px", fontWeight: 600, color: "#000", textDecoration: "none" }}>
+                  privacy policy
+                </a>
+                <a href="https://logoff.app/terms" target="_blank" rel="noreferrer" style={{ fontSize: "14px", fontWeight: 600, color: "#000", textDecoration: "none" }}>
+                  terms of service
+                </a>
+              </div>
+            </div>
+
             {/* Log out */}
-            <div style={{ padding: "16px 20px" }}>
+            <div style={{ padding: "16px 20px", borderTop: "1px solid #f0f0f0" }}>
               <button
                 onClick={async () => { try { await signOut(); } catch {} }}
                 style={{
@@ -600,6 +644,42 @@ export default function ProfilePage() {
               >
                 log out
               </button>
+            </div>
+
+            {/* Delete account */}
+            <div style={{ padding: "0 20px 8px", borderTop: "1px solid #f0f0f0" }}>
+              {deleteStep === "idle" && (
+                <button
+                  onClick={() => setDeleteStep("confirm")}
+                  style={{ background: "none", border: "none", cursor: "pointer", padding: "16px 0 0", fontSize: "13px", fontWeight: 600, color: "#aaa" }}
+                >
+                  delete account
+                </button>
+              )}
+              {deleteStep === "confirm" && (
+                <div style={{ paddingTop: "16px" }}>
+                  <p style={{ margin: "0 0 12px", fontSize: "13px", color: "#333", fontWeight: 500, lineHeight: 1.4 }}>
+                    This permanently deletes your account and all your posts. This cannot be undone.
+                  </p>
+                  <div style={{ display: "flex", gap: "12px" }}>
+                    <button
+                      onClick={handleDeleteAccount}
+                      style={{ background: "#e53935", color: "#fff", border: "none", borderRadius: "999px", padding: "10px 20px", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}
+                    >
+                      yes, delete my account
+                    </button>
+                    <button
+                      onClick={() => setDeleteStep("idle")}
+                      style={{ background: "none", border: "1px solid #e5e5e5", borderRadius: "999px", padding: "10px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", color: "#666" }}
+                    >
+                      cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+              {deleteStep === "deleting" && (
+                <p style={{ paddingTop: "16px", margin: 0, fontSize: "13px", color: "#999" }}>deleting account...</p>
+              )}
             </div>
           </div>
         </div>

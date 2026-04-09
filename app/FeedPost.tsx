@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
 import type { Post } from "./types";
+import { containsBannedContent } from "../lib/filter";
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -138,6 +139,8 @@ export default function FeedPost({
   const handleSubmitComment = () => {
     const trimmedComment = commentText.trim();
     if (!trimmedComment) return;
+    const banned = containsBannedContent(trimmedComment);
+    if (banned) { alert(banned); return; }
     onAddComment(post.id, trimmedComment);
     setCommentText("");
     setShowCommentInput(false);

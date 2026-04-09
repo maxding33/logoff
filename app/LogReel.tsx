@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Post } from "./types";
+import { containsBannedContent } from "../lib/filter";
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -173,6 +174,8 @@ export default function LogReel({
   const handleSubmitComment = () => {
     const trimmed = commentText.trim();
     if (!trimmed) return;
+    const banned = containsBannedContent(trimmed);
+    if (banned) { alert(banned); return; }
     onAddComment(post.id, trimmed);
     setCommentText("");
   };
