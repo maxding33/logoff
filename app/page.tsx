@@ -248,7 +248,7 @@ function HomeInner() {
       dragDirection.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert";
     }
 
-    if (dragDirection.current === "horiz" && reelIndex === null) {
+    if (dragDirection.current === "horiz" && reelIndex === null && !(challengeTimer && activeTab === "free")) {
       pulling.current = false;
       setPullDistance(0);
       const base = activeTab === "challenge" ? 0 : -window.innerWidth;
@@ -263,7 +263,7 @@ function HomeInner() {
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (dragDirection.current === "horiz" && reelIndex === null) {
+    if (dragDirection.current === "horiz" && reelIndex === null && !(challengeTimer && activeTab === "free")) {
       const dx = e.changedTouches[0].clientX - touchStartX.current;
       const threshold = window.innerWidth * 0.18;
       let newTab = activeTab;
