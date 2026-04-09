@@ -542,11 +542,11 @@ function HomeInner() {
         position: "relative",
       }}>
         <Link href="/search" style={{
-          position: "absolute", left: "16px", color: "#000",
+          position: "absolute", left: "8px", color: "#000",
           display: "flex", alignItems: "center", justifyContent: "center",
-          minWidth: "44px", minHeight: "44px",
+          minWidth: "52px", minHeight: "53px",
         }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -560,7 +560,7 @@ function HomeInner() {
             LOG<span style={{ color: "#4a7c59" }}>OFF</span>
           </p>
         )}
-        <span style={{ position: "absolute", right: "16px", display: "flex", alignItems: "center", gap: "10px" }}>
+        <span style={{ position: "absolute", right: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
           <button
             type="button"
             onClick={() => { setTestFail(true); forceUpdate((n) => n + 1); }}
@@ -572,8 +572,8 @@ function HomeInner() {
             style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
           >eod</button>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{streak} 🔥</span>
-          <Link href="/messages" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", color: "#000", minWidth: "32px", minHeight: "32px" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <Link href="/messages" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", color: "#000", minWidth: "44px", minHeight: "53px" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
             {unreadMessages > 0 && (
