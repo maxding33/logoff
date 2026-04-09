@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Post } from "./types";
+import type { Post, ReactionType } from "./types";
+import { REACTION_EMOJI } from "./types";
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -40,7 +41,7 @@ type Props = {
   currentUserId: string;
   currentUsername: string;
   onClose: () => void;
-  onToggleLike: (postId: string) => void;
+  onReact: (postId: string, type: ReactionType) => void;
   onAddComment: (postId: string, text: string) => void;
   onDeleteComment: (postId: string, commentId: string) => void;
   onDeletePost: (postId: string) => void;
@@ -52,7 +53,7 @@ export default function LogReel({
   currentUserId,
   currentUsername,
   onClose,
-  onToggleLike,
+  onReact,
   onAddComment,
   onDeleteComment,
   onDeletePost,
@@ -161,7 +162,7 @@ export default function LogReel({
   const handleDoubleTap = (e: React.TouchEvent) => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
-      if (!post.liked) onToggleLike(post.id);
+      if (post.userReaction !== "heart") onReact(post.id, "heart");
       const touch = e.changedTouches[0];
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       setFloatingHeart({ x: touch.clientX - rect.left, y: touch.clientY - rect.top, key: now });
@@ -255,12 +256,31 @@ export default function LogReel({
 
       {/* Right side: like + comment + delete */}
       <div style={{ position: "fixed", bottom: "48px", right: "20px", zIndex: 5, display: "flex", flexDirection: "column", alignItems: "center", gap: "28px" }}>
-        <button type="button" onClick={() => onToggleLike(post.id)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
-          <svg width="34" height="34" viewBox="0 0 24 24" fill={post.liked ? "#4a7c59" : "none"} stroke={post.liked ? "#4a7c59" : "#fff"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{post.likes}</span>
-        </button>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+          {(["heart", "fire", "muscle"] as ReactionType[]).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onReact(post.id, type)}
+              style={{
+                background: post.userReaction === type ? "rgba(255,255,255,0.25)" : "none",
+                border: "none", borderRadius: "50%",
+                width: "44px", height: "44px",
+                cursor: "pointer", fontSize: "24px", lineHeight: 1,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                touchAction: "manipulation", WebkitTapHighlightColor: "transparent",
+              }}
+            >
+              {REACTION_EMOJI[type]}
+            </button>
+          ))}
+          {post.reactions.total > 0 && (
+            <span style={{ color: "#fff", fontSize: "11px", fontWeight: 700, textAlign: "center" }}>
+              {post.reactions.topTypes.map((t) => REACTION_EMOJI[t]).join("")}
+              {post.reactions.countLabel ? ` ${post.reactions.countLabel}` : ""}
+            </span>
+          )}
+        </div>
         <button type="button" onClick={() => setShowComments(true)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />

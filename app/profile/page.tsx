@@ -8,7 +8,9 @@ import UploadModal from "../UploadModal";
 import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { signOut } from "../../lib/auth";
-import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deleteComment, deletePost } from "../../lib/posts";
+import { fetchPosts, uploadPhoto, createPost, toggleReaction, addComment, deleteComment, deletePost } from "../../lib/posts";
+import type { ReactionType } from "../types";
+import { reactionCountLabel } from "../types";
 import LogReel from "../LogReel";
 import { fetchProfile, updateProfile, uploadAvatar, removeAvatar, updateNotificationPrefs, type NotificationPrefs } from "../../lib/profile";
 import { fetchCalendarPosts, type CalendarPost } from "../../lib/posts";
@@ -240,11 +242,20 @@ export default function ProfilePage() {
     }
   };
 
-  const handleToggleLike = async (postId: string) => {
+  const handleReact = async (postId: string, type: ReactionType) => {
     if (!currentUserId) return;
-    setPosts((prev) => prev.map((p) => p.id === postId ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p));
     const post = posts.find((p) => p.id === postId);
-    if (post) await toggleLike(postId, currentUserId, post.liked).catch(() => {});
+    if (!post) return;
+    const prev = post.userReaction;
+    const removing = prev === type;
+    const newTotal = removing ? post.reactions.total - 1 : post.reactions.total + (prev ? 0 : 1);
+    const update = (p: typeof post) => p.id !== postId ? p : {
+      ...p,
+      userReaction: removing ? null : type,
+      reactions: { ...p.reactions, total: newTotal, countLabel: reactionCountLabel(newTotal) },
+    };
+    setPosts((cur) => cur.map(update));
+    try { await toggleReaction(postId, currentUserId, type, prev); } catch {}
   };
 
   const handleAddComment = async (postId: string, text: string) => {
@@ -674,7 +685,7 @@ export default function ProfilePage() {
           currentUserId={currentUserId}
           currentUsername={name}
           onClose={() => setReelIndex(null)}
-          onToggleLike={handleToggleLike}
+          onReact={handleReact}
           onAddComment={handleAddComment}
           onDeleteComment={handleDeleteComment}
           onDeletePost={(postId) => { handleDeletePost(postId); setReelIndex(null); }}

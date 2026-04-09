@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
-import type { Post, Comment } from "../app/types";
+import type { Post, Comment, ReactionType } from "../app/types";
+import { reactionCountLabel, REACTION_EMOJI } from "../app/types";
 
 function getClient() {
   if (!supabase) throw new Error("Supabase not configured");
@@ -25,7 +26,7 @@ const POST_SELECT = `
   is_challenge,
   expires_at,
   users(username, avatar_url),
-  likes(id, user_id),
+  reactions(user_id, type),
   comments(id, text, user_id, users(username, avatar_url))
 `;
 
@@ -38,7 +39,7 @@ type RawPost = {
   is_challenge: boolean;
   expires_at: string | null;
   users: { username: string; avatar_url: string | null } | null;
-  likes: { user_id: string }[];
+  reactions: { user_id: string; type: string }[];
   comments: { id: string; text: string; user_id: string; users: { username: string; avatar_url: string | null } | null }[];
 };
 
@@ -51,8 +52,15 @@ function mapPost(post: RawPost, currentUserId: string): Post {
     image: post.image_url,
     caption: post.caption,
     createdAt: formatTime(post.created_at),
-    liked: (post.likes ?? []).some((l) => l.user_id === currentUserId),
-    likes: (post.likes ?? []).length,
+    ...(() => {
+      const raw = post.reactions ?? [];
+      const userReaction = (raw.find((r) => r.user_id === currentUserId)?.type ?? null) as ReactionType | null;
+      const counts: Partial<Record<ReactionType, number>> = {};
+      for (const r of raw) counts[r.type as ReactionType] = (counts[r.type as ReactionType] ?? 0) + 1;
+      const topTypes = (Object.entries(counts) as [ReactionType, number][])
+        .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t);
+      return { reactions: { topTypes, countLabel: reactionCountLabel(raw.length), total: raw.length }, userReaction };
+    })(),
     comments: (post.comments ?? []).map((c) => ({
       id: c.id,
       user: c.users?.username ?? "Unknown",
@@ -194,12 +202,12 @@ export async function createPost(userId: string, imageUrl: string, caption: stri
   if (error) throw error;
 }
 
-export async function toggleLike(postId: string, userId: string, currentlyLiked: boolean): Promise<void> {
+export async function toggleReaction(postId: string, userId: string, type: ReactionType, current: ReactionType | null): Promise<void> {
   const client = getClient();
-  if (currentlyLiked) {
-    await client.from("likes").delete().eq("post_id", postId).eq("user_id", userId);
+  if (current === type) {
+    await client.from("reactions").delete().eq("post_id", postId).eq("user_id", userId);
   } else {
-    await client.from("likes").insert({ post_id: postId, user_id: userId });
+    await client.from("reactions").upsert({ post_id: postId, user_id: userId, type }, { onConflict: "post_id,user_id" });
   }
 }
 

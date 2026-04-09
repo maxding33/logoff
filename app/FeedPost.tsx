@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
-import type { Post } from "./types";
+import type { Post, ReactionType } from "./types";
+import { REACTION_EMOJI } from "./types";
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -46,7 +47,7 @@ type FeedPostProps = {
   post: Post;
   currentUsername: string;
   currentUserId: string;
-  onToggleLike: (postId: string) => void;
+  onReact: (postId: string, type: ReactionType) => void;
   onAddComment: (postId: string, text: string) => void;
   onDeletePost?: (postId: string) => void;
   onDeleteComment?: (postId: string, commentId: string) => void;
@@ -56,14 +57,13 @@ export default function FeedPost({
   post,
   currentUsername,
   currentUserId,
-  onToggleLike,
+  onReact,
   onAddComment,
   onDeletePost,
   onDeleteComment,
 }: FeedPostProps) {
   const [commentText, setCommentText] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
-  const [bouncing, setBouncing] = useState(false);
   const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const lastTapRef = useRef<number>(0);
@@ -108,7 +108,7 @@ export default function FeedPost({
   const handleDoubleTap = (e: React.TouchEvent | React.MouseEvent) => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
-      if (!post.liked) handleLike();
+      if (post.userReaction !== "heart") onReact(post.id, "heart");
       const rect = imageRef.current?.getBoundingClientRect();
       if (rect) {
         let x: number, y: number;
@@ -125,14 +125,6 @@ export default function FeedPost({
       }
     }
     lastTapRef.current = now;
-  };
-
-  const handleLike = () => {
-    if (!post.liked) {
-      setBouncing(true);
-      setTimeout(() => setBouncing(false), 350);
-    }
-    onToggleLike(post.id);
   };
 
   const handleSubmitComment = () => {
@@ -328,39 +320,37 @@ export default function FeedPost({
 
       {/* Actions */}
       <div style={{ padding: "8px 16px 14px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "22px", marginBottom: "10px" }}>
-          <button
-            type="button"
-            onClick={handleLike}
-            aria-label={post.liked ? "Unlike post" : "Like post"}
-            style={{
-              border: "none",
-              background: "transparent",
-              padding: "4px 0",
-              cursor: "pointer",
-              fontSize: "20px",
-              lineHeight: 1,
-              touchAction: "manipulation",
-              WebkitTapHighlightColor: "transparent",
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-              minHeight: "44px",
-            }}
-          >
-            <svg
-              width="26" height="26" viewBox="0 0 24 24"
-              fill={post.liked ? "#4a7c59" : "none"}
-              stroke={post.liked ? "#4a7c59" : "#000"} strokeWidth="1.75"
-              strokeLinecap="round" strokeLinejoin="round"
-              className={bouncing ? "heart-bounce" : ""}
+        <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "10px" }}>
+          {(["heart", "fire", "muscle"] as ReactionType[]).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onReact(post.id, type)}
+              aria-label={`React ${type}`}
+              style={{
+                border: "none",
+                background: post.userReaction === type ? "rgba(74,124,89,0.12)" : "transparent",
+                borderRadius: "20px",
+                padding: "4px 8px",
+                cursor: "pointer",
+                fontSize: "20px",
+                lineHeight: 1,
+                minHeight: "44px",
+                touchAction: "manipulation",
+                WebkitTapHighlightColor: "transparent",
+                outline: post.userReaction === type ? "1.5px solid #4a7c59" : "none",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
             >
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
-            <span style={{ fontSize: "13px", color: "#000", fontWeight: 600 }}>
-              {post.likes}
+              {REACTION_EMOJI[type]}
+            </button>
+          ))}
+          {post.reactions.total > 0 && (
+            <span style={{ fontSize: "13px", color: "#000", fontWeight: 600, marginLeft: "4px", display: "flex", alignItems: "center", gap: "2px" }}>
+              {post.reactions.topTypes.map((t) => REACTION_EMOJI[t]).join("")}
+              {post.reactions.countLabel && <span style={{ marginLeft: "3px" }}>{post.reactions.countLabel}</span>}
             </span>
-          </button>
+          )}
           <button
             ref={commentButtonRef}
             type="button"
