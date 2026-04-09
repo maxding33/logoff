@@ -9,7 +9,6 @@ import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { signOut } from "../../lib/auth";
 import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deleteComment, deletePost } from "../../lib/posts";
-import { containsBannedContent } from "../../lib/filter";
 import LogReel from "../LogReel";
 import { fetchProfile, updateProfile, uploadAvatar, removeAvatar, updateNotificationPrefs, type NotificationPrefs } from "../../lib/profile";
 import { fetchCalendarPosts, type CalendarPost } from "../../lib/posts";
@@ -134,7 +133,6 @@ export default function ProfilePage() {
 
   const saveName = async (value: string) => {
     const trimmed = value.trim().replace(/\s+/g, "").toLowerCase() || name;
-    if (containsBannedContent(trimmed)) { setEditingName(false); return; }
     setName(trimmed);
     setEditingName(false);
     if (currentUserId) {
@@ -307,17 +305,12 @@ export default function ProfilePage() {
   const handleSubmitPost = async () => {
     const file = fileObjectRef.current;
     if (!file || !currentUserId) return;
-    const captionText = caption.trim() || "";
-    if (captionText) {
-      const banned = containsBannedContent(captionText);
-      if (banned) { setPostError(banned); return; }
-    }
     setPosting(true);
     setPostError(null);
     try {
       const imageUrl = await uploadPhoto(file, currentUserId);
       const isChallenge = !!challengeTimer;
-      await createPost(currentUserId, imageUrl, captionText || (isChallenge ? "Went outside today." : " "), isChallenge);
+      await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : " "), isChallenge);
       // Small delay to ensure DB write is committed before refetching
       await new Promise((r) => setTimeout(r, 600));
       const updated = await fetchPosts(currentUserId, currentUserId);
