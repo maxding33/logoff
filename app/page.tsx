@@ -8,6 +8,7 @@ import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
 import { fetchFeedPosts, fetchFreePosts, uploadPhoto, preparePhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
+import { containsBannedContent } from "../lib/filter";
 import FreePostGrid from "./FreePostGrid";
 import FriendsMap from "./FriendsMap";
 import LogReel from "./LogReel";
@@ -343,6 +344,11 @@ function HomeInner() {
     const file = fileObjectRef.current;
     const blob = preparedBlobRef.current;
     if (!file || !currentUserId) return;
+    const captionText = caption.trim();
+    if (captionText) {
+      const banned = containsBannedContent(captionText);
+      if (banned) { setPostError(banned); return; }
+    }
     setPosting(true);
     setPostError(null);
     // Step 1: outdoor check
@@ -386,7 +392,7 @@ function HomeInner() {
     // Step 3: create post
     const isChallenge = isChallengeActive();
     try {
-      await createPost(currentUserId, imageUrl, caption.trim() || (isChallenge ? "Went outside today." : " "), isChallenge);
+      await createPost(currentUserId, imageUrl, captionText || (isChallenge ? "Went outside today." : " "), isChallenge);
     } catch (err) {
       console.error("Create post failed:", err);
       setPostError("couldn't save post — check your connection and try again");
