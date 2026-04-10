@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
-import CommentSheet from "./CommentSheet";
 import type { Post } from "./types";
 import type { ReportTarget } from "../lib/reports";
 
@@ -53,6 +52,7 @@ type FeedPostProps = {
   onDeletePost?: (postId: string) => void;
   onDeleteComment?: (postId: string, commentId: string) => void;
   onReport?: (target: ReportTarget) => void;
+  onOpenComments?: (postId: string) => void;
 };
 
 export default function FeedPost({
@@ -64,8 +64,8 @@ export default function FeedPost({
   onDeletePost,
   onDeleteComment,
   onReport,
+  onOpenComments,
 }: FeedPostProps) {
-  const [showCommentSheet, setShowCommentSheet] = useState(false);
   const [bouncing, setBouncing] = useState(false);
   const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
   const [showMenu, setShowMenu] = useState(false);
@@ -121,18 +121,6 @@ export default function FeedPost({
   };
 
   return (
-    <>
-    {showCommentSheet && (
-      <CommentSheet
-        comments={post.comments}
-        postId={post.id}
-        currentUserId={currentUserId}
-        onAddComment={onAddComment}
-        onDeleteComment={onDeleteComment}
-        onReport={onReport}
-        onClose={() => setShowCommentSheet(false)}
-      />
-    )}
     <article style={{ borderBottom: "1px solid #e5e5e5" }}>
       {/* Header */}
       <div style={{
@@ -347,7 +335,7 @@ export default function FeedPost({
           </button>
           <button
             type="button"
-            onClick={() => setShowCommentSheet(true)}
+            onClick={() => onOpenComments?.(post.id)}
             aria-label="Open comments"
             style={{
               border: "none",
@@ -380,6 +368,5 @@ export default function FeedPost({
 
       </div>
     </article>
-    </>
   );
 }

@@ -14,6 +14,7 @@ import FriendsMap from "./FriendsMap";
 import LogReel from "./LogReel";
 import GamePicker from "./GamePicker";
 import ReportSheet from "./ReportSheet";
+import CommentSheet from "./CommentSheet";
 import type { ReportTarget } from "../lib/reports";
 import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
@@ -36,6 +37,7 @@ function HomeInner() {
   const [activeTab, setActiveTab] = useState<"challenge" | "free">("challenge");
   const [reelIndex, setReelIndex] = useState<number | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
   const [blockedIds, setBlockedIds] = useState<string[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
@@ -647,6 +649,7 @@ function HomeInner() {
                     onDeletePost={handleDeletePost}
                     onDeleteComment={handleDeleteComment}
                     onReport={setReportTarget}
+                    onOpenComments={setCommentPostId}
                   />
                 ))
               )}
@@ -856,6 +859,21 @@ function HomeInner() {
       {reportTarget && currentUserId && (
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
+      {commentPostId && currentUserId && (() => {
+        const post = [...posts, ...freePosts].find(p => p.id === commentPostId);
+        if (!post) return null;
+        return (
+          <CommentSheet
+            comments={post.comments}
+            postId={post.id}
+            currentUserId={currentUserId}
+            onAddComment={handleAddComment}
+            onDeleteComment={handleDeleteComment}
+            onReport={setReportTarget}
+            onClose={() => setCommentPostId(null)}
+          />
+        );
+      })()}
     </main>
   );
 }
