@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthGuard from "../components/AuthGuard";
 import NotificationSetup from "./NotificationSetup";
+import CapacitorInit from "./CapacitorInit";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,7 +59,8 @@ export default function RootLayout({
             }
           };
         `}} />
-<AuthGuard>{children}</AuthGuard>
+<CapacitorInit />
+        <AuthGuard>{children}</AuthGuard>
         <NotificationSetup />
       </body>
     </html>
