@@ -486,7 +486,7 @@ function HomeInner() {
   return (
     <main
       ref={mainRef}
-      style={{ minHeight: "100vh", background: "#ffffff", padding: "0 0 96px", overflowX: "hidden", touchAction: "pan-y" }}
+      style={{ height: "100vh", background: "#ffffff", display: "flex", flexDirection: "column", overflow: "hidden", touchAction: "pan-y" }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -617,12 +617,12 @@ function HomeInner() {
         ))}
       </div>
 
-      {/* Sliding panels */}
-      <div style={{ overflow: "hidden" }}>
-        <div ref={sliderRef} style={{ display: "flex", width: "200%", willChange: "transform" }}>
+      {/* Sliding panels — each panel scrolls independently */}
+      <div style={{ overflow: "hidden", flex: 1, position: "relative" }}>
+        <div ref={sliderRef} style={{ display: "flex", width: "200%", height: "100%", willChange: "transform" }}>
           {/* Panel 1 — challenge feed */}
-          <div style={{ width: "50%", minWidth: 0 }}>
-            <section style={{ display: "grid", gap: 0 }}>
+          <div style={{ width: "50%", minWidth: 0, height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+            <section style={{ display: "grid", gap: 0, paddingBottom: "96px" }}>
               {loading && posts.length === 0 ? (
                 <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>Loading...</p>
               ) : posts.length === 0 ? (
@@ -646,12 +646,14 @@ function HomeInner() {
             </section>
           </div>
           {/* Panel 2 — log / map feed */}
-          <div style={{ width: "50%", minWidth: 0 }}>
-            {challengeTimer ? (
-              <FriendsMap currentUserId={currentUserId ?? ""} />
-            ) : (
-              <FreePostGrid posts={freePosts} onTap={(post) => setReelIndex(freePosts.findIndex((p) => p.id === post.id))} />
-            )}
+          <div style={{ width: "50%", minWidth: 0, height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+            <div style={{ paddingBottom: "96px" }}>
+              {challengeTimer ? (
+                <FriendsMap currentUserId={currentUserId ?? ""} />
+              ) : (
+                <FreePostGrid posts={freePosts} onTap={(post) => setReelIndex(freePosts.findIndex((p) => p.id === post.id))} />
+              )}
+            </div>
           </div>
         </div>
       </div>
