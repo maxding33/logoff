@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import CommentSheet from "./CommentSheet";
 import type { Post } from "./types";
 import type { ReportTarget } from "../lib/reports";
 
@@ -62,7 +63,6 @@ export default function LogReel({
 }: Props) {
   const [index, setIndex] = useState(startIndex);
   const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState("");
   const [dragOffset, setDragOffset] = useState(0);
   const [snapping, setSnapping] = useState(false);
   const touchStartY = useRef(0);
@@ -77,7 +77,7 @@ export default function LogReel({
   const post = posts[index];
 
   // Close comments when post changes
-  useEffect(() => { setShowComments(false); setCommentText(""); }, [index]);
+  useEffect(() => { setShowComments(false); }, [index]);
 
   // Prevent body scroll while reel is open
   useEffect(() => {
@@ -171,13 +171,6 @@ export default function LogReel({
       setTimeout(() => setFloatingHeart(null), 800);
     }
     lastTapRef.current = now;
-  };
-
-  const handleSubmitComment = () => {
-    const trimmed = commentText.trim();
-    if (!trimmed) return;
-    onAddComment(post.id, trimmed);
-    setCommentText("");
   };
 
   return (
@@ -305,81 +298,17 @@ export default function LogReel({
       {/* Close button */}
       <button type="button" onClick={onClose} style={{ position: "fixed", top: "16px", right: "16px", background: "none", border: "none", color: "#fff", fontSize: "28px", cursor: "pointer", lineHeight: 1, zIndex: 10, touchAction: "manipulation" }}>×</button>
 
-      {/* Comments sheet */}
+      {/* Comments sheet — uses shared CommentSheet component */}
       {showComments && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 20 }}
-          onClick={() => setShowComments(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: "absolute", bottom: 0, left: 0, right: 0,
-              background: "#fff", borderRadius: "16px 16px 0 0",
-              maxHeight: "60vh", display: "flex", flexDirection: "column",
-              animation: "slideUpSheet 0.28s cubic-bezier(0.32,0.72,0,1)",
-            }}
-          >
-            <style>{`
-              @keyframes slideUpSheet {
-                from { transform: translateY(100%); }
-                to { transform: translateY(0); }
-              }
-            `}</style>
-            <div style={{ padding: "12px 20px", borderBottom: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: "14px", fontWeight: 700 }}>comments</span>
-              <button type="button" onClick={() => setShowComments(false)} style={{ background: "none", border: "none", fontSize: "22px", cursor: "pointer", color: "#999", lineHeight: 1 }}>×</button>
-            </div>
-            <div style={{ overflowY: "auto", flex: 1, padding: "8px 20px" }}>
-              {post.comments.length === 0 ? (
-                <p style={{ color: "#bbb", fontSize: "13px", textAlign: "center", padding: "24px 0" }}>no comments yet</p>
-              ) : (
-                post.comments.map((c) => (
-                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 0", borderBottom: "1px solid #f5f5f5" }}>
-                    <div style={{ flexShrink: 0 }}>
-                      {c.avatarUrl ? (
-                        <img src={c.avatarUrl} alt={c.user} style={{ width: "30px", height: "30px", borderRadius: "50%", objectFit: "cover" }} />
-                      ) : (
-                        <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: getAvatarColor(c.user), display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <span style={{ color: "#fff", fontSize: "10px", fontWeight: 700, lineHeight: 1 }}>{getInitials(c.user)}</span>
-                        </div>
-                      )}
-                    </div>
-                    <p style={{ margin: 0, fontSize: "13px", flex: 1 }}>
-                      <span style={{ fontWeight: 700, color: "#000" }}>{c.user}</span>{" "}
-                      <span style={{ color: "#444" }}>{c.text}</span>
-                    </p>
-                    {c.userId === currentUserId ? (
-                      <button type="button" onClick={() => onDeleteComment(post.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: "18px", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0, touchAction: "manipulation" }}>×</button>
-                    ) : onReport && (
-                      <button type="button" onClick={() => onReport({ type: "comment", commentId: c.id, reportedUserId: c.userId })} style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0, display: "flex", alignItems: "center", touchAction: "manipulation" }} aria-label="Report comment">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-            <div style={{ padding: "10px 16px", borderTop: "1px solid #f0f0f0", display: "flex", gap: "8px", alignItems: "center" }}>
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
-                placeholder="add a comment..."
-                autoFocus
-                style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", background: "transparent", minHeight: "44px" }}
-              />
-              <button
-                type="button"
-                onClick={handleSubmitComment}
-                style={{ border: "none", background: "transparent", color: "#000", fontWeight: 700, fontSize: "13px", cursor: "pointer", minHeight: "44px", touchAction: "manipulation" }}
-              >post</button>
-            </div>
-          </div>
-        </div>
+        <CommentSheet
+          comments={post.comments}
+          postId={post.id}
+          currentUserId={currentUserId}
+          onAddComment={onAddComment}
+          onDeleteComment={onDeleteComment}
+          onReport={onReport}
+          onClose={() => setShowComments(false)}
+        />
       )}
     </div>
   );
