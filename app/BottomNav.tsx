@@ -52,7 +52,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
         }}
       >
         <svg
-          width="28" height="28" viewBox="0 0 24 24"
+          width="30" height="30" viewBox="0 0 24 24"
           fill={pathname === "/" ? "currentColor" : "none"}
           stroke="currentColor" strokeWidth="1.75"
           strokeLinecap="round" strokeLinejoin="round"
@@ -125,7 +125,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
         }}
       >
         <svg
-          width="28" height="28" viewBox="0 0 24 24"
+          width="30" height="30" viewBox="0 0 24 24"
           fill={pathname === "/profile" ? "currentColor" : "none"}
           stroke="currentColor" strokeWidth="1.75"
           strokeLinecap="round" strokeLinejoin="round"
