@@ -5,9 +5,8 @@ import { useEffect } from "react";
 export default function CapacitorInit() {
   useEffect(() => {
     import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
-      StatusBar.setOverlaysWebView({ overlay: false });
-      StatusBar.setBackgroundColor({ color: "#ffffff" });
-      StatusBar.setStyle({ style: Style.Light });
+      StatusBar.setOverlaysWebView({ overlay: true });
+      StatusBar.setStyle({ style: Style.Dark });
     }).catch(() => {
       // Not running in Capacitor — ignore
     });
