@@ -569,16 +569,6 @@ function HomeInner() {
           </p>
         )}
         <span style={{ position: "absolute", right: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
-          <button
-            type="button"
-            onClick={() => { setTestFail(true); forceUpdate((n) => n + 1); }}
-            style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
-          >fail</button>
-          <button
-            type="button"
-            onClick={() => { setTestEod(true); forceUpdate((n) => n + 1); }}
-            style={{ fontSize: "10px", color: "#bbb", background: "none", border: "1px solid #ddd", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" }}
-          >eod</button>
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{streak} 🔥</span>
           <Link href="/messages" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", color: "#000", minWidth: "44px", minHeight: "53px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
