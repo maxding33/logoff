@@ -37,7 +37,7 @@ export default function CommentSheet({
     document.body.style.top = `-${scrollY}px`;
     document.body.style.left = "0";
     document.body.style.right = "0";
-    setTimeout(() => inputRef.current?.focus(), 350);
+    // Don't auto-focus — let user read comments first
     return () => {
       document.body.style.position = "";
       document.body.style.top = "";
