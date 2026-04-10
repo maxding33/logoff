@@ -259,7 +259,7 @@ export default function LogReel({
         </button>
         <button type="button" onClick={() => setShowComments(true)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            <path d="M12 21a9 9 0 1 0-8.5-6L3 21l6-0.5A9 9 0 0 0 12 21z" />
           </svg>
           <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{post.comments.length}</span>
         </button>

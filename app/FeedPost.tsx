@@ -354,7 +354,7 @@ export default function FeedPost({
               fill="none" stroke="#000" strokeWidth="1.75"
               strokeLinecap="round" strokeLinejoin="round"
             >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              <path d="M12 21a9 9 0 1 0-8.5-6L3 21l6-0.5A9 9 0 0 0 12 21z" />
             </svg>
           </button>
         </div>
