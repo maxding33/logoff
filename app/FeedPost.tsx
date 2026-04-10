@@ -153,7 +153,7 @@ export default function FeedPost({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "10px 14px",
+        padding: "10px 14px 10px 10px",
       }}>
         <Link href={isOwnPost ? "/profile" : `/user/${encodeURIComponent(post.user)}`} style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
           <Avatar name={post.user} avatarUrl={post.avatarUrl} />
@@ -168,8 +168,8 @@ export default function FeedPost({
             )}
           </div>
         </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "12px", color: "#999" }}>{post.createdAt}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ fontSize: "12px", color: "#999", marginRight: "2px" }}>{post.createdAt}</span>
           {(isOwnPost ? !!onDeletePost : !!onReport) && (
             <div ref={menuRef} style={{ position: "relative" }}>
               <button
@@ -326,7 +326,7 @@ export default function FeedPost({
 
       {/* Actions */}
       <div style={{ padding: "8px 16px 14px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "22px", marginBottom: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "18px", marginBottom: "7px" }}>
           <button
             type="button"
             onClick={handleLike}
