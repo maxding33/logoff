@@ -82,7 +82,6 @@ export default function CommentSheet({
           background: "#fff",
           borderRadius: "16px 16px 0 0",
           height: "45vh",
-          maxHeight: "70vh",
           display: "flex",
           flexDirection: "column",
           transform: visible && !closing ? "translateY(0)" : "translateY(100%)",
