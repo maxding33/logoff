@@ -110,7 +110,7 @@ export default function CommentSheet({
             <p style={{ textAlign: "center", color: "#bbb", fontSize: "14px", padding: "24px 0" }}>No comments yet</p>
           ) : (
             comments.map((comment) => (
-              <div key={comment.id} style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "14px" }}>
+              <div key={comment.id} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
                 <Avatar name={comment.user} size={28} avatarUrl={comment.avatarUrl} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: "13px", lineHeight: 1.4 }}>
