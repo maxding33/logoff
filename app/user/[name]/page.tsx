@@ -8,6 +8,8 @@ import { supabase } from "../../../lib/supabase";
 import { followUser, unfollowUser, getFollowStatus, getFriendsCount } from "../../../lib/follows";
 import { fetchPosts } from "../../../lib/posts";
 import type { Post } from "../../types";
+import ReportSheet from "../../ReportSheet";
+import type { ReportTarget } from "../../../lib/reports";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -30,6 +32,8 @@ export default function UserProfilePage() {
   const [redirecting, setRedirecting] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [expandedPost, setExpandedPost] = useState<Post | null>(null);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -110,7 +114,7 @@ export default function UserProfilePage() {
       <header style={{
         padding: "0 16px", height: "53px",
         borderBottom: "1px solid #e5e5e5",
-        display: "flex", alignItems: "center", gap: "12px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#000", textDecoration: "none" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -120,6 +124,28 @@ export default function UserProfilePage() {
             {name}
           </span>
         </Link>
+        {currentUserId && targetUserId && currentUserId !== targetUserId && (
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setShowUserMenu((v) => !v)}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", minWidth: "44px", minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center", color: "#999" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+              </svg>
+            </button>
+            {showUserMenu && (
+              <div style={{ position: "absolute", right: 0, top: "100%", background: "#fff", border: "1px solid #e5e5e5", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: "140px", overflow: "hidden" }}>
+                <button
+                  onClick={() => { setShowUserMenu(false); setReportTarget({ type: "user", reportedUserId: targetUserId }); }}
+                  style={{ display: "block", width: "100%", padding: "14px 16px", border: "none", background: "transparent", textAlign: "left", fontSize: "14px", color: "#000", fontWeight: 600, cursor: "pointer" }}
+                >
+                  Report user
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       {!loading && (
@@ -204,6 +230,9 @@ export default function UserProfilePage() {
             </p>
           )}
         </div>
+      )}
+      {reportTarget && currentUserId && (
+        <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
     </main>
   );

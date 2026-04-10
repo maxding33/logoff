@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Post } from "./types";
+import type { ReportTarget } from "../lib/reports";
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -44,6 +45,7 @@ type Props = {
   onAddComment: (postId: string, text: string) => void;
   onDeleteComment: (postId: string, commentId: string) => void;
   onDeletePost: (postId: string) => void;
+  onReport?: (target: ReportTarget) => void;
 };
 
 export default function LogReel({
@@ -56,6 +58,7 @@ export default function LogReel({
   onAddComment,
   onDeleteComment,
   onDeletePost,
+  onReport,
 }: Props) {
   const [index, setIndex] = useState(startIndex);
   const [showComments, setShowComments] = useState(false);
@@ -267,10 +270,16 @@ export default function LogReel({
           </svg>
           <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{post.comments.length}</span>
         </button>
-        {post.userId === currentUserId && (
+        {post.userId === currentUserId ? (
           <button type="button" onClick={() => { onDeletePost(post.id); onClose(); }} style={{ background: "none", border: "none", cursor: "pointer", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" />
+            </svg>
+          </button>
+        ) : onReport && (
+          <button type="button" onClick={() => onReport({ type: "post", postId: post.id, reportedUserId: post.userId })} style={{ background: "none", border: "none", cursor: "pointer", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
             </svg>
           </button>
         )}
@@ -340,8 +349,14 @@ export default function LogReel({
                       <span style={{ fontWeight: 700, color: "#000" }}>{c.user}</span>{" "}
                       <span style={{ color: "#444" }}>{c.text}</span>
                     </p>
-                    {c.userId === currentUserId && (
+                    {c.userId === currentUserId ? (
                       <button type="button" onClick={() => onDeleteComment(post.id, c.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: "18px", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0, touchAction: "manipulation" }}>×</button>
+                    ) : onReport && (
+                      <button type="button" onClick={() => onReport({ type: "comment", commentId: c.id, reportedUserId: c.userId })} style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0, display: "flex", alignItems: "center", touchAction: "manipulation" }} aria-label="Report comment">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+                        </svg>
+                      </button>
                     )}
                   </div>
                 ))

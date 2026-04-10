@@ -9,6 +9,8 @@ import type { Post } from "../types";
 import { supabase } from "../../lib/supabase";
 import { signOut } from "../../lib/auth";
 import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deleteComment, deletePost } from "../../lib/posts";
+import ReportSheet from "../ReportSheet";
+import type { ReportTarget } from "../../lib/reports";
 import LogReel from "../LogReel";
 import { fetchProfile, updateProfile, uploadAvatar, removeAvatar, updateNotificationPrefs, type NotificationPrefs } from "../../lib/profile";
 import { fetchCalendarPosts, type CalendarPost } from "../../lib/posts";
@@ -62,6 +64,7 @@ export default function ProfilePage() {
   const [showUpdates, setShowUpdates] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [deleteStep, setDeleteStep] = useState<"idle" | "confirm" | "deleting">("idle");
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [showAvatarOptions, setShowAvatarOptions] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarPosts, setCalendarPosts] = useState<CalendarPost[]>([]);
@@ -751,6 +754,7 @@ export default function ProfilePage() {
           onAddComment={handleAddComment}
           onDeleteComment={handleDeleteComment}
           onDeletePost={(postId) => { handleDeletePost(postId); setReelIndex(null); }}
+          onReport={setReportTarget}
         />
       )}
       {/* Avatar options sheet */}
@@ -797,6 +801,9 @@ export default function ProfilePage() {
           posts={calendarLoading ? [] : calendarPosts}
           onClose={() => setShowCalendar(false)}
         />
+      )}
+      {reportTarget && currentUserId && (
+        <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
     </main>
   );

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
 import type { Post } from "./types";
+import type { ReportTarget } from "../lib/reports";
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -50,6 +51,7 @@ type FeedPostProps = {
   onAddComment: (postId: string, text: string) => void;
   onDeletePost?: (postId: string) => void;
   onDeleteComment?: (postId: string, commentId: string) => void;
+  onReport?: (target: ReportTarget) => void;
 };
 
 export default function FeedPost({
@@ -60,6 +62,7 @@ export default function FeedPost({
   onAddComment,
   onDeletePost,
   onDeleteComment,
+  onReport,
 }: FeedPostProps) {
   const [commentText, setCommentText] = useState("");
   const [showCommentInput, setShowCommentInput] = useState(false);
@@ -167,7 +170,7 @@ export default function FeedPost({
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "12px", color: "#999" }}>{post.createdAt}</span>
-          {isOwnPost && onDeletePost && (
+          {(isOwnPost ? !!onDeletePost : !!onReport) && (
             <div ref={menuRef} style={{ position: "relative" }}>
               <button
                 type="button"
@@ -207,28 +210,23 @@ export default function FeedPost({
                   minWidth: "140px",
                   overflow: "hidden",
                 }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowMenu(false);
-                      onDeletePost(post.id);
-                    }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      padding: "14px 16px",
-                      border: "none",
-                      background: "transparent",
-                      textAlign: "left",
-                      fontSize: "14px",
-                      color: "#e53935",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      touchAction: "manipulation",
-                    }}
-                  >
-                    Delete post
-                  </button>
+                  {isOwnPost && onDeletePost ? (
+                    <button
+                      type="button"
+                      onClick={() => { setShowMenu(false); onDeletePost(post.id); }}
+                      style={{ display: "block", width: "100%", padding: "14px 16px", border: "none", background: "transparent", textAlign: "left", fontSize: "14px", color: "#e53935", fontWeight: 600, cursor: "pointer", touchAction: "manipulation" }}
+                    >
+                      Delete post
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setShowMenu(false); onReport!({ type: "post", postId: post.id, reportedUserId: post.userId }); }}
+                      style={{ display: "block", width: "100%", padding: "14px 16px", border: "none", background: "transparent", textAlign: "left", fontSize: "14px", color: "#000", fontWeight: 600, cursor: "pointer", touchAction: "manipulation" }}
+                    >
+                      Report post
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -405,14 +403,24 @@ export default function FeedPost({
                     <p style={{ margin: 0, fontSize: "12px", color: "#777", lineHeight: 1.4 }}>
                       <span style={{ fontWeight: 700, color: "#555" }}>{comment.user}</span>{" "}{comment.text}
                     </p>
-                    {comment.userId === currentUserId && onDeleteComment && (
+                    {comment.userId === currentUserId && onDeleteComment ? (
                       <button
                         onClick={() => onDeleteComment(post.id, comment.id)}
                         style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: "14px", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0 }}
                       >
                         ×
                       </button>
-                    )}
+                    ) : comment.userId !== currentUserId && onReport ? (
+                      <button
+                        onClick={() => onReport({ type: "comment", commentId: comment.id, reportedUserId: comment.userId })}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#ddd", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0, display: "flex", alignItems: "center" }}
+                        aria-label="Report comment"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
+                        </svg>
+                      </button>
+                    ) : null}
                   </div>
                 ))}
               </div>

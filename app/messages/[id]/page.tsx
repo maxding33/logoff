@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLastSeen, isOnline, getCachedMessages, getCachedMembers, setCachedMessages, setCachedMembers, type Message, type ConversationMember } from "../../../lib/messages";
 import Avatar from "../../Avatar";
+import ReportSheet from "../../ReportSheet";
+import type { ReportTarget } from "../../../lib/reports";
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -43,9 +45,11 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(getCachedMessages(conversationId).length === 0);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastSeenInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -227,14 +231,26 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
                           {showAvatar && <Avatar name={msg.senderUsername} size={28} avatarUrl={msg.senderAvatarUrl} />}
                         </div>
                       )}
-                      <div style={{
-                        maxWidth: "70vw", padding: "9px 13px",
-                        background: isMine ? "#000" : "#f0f0f0",
-                        color: isMine ? "#fff" : "#000",
-                        borderRadius: isMine ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                        fontSize: "14px", lineHeight: 1.4,
-                        wordBreak: "break-word",
-                      }}>
+                      <div
+                        onTouchStart={() => {
+                          if (isMine) return;
+                          longPressTimer.current = setTimeout(() => {
+                            setReportTarget({ type: "message", messageId: msg.id, reportedUserId: msg.senderId });
+                          }, 600);
+                        }}
+                        onTouchEnd={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
+                        onTouchMove={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
+                        style={{
+                          maxWidth: "70vw", padding: "9px 13px",
+                          background: isMine ? "#000" : "#f0f0f0",
+                          color: isMine ? "#fff" : "#000",
+                          borderRadius: isMine ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                          fontSize: "14px", lineHeight: 1.4,
+                          wordBreak: "break-word",
+                          userSelect: "none",
+                          WebkitUserSelect: "none",
+                        }}
+                      >
                         {msg.text}
                       </div>
                     </div>
@@ -287,6 +303,9 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           </svg>
         </button>
       </div>
+      {reportTarget && currentUserId && (
+        <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
+      )}
     </main>
   );
 }

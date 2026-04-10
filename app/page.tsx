@@ -12,6 +12,8 @@ import FreePostGrid from "./FreePostGrid";
 import FriendsMap from "./FriendsMap";
 import LogReel from "./LogReel";
 import GamePicker from "./GamePicker";
+import ReportSheet from "./ReportSheet";
+import type { ReportTarget } from "../lib/reports";
 import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
 import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
@@ -32,6 +34,7 @@ function HomeInner() {
   const [freePosts, setFreePosts] = useState<Post[]>(cachedFreePosts);
   const [activeTab, setActiveTab] = useState<"challenge" | "free">("challenge");
   const [reelIndex, setReelIndex] = useState<number | null>(null);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [streak, setStreak] = useState(0);
@@ -640,6 +643,7 @@ function HomeInner() {
                     onAddComment={handleAddComment}
                     onDeletePost={handleDeletePost}
                     onDeleteComment={handleDeleteComment}
+                    onReport={setReportTarget}
                   />
                 ))
               )}
@@ -809,6 +813,7 @@ function HomeInner() {
           onAddComment={handleAddComment}
           onDeleteComment={handleDeleteComment}
           onDeletePost={(id) => { handleDeletePost(id); setReelIndex(null); }}
+          onReport={setReportTarget}
         />
       )}
 
@@ -844,6 +849,9 @@ function HomeInner() {
             logged off
           </p>
         </div>
+      )}
+      {reportTarget && currentUserId && (
+        <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
     </main>
   );
