@@ -201,7 +201,7 @@ export default function LogReel({
           return (
             <div key={p.id} style={{ position: "relative", height: "100vh", overflow: "hidden" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.image} alt={p.caption} onTouchEnd={i === index ? handleDoubleTap : undefined} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <img src={p.image} alt={p.caption} onTouchEnd={i === index ? handleDoubleTap : undefined} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
               {i === index && floatingHeart && (
                 <svg key={floatingHeart.key} className="float-heart" width="70" height="70" viewBox="0 0 24 24"
                   fill="#4a7c59" stroke="#4a7c59" strokeWidth="1.5"
