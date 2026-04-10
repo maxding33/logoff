@@ -368,14 +368,6 @@ export default function LogReel({
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmitComment(); } }}
-                onFocus={() => {
-                  const viewport = document.querySelector("meta[name=viewport]");
-                  if (viewport) viewport.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1");
-                }}
-                onBlur={() => {
-                  const viewport = document.querySelector("meta[name=viewport]");
-                  if (viewport) viewport.setAttribute("content", "width=device-width, initial-scale=1");
-                }}
                 placeholder="add a comment..."
                 autoFocus
                 style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", background: "transparent", minHeight: "44px" }}

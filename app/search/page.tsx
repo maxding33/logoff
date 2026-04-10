@@ -76,17 +76,9 @@ export default function SearchPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="search by name..."
             autoFocus
-            onFocus={() => {
-              const viewport = document.querySelector("meta[name=viewport]");
-              if (viewport) viewport.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1");
-            }}
-            onBlur={() => {
-              const viewport = document.querySelector("meta[name=viewport]");
-              if (viewport) viewport.setAttribute("content", "width=device-width, initial-scale=1");
-            }}
             style={{
               flex: 1, border: "none", outline: "none",
-              background: "transparent", fontSize: "15px", color: "#000",
+              background: "transparent", fontSize: "16px", color: "#000",
             }}
           />
           {query && (
