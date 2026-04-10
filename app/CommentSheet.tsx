@@ -27,23 +27,13 @@ export default function CommentSheet({
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const scrollYRef = useRef(0);
   const [phase, setPhase] = useState<"mounting" | "open" | "closing">("mounting");
 
   useEffect(() => {
-    scrollYRef.current = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollYRef.current}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    // Wait 2 frames so the browser has painted the empty backdrop before we animate in
+    document.body.style.overflow = "hidden";
     requestAnimationFrame(() => requestAnimationFrame(() => setPhase("open")));
     return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      window.scrollTo(0, scrollYRef.current);
+      document.body.style.overflow = "";
     };
   }, []);
 
