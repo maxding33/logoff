@@ -143,7 +143,7 @@ export default function FeedPost({
           </div>
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "12px", color: "#999", marginRight: "2px" }}>{post.createdAt}</span>
+          <span style={{ fontSize: "12px", color: "#999", marginRight: "4px" }}>{post.createdAt}</span>
           {(isOwnPost ? !!onDeletePost : !!onReport) && (
             <div ref={menuRef} style={{ position: "relative" }}>
               <button
