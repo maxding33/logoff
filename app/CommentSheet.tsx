@@ -27,29 +27,32 @@ export default function CommentSheet({
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const scrollYRef = useRef(0);
+  const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
-    // Lock body scroll while sheet is open
-    const scrollY = window.scrollY;
+    // Lock body scroll
+    scrollYRef.current = window.scrollY;
     document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
+    document.body.style.top = `-${scrollYRef.current}px`;
     document.body.style.left = "0";
     document.body.style.right = "0";
-    // Don't auto-focus — let user read comments first
+    // Trigger enter animation on next frame
+    requestAnimationFrame(() => setVisible(true));
     return () => {
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.left = "";
       document.body.style.right = "";
-      window.scrollTo(0, scrollY);
+      window.scrollTo(0, scrollYRef.current);
     };
   }, []);
 
   const handleClose = () => {
     setClosing(true);
-    setTimeout(onClose, 250);
+    setVisible(false);
+    setTimeout(onClose, 280);
   };
 
   const handleSubmit = () => {
@@ -67,15 +70,14 @@ export default function CommentSheet({
         position: "fixed",
         inset: 0,
         zIndex: 100,
-        background: closing ? "transparent" : "rgba(0,0,0,0.35)",
-        transition: "background 0.25s ease",
+        background: visible && !closing ? "rgba(0,0,0,0.35)" : "transparent",
+        transition: "background 0.28s ease",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
       }}
     >
       <div
-        ref={sheetRef}
         style={{
           background: "#fff",
           borderRadius: "16px 16px 0 0",
@@ -83,9 +85,8 @@ export default function CommentSheet({
           maxHeight: "70vh",
           display: "flex",
           flexDirection: "column",
-          transform: closing ? "translateY(100%)" : "translateY(0)",
-          transition: "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)",
-          animation: closing ? undefined : "sheet-up 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
+          transform: visible && !closing ? "translateY(0)" : "translateY(100%)",
+          transition: "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
       >
         {/* Handle */}
@@ -149,6 +150,7 @@ export default function CommentSheet({
           gap: "8px",
           alignItems: "center",
           background: "#fff",
+          borderRadius: "0 0 0 0",
         }}>
           <input
             ref={inputRef}
@@ -187,13 +189,6 @@ export default function CommentSheet({
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes sheet-up {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }
