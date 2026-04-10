@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
+import CommentSheet from "./CommentSheet";
 import type { Post } from "./types";
 import type { ReportTarget } from "../lib/reports";
 
@@ -64,34 +65,15 @@ export default function FeedPost({
   onDeleteComment,
   onReport,
 }: FeedPostProps) {
-  const [commentText, setCommentText] = useState("");
-  const [showCommentInput, setShowCommentInput] = useState(false);
+  const [showCommentSheet, setShowCommentSheet] = useState(false);
   const [bouncing, setBouncing] = useState(false);
   const [floatingHeart, setFloatingHeart] = useState<{ x: number; y: number; key: number } | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const lastTapRef = useRef<number>(0);
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const commentRef = useRef<HTMLDivElement | null>(null);
-  const commentButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   const isOwnPost = post.user === currentUsername;
-
-  useEffect(() => {
-    if (!showCommentInput) return;
-    const handler = (e: MouseEvent | TouchEvent) => {
-      if (commentButtonRef.current?.contains(e.target as Node)) return;
-      if (commentRef.current && !commentRef.current.contains(e.target as Node)) {
-        setShowCommentInput(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    document.addEventListener("touchstart", handler);
-    return () => {
-      document.removeEventListener("mousedown", handler);
-      document.removeEventListener("touchstart", handler);
-    };
-  }, [showCommentInput]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -138,15 +120,19 @@ export default function FeedPost({
     onToggleLike(post.id);
   };
 
-  const handleSubmitComment = () => {
-    const trimmedComment = commentText.trim();
-    if (!trimmedComment) return;
-    onAddComment(post.id, trimmedComment);
-    setCommentText("");
-    setShowCommentInput(false);
-  };
-
   return (
+    <>
+    {showCommentSheet && (
+      <CommentSheet
+        comments={post.comments}
+        postId={post.id}
+        currentUserId={currentUserId}
+        onAddComment={onAddComment}
+        onDeleteComment={onDeleteComment}
+        onReport={onReport}
+        onClose={() => setShowCommentSheet(false)}
+      />
+    )}
     <article style={{ borderBottom: "1px solid #e5e5e5" }}>
       {/* Header */}
       <div style={{
@@ -360,10 +346,9 @@ export default function FeedPost({
             </span>
           </button>
           <button
-            ref={commentButtonRef}
             type="button"
-            onClick={() => setShowCommentInput((v) => !v)}
-            aria-label="Toggle comment input"
+            onClick={() => setShowCommentSheet(true)}
+            aria-label="Open comments"
             style={{
               border: "none",
               background: "transparent",
@@ -393,83 +378,8 @@ export default function FeedPost({
           </p>
         )}
 
-        {/* Comments + input - only shown when toggled */}
-        {showCommentInput && (
-          <div ref={commentRef}>
-            {post.comments.length > 0 && (
-              <div style={{ marginBottom: "8px" }}>
-                {post.comments.map((comment) => (
-                  <div key={comment.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 4px" }}>
-                    <p style={{ margin: 0, fontSize: "12px", color: "#777", lineHeight: 1.4 }}>
-                      <span style={{ fontWeight: 700, color: "#555" }}>{comment.user}</span>{" "}{comment.text}
-                    </p>
-                    {comment.userId === currentUserId && onDeleteComment ? (
-                      <button
-                        onClick={() => onDeleteComment(post.id, comment.id)}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "#ccc", fontSize: "14px", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0 }}
-                      >
-                        ×
-                      </button>
-                    ) : comment.userId !== currentUserId && onReport ? (
-                      <button
-                        onClick={() => onReport({ type: "comment", commentId: comment.id, reportedUserId: comment.userId })}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "#ddd", padding: "0 0 0 8px", lineHeight: 1, flexShrink: 0, display: "flex", alignItems: "center" }}
-                        aria-label="Report comment"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />
-                        </svg>
-                      </button>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", borderTop: "1px solid #f0f0f0", paddingTop: "10px" }}>
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSubmitComment();
-                }
-              }}
-              placeholder="add a comment..."
-              autoFocus
-              style={{
-                flex: 1,
-                border: "none",
-                outline: "none",
-                fontSize: "16px",
-                color: "#000",
-                background: "transparent",
-                minHeight: "44px",
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleSubmitComment}
-              style={{
-                border: "none",
-                background: "transparent",
-                color: "#000",
-                fontWeight: 700,
-                fontSize: "13px",
-                cursor: "pointer",
-                padding: "4px 0",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "transparent",
-                minHeight: "44px",
-              }}
-            >
-              post
-            </button>
-          </div>
-          </div>
-        )}
       </div>
     </article>
+    </>
   );
 }
