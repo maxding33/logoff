@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, RefObject, useState } from "react";
+import { ChangeEvent, RefObject, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,11 +14,24 @@ type BottomNavProps = {
 export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly, onGamePress }: BottomNavProps) {
   const pathname = usePathname();
   const [tapped, setTapped] = useState<"home" | "profile" | null>(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      setKeyboardOpen(vv.height < window.innerHeight * 0.75);
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, []);
 
   const handleTap = (icon: "home" | "profile") => {
     setTapped(icon);
     setTimeout(() => setTapped(null), 400);
   };
+
+  if (keyboardOpen) return null;
 
   return (
     <nav
