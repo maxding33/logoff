@@ -8,6 +8,9 @@ const config: CapacitorConfig = {
     url: 'https://project-pjd7w.vercel.app',
     cleartext: false,
   },
+  ios: {
+    preferredContentMode: 'mobile',
+  },
 };
 
 export default config;
