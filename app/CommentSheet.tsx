@@ -28,18 +28,16 @@ export default function CommentSheet({
   const inputRef = useRef<HTMLInputElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const scrollYRef = useRef(0);
-  const [visible, setVisible] = useState(false);
-  const [closing, setClosing] = useState(false);
+  const [phase, setPhase] = useState<"mounting" | "open" | "closing">("mounting");
 
   useEffect(() => {
-    // Lock body scroll
     scrollYRef.current = window.scrollY;
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollYRef.current}px`;
     document.body.style.left = "0";
     document.body.style.right = "0";
-    // Trigger enter animation on next frame
-    requestAnimationFrame(() => setVisible(true));
+    // Wait 2 frames so the browser has painted the empty backdrop before we animate in
+    requestAnimationFrame(() => requestAnimationFrame(() => setPhase("open")));
     return () => {
       document.body.style.position = "";
       document.body.style.top = "";
@@ -50,8 +48,8 @@ export default function CommentSheet({
   }, []);
 
   const handleClose = () => {
-    setClosing(true);
-    setVisible(false);
+    if (phase === "closing") return;
+    setPhase("closing");
     setTimeout(onClose, 280);
   };
 
@@ -62,6 +60,18 @@ export default function CommentSheet({
     setText("");
   };
 
+  // During mounting phase, render only an invisible backdrop — no sheet yet
+  if (phase === "mounting") {
+    return (
+      <div style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        background: "transparent",
+      }} />
+    );
+  }
+
   return (
     <div
       ref={backdropRef}
@@ -70,7 +80,7 @@ export default function CommentSheet({
         position: "fixed",
         inset: 0,
         zIndex: 100,
-        background: visible && !closing ? "rgba(0,0,0,0.35)" : "transparent",
+        background: phase === "open" ? "rgba(0,0,0,0.35)" : "transparent",
         transition: "background 0.28s ease",
         display: "flex",
         flexDirection: "column",
@@ -84,7 +94,7 @@ export default function CommentSheet({
           height: "45vh",
           display: "flex",
           flexDirection: "column",
-          transform: visible && !closing ? "translateY(0)" : "translateY(100%)",
+          transform: phase === "open" ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
         }}
       >
@@ -149,7 +159,6 @@ export default function CommentSheet({
           gap: "8px",
           alignItems: "center",
           background: "#fff",
-          borderRadius: "0 0 0 0",
         }}>
           <input
             ref={inputRef}
