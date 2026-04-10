@@ -12,6 +12,7 @@
     "@capacitor/cli": "^8.3.0",
     "@capacitor/core": "^8.3.0",
     "@capacitor/ios": "^8.3.0",
+    "@capacitor/local-notifications": "^8.0.2",
     "@capacitor/status-bar": "^8.0.2",
     "@supabase/supabase-js": "^2.100.1",
     "mapbox-gl": "^3.21.0",

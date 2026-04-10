@@ -3,25 +3,40 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { registerAndSubscribe } from "../lib/notifications";
+import { isCapacitor, requestNativePermission, checkNativePermission, scheduleDailyChallenge } from "../lib/capacitor-notifications";
 
 export default function NotificationSetup() {
   const [show, setShow] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [denied, setDenied] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
-    if (!("Notification" in window)) return;
-    if (Notification.permission === "granted") return; // already set up
-    if (Notification.permission === "denied") return; // user said no
 
-    // Check if already subscribed (stored flag)
-    if (localStorage.getItem("push_subscribed")) return;
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      setUserId(user.id);
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserId(user.id);
-        // Show the prompt after a short delay so it doesn't feel jarring
+      if (isCapacitor()) {
+        // Native Capacitor path
+        const perm = await checkNativePermission();
+        if (perm === "granted") {
+          // Already granted — reschedule daily notification
+          scheduleDailyChallenge();
+          return;
+        }
+        if (perm === "denied") return;
+        // Permission not yet requested — show prompt
+        if (!localStorage.getItem("push_subscribed")) {
+          setTimeout(() => setShow(true), 3000);
+        }
+      } else {
+        // Web/PWA path
+        if (!("Notification" in window)) return;
+        if (Notification.permission === "granted") return;
+        if (Notification.permission === "denied") return;
+        if (localStorage.getItem("push_subscribed")) return;
         setTimeout(() => setShow(true), 3000);
       }
     });
@@ -30,11 +45,25 @@ export default function NotificationSetup() {
   const handleAllow = async () => {
     if (!userId) return;
     setShow(false);
-    const ok = await registerAndSubscribe(userId);
-    if (ok) {
-      localStorage.setItem("push_subscribed", "1");
-      setDone(true);
-      setTimeout(() => setDone(false), 3000);
+
+    if (isCapacitor()) {
+      const granted = await requestNativePermission();
+      if (granted) {
+        localStorage.setItem("push_subscribed", "1");
+        await scheduleDailyChallenge();
+        setDone(true);
+        setTimeout(() => setDone(false), 3000);
+      } else {
+        setDenied(true);
+        setTimeout(() => setDenied(false), 5000);
+      }
+    } else {
+      const ok = await registerAndSubscribe(userId);
+      if (ok) {
+        localStorage.setItem("push_subscribed", "1");
+        setDone(true);
+        setTimeout(() => setDone(false), 3000);
+      }
     }
   };
 
@@ -42,6 +71,24 @@ export default function NotificationSetup() {
     setShow(false);
     localStorage.setItem("push_subscribed", "dismissed");
   };
+
+  if (denied) {
+    return (
+      <div style={{
+        position: "fixed", bottom: "96px", left: "16px", right: "16px",
+        background: "#fff", border: "1px solid #e5e5e5",
+        borderRadius: "16px", padding: "18px",
+        zIndex: 100, boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+      }}>
+        <p style={{ margin: "0 0 4px", fontSize: "15px", fontWeight: 700 }}>
+          notifications blocked
+        </p>
+        <p style={{ margin: 0, fontSize: "13px", color: "#666", lineHeight: 1.5 }}>
+          go to Settings → LOGOFF → Notifications and turn them on.
+        </p>
+      </div>
+    );
+  }
 
   if (done) {
     return (
