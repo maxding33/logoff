@@ -252,7 +252,7 @@ export default function LogReel({
       {/* Right side: like + comment + delete */}
       <div style={{ position: "fixed", bottom: "48px", right: "20px", zIndex: 5, display: "flex", flexDirection: "column", alignItems: "center", gap: "28px" }}>
         <button type="button" onClick={() => onToggleLike(post.id)} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "5px", touchAction: "manipulation", WebkitTapHighlightColor: "transparent" }}>
-          <svg width="34" height="34" viewBox="0 0 24 24" fill={post.liked ? "#4a7c59" : "none"} stroke={post.liked ? "#4a7c59" : "#fff"} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill={post.liked ? "#4a7c59" : "none"} stroke="#fff" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
           <span style={{ color: "#fff", fontSize: "13px", fontWeight: 700 }}>{post.likes}</span>
