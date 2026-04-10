@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "../Avatar";
 import { supabase } from "../../lib/supabase";
+import { getBlockedIds } from "../../lib/blocks";
 
 type UserResult = { id: string; username: string; display_name: string | null; avatar_url: string | null };
 
@@ -12,12 +13,15 @@ export default function SearchPage() {
   const [results, setResults] = useState<UserResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [blockedIds, setBlockedIds] = useState<string[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setCurrentUserId(user.id);
+      if (!user) return;
+      setCurrentUserId(user.id);
+      getBlockedIds(user.id).then(setBlockedIds).catch(() => {});
     });
   }, []);
 
@@ -34,12 +38,12 @@ export default function SearchPage() {
         .select("id, username, display_name, avatar_url")
         .or(`username.ilike.%${trimmed}%,display_name.ilike.%${trimmed}%`)
         .limit(30);
-      setResults((data ?? []).filter((u) => u.id !== currentUserId));
+      setResults((data ?? []).filter((u) => u.id !== currentUserId && !blockedIds.includes(u.id)));
       setLoading(false);
     }, 200);
 
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [query, currentUserId]);
+  }, [query, currentUserId, blockedIds]);
 
   return (
     <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>

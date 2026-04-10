@@ -10,6 +10,7 @@ import { fetchPosts } from "../../../lib/posts";
 import type { Post } from "../../types";
 import ReportSheet from "../../ReportSheet";
 import type { ReportTarget } from "../../../lib/reports";
+import { blockUser, unblockUser, checkIsBlocked } from "../../../lib/blocks";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -34,6 +35,7 @@ export default function UserProfilePage() {
   const [expandedPost, setExpandedPost] = useState<Post | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -76,6 +78,7 @@ export default function UserProfilePage() {
       setFollowedBy(status.followedBy);
       setPendingThem(status.pendingThem);
       setFriendsCount(friends);
+      checkIsBlocked(user.id, target.id).then(setIsBlocked).catch(() => {});
       setLoading(false);
     });
   }, [name]);
@@ -135,10 +138,29 @@ export default function UserProfilePage() {
               </svg>
             </button>
             {showUserMenu && (
-              <div style={{ position: "absolute", right: 0, top: "100%", background: "#fff", border: "1px solid #e5e5e5", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: "140px", overflow: "hidden" }}>
+              <div style={{ position: "absolute", right: 0, top: "100%", background: "#fff", border: "1px solid #e5e5e5", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: "160px", overflow: "hidden" }}>
                 <button
-                  onClick={() => { setShowUserMenu(false); setReportTarget({ type: "user", reportedUserId: targetUserId }); }}
-                  style={{ display: "block", width: "100%", padding: "14px 16px", border: "none", background: "transparent", textAlign: "left", fontSize: "14px", color: "#000", fontWeight: 600, cursor: "pointer" }}
+                  onClick={async () => {
+                    setShowUserMenu(false);
+                    if (!currentUserId || !targetUserId) return;
+                    if (isBlocked) {
+                      await unblockUser(currentUserId, targetUserId);
+                      setIsBlocked(false);
+                    } else {
+                      await blockUser(currentUserId, targetUserId);
+                      setIsBlocked(true);
+                      // Remove follow relationship on block
+                      if (following) await unfollowUser(currentUserId, targetUserId).catch(() => {});
+                      setFollowing(false);
+                    }
+                  }}
+                  style={{ display: "block", width: "100%", padding: "14px 16px", border: "none", background: "transparent", textAlign: "left", fontSize: "14px", color: isBlocked ? "#4a7c59" : "#e53935", fontWeight: 600, cursor: "pointer" }}
+                >
+                  {isBlocked ? "Unblock user" : "Block user"}
+                </button>
+                <button
+                  onClick={() => { setShowUserMenu(false); setReportTarget({ type: "user", reportedUserId: targetUserId! }); }}
+                  style={{ display: "block", width: "100%", padding: "14px 16px", border: "none", background: "transparent", textAlign: "left", fontSize: "14px", color: "#000", fontWeight: 600, cursor: "pointer", borderTop: "1px solid #f0f0f0" }}
                 >
                   Report user
                 </button>

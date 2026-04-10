@@ -7,6 +7,7 @@ import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLas
 import Avatar from "../../Avatar";
 import ReportSheet from "../../ReportSheet";
 import type { ReportTarget } from "../../../lib/reports";
+import { blockUser, unblockUser, checkIsBlocked } from "../../../lib/blocks";
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -46,6 +47,8 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(getCachedMessages(conversationId).length === 0);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastSeenInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -67,6 +70,10 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         setCachedMembers(conversationId, mems);
         await markAsRead(conversationId, user.id);
         await updateLastSeen(user.id);
+        const otherMember = mems.find((m) => m.userId !== user.id);
+        if (otherMember) {
+          checkIsBlocked(user.id, otherMember.userId).then(setIsBlocked).catch(() => {});
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -200,6 +207,43 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           <p style={{ margin: 0, fontSize: "14px", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</p>
           {otherOnline && <p style={{ margin: 0, fontSize: "11px", color: "#4a7c59" }}>online</p>}
         </div>
+        {other && currentUserId && (
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <button
+              onClick={() => setShowHeaderMenu((v) => !v)}
+              style={{ background: "none", border: "none", cursor: "pointer", minWidth: "44px", minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center", color: "#999" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+              </svg>
+            </button>
+            {showHeaderMenu && (
+              <div style={{ position: "absolute", right: 0, top: "100%", background: "#fff", border: "1px solid #e5e5e5", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: "160px", overflow: "hidden" }}>
+                <button
+                  onClick={async () => {
+                    setShowHeaderMenu(false);
+                    if (isBlocked) {
+                      await unblockUser(currentUserId, other.userId);
+                      setIsBlocked(false);
+                    } else {
+                      await blockUser(currentUserId, other.userId);
+                      setIsBlocked(true);
+                    }
+                  }}
+                  style={{ display: "block", width: "100%", padding: "14px 16px", border: "none", background: "transparent", textAlign: "left", fontSize: "14px", color: isBlocked ? "#4a7c59" : "#e53935", fontWeight: 600, cursor: "pointer" }}
+                >
+                  {isBlocked ? "Unblock user" : "Block user"}
+                </button>
+                <button
+                  onClick={() => { setShowHeaderMenu(false); setReportTarget({ type: "user", reportedUserId: other.userId }); }}
+                  style={{ display: "block", width: "100%", padding: "14px 16px", border: "none", background: "transparent", textAlign: "left", fontSize: "14px", color: "#000", fontWeight: 600, cursor: "pointer", borderTop: "1px solid #f0f0f0" }}
+                >
+                  Report user
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Messages */}
@@ -268,6 +312,17 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Input */}
+      {isBlocked ? (
+        <div style={{ padding: "14px 16px calc(14px + env(safe-area-inset-bottom))", borderTop: "1px solid #e5e5e5", background: "#fafafa", textAlign: "center" }}>
+          <p style={{ margin: "0 0 6px", fontSize: "13px", color: "#999" }}>You&apos;ve blocked this user.</p>
+          <button
+            onClick={async () => { if (!currentUserId || !other) return; await unblockUser(currentUserId, other.userId); setIsBlocked(false); }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 700, color: "#000", padding: 0 }}
+          >
+            Unblock
+          </button>
+        </div>
+      ) : (
       <div style={{
         padding: "10px 16px calc(10px + env(safe-area-inset-bottom))",
         borderTop: "1px solid #e5e5e5",
@@ -303,6 +358,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           </svg>
         </button>
       </div>
+      )}
       {reportTarget && currentUserId && (
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}

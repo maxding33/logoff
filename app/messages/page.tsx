@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 import { getConversations, getOrCreateDM, createGroupChat, isOnline, type Conversation } from "../../lib/messages";
 import { getFriends } from "../../lib/follows";
+import { getBlockedIds } from "../../lib/blocks";
 import Avatar from "../Avatar";
 
 function formatTime(iso: string): string {
@@ -44,6 +45,7 @@ export default function MessagesPage() {
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [groupName, setGroupName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [blockedIds, setBlockedIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -58,6 +60,7 @@ export default function MessagesPage() {
       else console.error("[messages] getConversations error:", convsResult.reason);
       if (friendsResult.status === "fulfilled") { setFriends(friendsResult.value); cachedFriends = friendsResult.value; }
       else console.error("[messages] getFriends error:", friendsResult.reason);
+      getBlockedIds(user.id).then(setBlockedIds).catch(() => {});
       setLoading(false);
     });
   }, []);
@@ -146,7 +149,7 @@ export default function MessagesPage() {
         </p>
       ) : (
         <div>
-          {conversations.map((conv) => {
+          {conversations.filter((conv) => !(!conv.isGroup && conv.members[0] && blockedIds.includes(conv.members[0].userId))).map((conv) => {
             const name = getConvName(conv, currentUserId ?? "");
             const avatar = conv.isGroup ? null : getConvAvatar(conv);
             const other = conv.members[0];
@@ -216,9 +219,9 @@ export default function MessagesPage() {
               <button onClick={() => setShowNewDM(false)} style={{ background: "none", border: "none", fontSize: "22px", color: "#999", cursor: "pointer", lineHeight: 1 }}>×</button>
             </div>
             <div style={{ overflowY: "auto", flex: 1 }}>
-              {friends.length === 0 ? (
+              {friends.filter((f) => !blockedIds.includes(f.id)).length === 0 ? (
                 <p style={{ textAlign: "center", color: "#aaa", fontSize: "13px", padding: "32px 16px" }}>no friends yet. add some first</p>
-              ) : friends.map((f) => (
+              ) : friends.filter((f) => !blockedIds.includes(f.id)).map((f) => (
                 <button key={f.id} onClick={() => handleStartDM(f.id)} disabled={creating}
                   style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: "12px 20px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left" }}>
                   <Avatar name={f.username} size={40} avatarUrl={f.avatarUrl} />
@@ -253,9 +256,9 @@ export default function MessagesPage() {
               />
             </div>
             <div style={{ overflowY: "auto", flex: 1 }}>
-              {friends.length === 0 ? (
+              {friends.filter((f) => !blockedIds.includes(f.id)).length === 0 ? (
                 <p style={{ textAlign: "center", color: "#aaa", fontSize: "13px", padding: "32px 16px" }}>no friends yet</p>
-              ) : friends.map((f) => {
+              ) : friends.filter((f) => !blockedIds.includes(f.id)).map((f) => {
                 const selected = selectedFriends.includes(f.id);
                 return (
                   <button key={f.id} onClick={() => toggleFriend(f.id)}

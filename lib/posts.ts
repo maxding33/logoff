@@ -75,10 +75,10 @@ async function getFriendIds(currentUserId: string): Promise<string[]> {
   return (theyFollow ?? []).filter((r) => iFollowIds.has(r.follower_id)).map((r) => r.follower_id);
 }
 
-export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
+export async function fetchFeedPosts(currentUserId: string, blockedIds: string[] = []): Promise<Post[]> {
   const client = getClient();
   const friendIds = await getFriendIds(currentUserId);
-  const userIds = [currentUserId, ...friendIds];
+  const userIds = [currentUserId, ...friendIds.filter((id) => !blockedIds.includes(id))];
 
   const { data, error } = await client
     .from("posts")
@@ -91,10 +91,10 @@ export async function fetchFeedPosts(currentUserId: string): Promise<Post[]> {
   return (data ?? []).map((p) => mapPost(p as unknown as RawPost, currentUserId));
 }
 
-export async function fetchFreePosts(currentUserId: string): Promise<Post[]> {
+export async function fetchFreePosts(currentUserId: string, blockedIds: string[] = []): Promise<Post[]> {
   const client = getClient();
   const friendIds = await getFriendIds(currentUserId);
-  const userIds = [currentUserId, ...friendIds];
+  const userIds = [currentUserId, ...friendIds.filter((id) => !blockedIds.includes(id))];
 
   const { data, error } = await client
     .from("posts")

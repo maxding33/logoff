@@ -8,6 +8,7 @@ import UploadModal from "./UploadModal";
 import type { Post } from "./types";
 import { supabase } from "../lib/supabase";
 import { fetchFeedPosts, fetchFreePosts, uploadPhoto, preparePhoto, createPost, toggleLike, addComment, deletePost, deleteComment } from "../lib/posts";
+import { getBlockedIds } from "../lib/blocks";
 import FreePostGrid from "./FreePostGrid";
 import FriendsMap from "./FriendsMap";
 import LogReel from "./LogReel";
@@ -35,6 +36,7 @@ function HomeInner() {
   const [activeTab, setActiveTab] = useState<"challenge" | "free">("challenge");
   const [reelIndex, setReelIndex] = useState<number | null>(null);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [blockedIds, setBlockedIds] = useState<string[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [streak, setStreak] = useState(0);
@@ -173,14 +175,15 @@ function HomeInner() {
     getStreak(currentUserId).then(({ current }) => setStreak(current));
     getUnreadCount(currentUserId).then(setUnreadMessages).catch(() => {});
     updateLastSeen(currentUserId).catch(() => {});
+    getBlockedIds(currentUserId).then(setBlockedIds).catch(() => {});
   }, [currentUserId]);
 
-  const loadPosts = useCallback(async (userId: string, quiet = false) => {
+  const loadPosts = useCallback(async (userId: string, quiet = false, blocked: string[] = []) => {
     if (!quiet) setLoading(true);
     try {
       const [fetched, fetchedFree] = await Promise.all([
-        fetchFeedPosts(userId),
-        fetchFreePosts(userId),
+        fetchFeedPosts(userId, blocked),
+        fetchFreePosts(userId, blocked),
       ]);
       setPosts(fetched);
       cachedPosts = fetched;
@@ -198,8 +201,8 @@ function HomeInner() {
   // Initial load — quiet if we have cached posts already
   useEffect(() => {
     if (!currentUserId) return;
-    loadPosts(currentUserId, cachedPosts.length > 0);
-  }, [currentUserId, loadPosts]);
+    loadPosts(currentUserId, cachedPosts.length > 0, blockedIds);
+  }, [currentUserId, loadPosts, blockedIds]);
 
   // Supabase Realtime — re-fetch whenever posts/likes/comments change
   useEffect(() => {
@@ -400,8 +403,8 @@ function HomeInner() {
     // Step 4: refresh feeds + finish
     try {
       const [updated, updatedFree] = await Promise.all([
-        fetchFeedPosts(currentUserId),
-        fetchFreePosts(currentUserId),
+        fetchFeedPosts(currentUserId, blockedIds),
+        fetchFreePosts(currentUserId, blockedIds),
       ]);
       setPosts(updated);
       cachedPosts = updated;
