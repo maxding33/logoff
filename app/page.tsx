@@ -572,7 +572,7 @@ function HomeInner() {
           <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{streak} 🔥</span>
           <Link href="/messages" style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", color: "#000", minWidth: "44px", minHeight: "53px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
             </svg>
             {unreadMessages > 0 && (
               <span style={{
