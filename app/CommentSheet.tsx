@@ -79,6 +79,7 @@ export default function CommentSheet({
         style={{
           background: "#fff",
           borderRadius: "16px 16px 0 0",
+          height: "45vh",
           maxHeight: "70vh",
           display: "flex",
           flexDirection: "column",
