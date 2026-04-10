@@ -564,7 +564,7 @@ function HomeInner() {
             {challengeTimer}
           </p>
         ) : (
-          <p style={{ margin: 0, fontSize: "18px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000" }}>
+          <p style={{ margin: 0, fontSize: "18px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000", marginRight: "-0.12em" }}>
             LOG<span style={{ color: "#4a7c59" }}>OFF</span>
           </p>
         )}
