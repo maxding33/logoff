@@ -145,7 +145,7 @@ export default function MessagesPage() {
       onTouchEnd={handleTouchEnd}
       style={{
         minHeight: "100vh", background: "#fff", paddingBottom: "80px",
-        animation: exitingBack ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+        animation: undefined,
         transform: swipingBack || exitingBack ? `translateX(${exitingBack ? "100%" : `${swipeX}px`})` : undefined,
         transition: swipingBack ? undefined : "transform 0.2s ease",
         opacity: swipingBack ? Math.max(0.6, 1 - swipeX / 500) : undefined,
