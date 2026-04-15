@@ -248,7 +248,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
 
       {/* Messages */}
       <div style={{ flex: 1, overflowY: "auto", padding: "12px 0", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-        {loading ? (
+        {loading || !currentUserId ? (
           <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>loading...</p>
         ) : messages.length === 0 ? (
           <p style={{ textAlign: "center", color: "#999", fontSize: "13px", padding: "48px 16px" }}>no messages yet. say hi</p>
