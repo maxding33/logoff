@@ -2,12 +2,12 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../lib/supabase";
-import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLastSeen, isOnline, getCachedMessages, getCachedMembers, setCachedMessages, setCachedMembers, getCachedConversationList, type Message, type ConversationMember, type Conversation } from "../../../lib/messages";
-import Avatar from "../../Avatar";
-import ReportSheet from "../../ReportSheet";
-import type { ReportTarget } from "../../../lib/reports";
-import { blockUser, unblockUser, checkIsBlocked } from "../../../lib/blocks";
+import { supabase } from "../../../../../lib/supabase";
+import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLastSeen, isOnline, getCachedMessages, getCachedMembers, setCachedMessages, setCachedMembers, getCachedConversationList, type Message, type ConversationMember, type Conversation } from "../../../../../lib/messages";
+import Avatar from "../../../../Avatar";
+import ReportSheet from "../../../../ReportSheet";
+import type { ReportTarget } from "../../../../../lib/reports";
+import { blockUser, unblockUser, checkIsBlocked } from "../../../../../lib/blocks";
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -85,14 +85,12 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     });
   }, [conversationId]);
 
-  // Keep last_seen fresh while in conversation
   useEffect(() => {
     if (!currentUserId) return;
     lastSeenInterval.current = setInterval(() => updateLastSeen(currentUserId), 60000);
     return () => { if (lastSeenInterval.current) clearInterval(lastSeenInterval.current); };
   }, [currentUserId]);
 
-  // Realtime messages
   useEffect(() => {
     if (!supabase || !currentUserId) return;
     const msgChannel = supabase
@@ -126,7 +124,6 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     };
   }, [conversationId, currentUserId]);
 
-  // Smooth scroll to bottom only for new incoming messages
   const prevMessageCount = useRef(messages.length);
   useEffect(() => {
     if (messages.length > prevMessageCount.current) {
@@ -143,7 +140,6 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     try {
       const msg = await sendMessage(conversationId, currentUserId, trimmed);
       setMessages((prev) => [...prev, msg]);
-      // Fire push notification (don't await)
       fetch("/api/messages/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -171,7 +167,6 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const other = !isGroup ? members[0] : null;
   const otherOnline = other ? isOnline(other.lastSeen) : false;
 
-  // Read receipt: find last message seen by all other members
   const getReadState = (msg: Message): boolean => {
     if (msg.senderId !== currentUserId) return false;
     return members.some((m) => m.userId !== currentUserId && new Date(m.lastReadAt) >= new Date(msg.createdAt));
@@ -185,7 +180,6 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const [swipeX, setSwipeX] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const [exiting, setExiting] = useState(false);
-
   const directionLocked = useRef<"horizontal" | "vertical" | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -213,7 +207,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     if (!swipeStart.current || !swiping) { swipeStart.current = null; return; }
     if (swipeX > 100) {
       setExiting(true);
-      setTimeout(() => router.back(), 200);
+      setTimeout(() => router.push("/messages"), 200);
     } else {
       setSwipeX(0);
       setSwiping(false);
@@ -222,48 +216,18 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <>
-    {(swiping || exiting) && (
-      <div style={{ position: "fixed", inset: 0, zIndex: -1, background: "#fff", overflow: "hidden" }}>
-        <div style={{ padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, letterSpacing: "0.06em" }}>messages</p>
-        </div>
-        {getCachedConversationList().map((conv) => {
-          const other = conv.members[0];
-          const name = conv.isGroup && conv.name ? conv.name : other ? `@${other.username}` : "unknown";
-          return (
-            <div key={conv.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderBottom: "1px solid #f0f0f0" }}>
-              <div style={{ flexShrink: 0 }}>
-                {conv.isGroup ? (
-                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#e5e5e5" }} />
-                ) : (
-                  <Avatar name={other?.username ?? "?"} size={48} avatarUrl={other?.avatarUrl ?? null} />
-                )}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: "14px", fontWeight: 600, color: "#000" }}>{name}</span>
-                <p style={{ margin: "2px 0 0", fontSize: "13px", color: "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {conv.lastMessage ? conv.lastMessage.text : "no messages yet"}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-        <div style={{ position: "fixed", inset: 0, background: `rgba(0,0,0,${Math.max(0, 0.08 - (swipeX / 1000))})`, pointerEvents: "none", transition: exiting ? "background 0.2s ease" : undefined }} />
-      </div>
-    )}
     <main
       ref={mainRef}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        display: "flex", flexDirection: "column", height: "100vh", background: "#fff",
+        position: "fixed", inset: 0, zIndex: 60,
+        display: "flex", flexDirection: "column", background: "#fff",
         boxShadow: swiping || exiting ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
         animation: exiting ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
         transform: swiping || exiting ? `translateX(${exiting ? "100%" : `${swipeX}px`})` : undefined,
         transition: swiping ? undefined : "transform 0.2s ease",
-        opacity: swiping ? Math.max(0.6, 1 - swipeX / 500) : undefined,
       }}
     >
       <style>{`
@@ -277,7 +241,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
         display: "flex", alignItems: "center", gap: "10px", flexShrink: 0,
       }}>
-        <button onClick={() => router.back()} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px", color: "#000" }}>
+        <button onClick={() => router.push("/messages")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px", color: "#000" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
@@ -457,6 +421,5 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
     </main>
-    </>
   );
 }

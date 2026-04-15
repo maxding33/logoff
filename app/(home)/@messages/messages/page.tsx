@@ -3,12 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "../../lib/supabase";
-import { getConversations, getOrCreateDM, createGroupChat, isOnline, setCachedConversationList, type Conversation } from "../../lib/messages";
-import { getFriends } from "../../lib/follows";
-import { getBlockedIds } from "../../lib/blocks";
-import Avatar from "../Avatar";
-import { getHomeCache } from "../../lib/homeCache";
+import { supabase } from "../../../../lib/supabase";
+import { getConversations, getOrCreateDM, createGroupChat, isOnline, setCachedConversationList, type Conversation } from "../../../../lib/messages";
+import { getFriends } from "../../../../lib/follows";
+import { getBlockedIds } from "../../../../lib/blocks";
+import Avatar from "../../../Avatar";
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -112,7 +111,6 @@ export default function MessagesPage() {
   const [swipingBack, setSwipingBack] = useState(false);
   const [exitingBack, setExitingBack] = useState(false);
   const mountTime = useRef(Date.now());
-
   const directionLocked = useRef<"horizontal" | "vertical" | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -126,7 +124,6 @@ export default function MessagesPage() {
     const touch = e.touches[0];
     const dx = touch.clientX - swipeStart.current.x;
     const dy = Math.abs(touch.clientY - swipeStart.current.y);
-    // Lock direction after 10px of movement
     if (!directionLocked.current && (dx > 10 || dy > 10)) {
       directionLocked.current = dx > dy ? "horizontal" : "vertical";
     }
@@ -140,78 +137,35 @@ export default function MessagesPage() {
     if (!swipeStart.current || !swipingBack) { swipeStart.current = null; return; }
     if (swipeX > 100) {
       setExitingBack(true);
-      setTimeout(() => router.back(), 200);
+      setTimeout(() => router.push("/"), 200);
     } else {
       setSwipeX(0); setSwipingBack(false);
     }
     swipeStart.current = null;
   };
 
-  const homeCache = (swipingBack || exitingBack) ? getHomeCache() : null;
-
   return (
-    <>
-    {(swipingBack || exitingBack) && homeCache && (
-      <div style={{ position: "fixed", inset: 0, zIndex: -1, background: "#fff", overflow: "hidden" }}>
-        {/* Home header */}
-        <header style={{ padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-          <span style={{ position: "absolute", left: "8px", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "52px", minHeight: "53px" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </span>
-          <p style={{ margin: 0, fontSize: "18px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000", marginRight: "-0.12em" }}>
-            LOG<span style={{ color: "#4a7c59" }}>OFF</span>
-          </p>
-          <span style={{ position: "absolute", right: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{homeCache.streak} 🔥</span>
-          </span>
-        </header>
-        {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "1px solid #e5e5e5" }}>
-          {(["challenge", "free"] as const).map((tab) => (
-            <div key={tab} style={{ flex: 1, textAlign: "center", padding: "10px 0", fontSize: "13px", fontWeight: 700, letterSpacing: "0.04em", color: homeCache.activeTab === tab ? "#000" : "#bbb", borderBottom: homeCache.activeTab === tab ? "2px solid #000" : "2px solid transparent" }}>
-              {tab}
-            </div>
-          ))}
-        </div>
-        {/* Post previews */}
-        <div style={{ padding: "0 0 96px" }}>
-          {(homeCache.activeTab === "challenge" ? homeCache.posts : homeCache.freePosts).slice(0, 3).map((post) => (
-            <div key={post.id} style={{ padding: "14px 16px", borderBottom: "1px solid #f0f0f0" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <Avatar name={post.user} size={32} avatarUrl={post.avatarUrl} />
-                <span style={{ fontSize: "14px", fontWeight: 700 }}>@{post.user}</span>
-              </div>
-              {post.image && (
-                <div style={{ width: "100%", aspectRatio: "1", borderRadius: "12px", background: "#f0f0f0", overflow: "hidden" }}>
-                  <img src={post.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        {/* Static bottom nav preview */}
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: "80px", background: "#fff", borderTop: "1px solid #e5e5e5", display: "flex", alignItems: "center", justifyContent: "space-around", padding: "0 24px" }}>
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-        </div>
-        <div style={{ position: "fixed", inset: 0, background: `rgba(0,0,0,${Math.max(0, 0.08 - (swipeX / 1000))})`, pointerEvents: "none", transition: exitingBack ? "background 0.2s ease" : undefined }} />
-      </div>
-    )}
     <main
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
-        minHeight: "100vh", background: "#fff", paddingBottom: "80px",
+        position: "fixed", inset: 0, zIndex: 50,
+        background: "#fff", overflowY: "auto",
+        animation: exitingBack ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
         transform: swipingBack || exitingBack ? `translateX(${exitingBack ? "100%" : `${swipeX}px`})` : undefined,
         transition: swipingBack ? undefined : "transform 0.2s ease",
-        opacity: swipingBack ? Math.max(0.6, 1 - swipeX / 500) : undefined,
         boxShadow: swipingBack || exitingBack ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
       }}
     >
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateX(15%); opacity: 0.6; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+      `}</style>
+
       <header style={{
         padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
         display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
@@ -246,6 +200,7 @@ export default function MessagesPage() {
         </div>
       </header>
 
+      <div style={{ paddingBottom: "80px" }}>
       {loading ? (
         <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>loading...</p>
       ) : conversations.length === 0 ? (
@@ -308,6 +263,7 @@ export default function MessagesPage() {
           })}
         </div>
       )}
+      </div>
 
       {/* New DM sheet */}
       {showNewDM && (
@@ -318,7 +274,6 @@ export default function MessagesPage() {
             maxHeight: "70vh", display: "flex", flexDirection: "column",
             animation: "slideUpSheet 0.28s cubic-bezier(0.32,0.72,0,1)",
           }}>
-            <style>{`@keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid #f0f0f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "14px", fontWeight: 700 }}>new message</span>
               <button onClick={() => setShowNewDM(false)} style={{ background: "none", border: "none", fontSize: "22px", color: "#999", cursor: "pointer", lineHeight: 1 }}>×</button>
@@ -390,6 +345,5 @@ export default function MessagesPage() {
         </div>
       )}
     </main>
-    </>
   );
 }

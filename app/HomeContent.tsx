@@ -28,7 +28,7 @@ let cachedFreePosts: Post[] = [];
 let cachedUserId: string | null = null;
 let cachedUsername = "You";
 
-function HomeInner() {
+export default function HomeContent() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileObjectRef = useRef<File | null>(null);
   const preparedBlobRef = useRef<Blob | null>(null);
@@ -872,8 +872,4 @@ function HomeInner() {
       })()}
     </main>
   );
-}
-
-export default function Home() {
-  return <HomeInner />;
 }
