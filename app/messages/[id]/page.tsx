@@ -180,10 +180,10 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const groups = groupMessagesByDate(messages);
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#fff", animation: "slideInRight 0.25s ease-out" }}>
+    <main style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#fff", animation: "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)" }}>
       <style>{`
         @keyframes slideInRight {
-          from { transform: translateX(30%); opacity: 0.5; }
+          from { transform: translateX(15%); opacity: 0.6; }
           to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
