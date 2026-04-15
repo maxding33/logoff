@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../lib/supabase";
-import { getConversations, getOrCreateDM, createGroupChat, isOnline, type Conversation } from "../../lib/messages";
+import { getConversations, getOrCreateDM, createGroupChat, isOnline, setCachedConversationList, type Conversation } from "../../lib/messages";
 import { getFriends } from "../../lib/follows";
 import { getBlockedIds } from "../../lib/blocks";
 import Avatar from "../Avatar";
@@ -56,7 +56,7 @@ export default function MessagesPage() {
         getConversations(user.id),
         getFriends(user.id),
       ]);
-      if (convsResult.status === "fulfilled") { setConversations(convsResult.value); cachedConversations = convsResult.value; }
+      if (convsResult.status === "fulfilled") { setConversations(convsResult.value); cachedConversations = convsResult.value; setCachedConversationList(convsResult.value); }
       else console.error("[messages] getConversations error:", convsResult.reason);
       if (friendsResult.status === "fulfilled") { setFriends(friendsResult.value); cachedFriends = friendsResult.value; }
       else console.error("[messages] getFriends error:", friendsResult.reason);
@@ -71,7 +71,7 @@ export default function MessagesPage() {
     const channel = supabase
       .channel("messages-list")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
-        getConversations(currentUserId).then((convs) => { setConversations(convs); cachedConversations = convs; }).catch(console.error);
+        getConversations(currentUserId).then((convs) => { setConversations(convs); cachedConversations = convs; setCachedConversationList(convs); }).catch(console.error);
       })
       .subscribe();
     return () => { supabase!.removeChannel(channel); };

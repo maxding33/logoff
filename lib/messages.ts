@@ -40,6 +40,9 @@ export function isOnline(lastSeen: string | null): boolean {
 
 const MESSAGE_CACHE = new Map<string, Message[]>();
 const MEMBERS_CACHE = new Map<string, ConversationMember[]>();
+let CONVERSATION_LIST_CACHE: Conversation[] = [];
+export function getCachedConversationList(): Conversation[] { return CONVERSATION_LIST_CACHE; }
+export function setCachedConversationList(convs: Conversation[]): void { CONVERSATION_LIST_CACHE = convs; }
 
 export function getCachedMessages(conversationId: string): Message[] {
   return MESSAGE_CACHE.get(conversationId) ?? [];

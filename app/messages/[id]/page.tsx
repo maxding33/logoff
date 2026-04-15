@@ -3,7 +3,7 @@
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
-import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLastSeen, isOnline, getCachedMessages, getCachedMembers, setCachedMessages, setCachedMembers, type Message, type ConversationMember } from "../../../lib/messages";
+import { getMessages, sendMessage, markAsRead, getConversationMembers, updateLastSeen, isOnline, getCachedMessages, getCachedMembers, setCachedMessages, setCachedMembers, getCachedConversationList, type Message, type ConversationMember, type Conversation } from "../../../lib/messages";
 import Avatar from "../../Avatar";
 import ReportSheet from "../../ReportSheet";
 import type { ReportTarget } from "../../../lib/reports";
@@ -222,11 +222,33 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   return (
     <>
     {(swiping || exiting) && (
-      <div style={{
-        position: "fixed", inset: 0, zIndex: -1,
-        background: `rgba(0,0,0,${Math.max(0, 0.15 - (swipeX / 800))})`,
-        transition: exiting ? "background 0.2s ease" : undefined,
-      }} />
+      <div style={{ position: "fixed", inset: 0, zIndex: -1, background: "#fff", overflow: "hidden" }}>
+        <div style={{ padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, letterSpacing: "0.06em" }}>messages</p>
+        </div>
+        {getCachedConversationList().map((conv) => {
+          const other = conv.members[0];
+          const name = conv.isGroup && conv.name ? conv.name : other ? `@${other.username}` : "unknown";
+          return (
+            <div key={conv.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderBottom: "1px solid #f0f0f0" }}>
+              <div style={{ flexShrink: 0 }}>
+                {conv.isGroup ? (
+                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#e5e5e5" }} />
+                ) : (
+                  <Avatar name={other?.username ?? "?"} size={48} avatarUrl={other?.avatarUrl ?? null} />
+                )}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: "14px", fontWeight: 600, color: "#000" }}>{name}</span>
+                <p style={{ margin: "2px 0 0", fontSize: "13px", color: "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {conv.lastMessage ? conv.lastMessage.text : "no messages yet"}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+        <div style={{ position: "fixed", inset: 0, background: `rgba(0,0,0,${Math.max(0, 0.08 - (swipeX / 1000))})`, pointerEvents: "none", transition: exiting ? "background 0.2s ease" : undefined }} />
+      </div>
     )}
     <main
       ref={mainRef}
