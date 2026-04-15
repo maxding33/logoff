@@ -110,8 +110,10 @@ export default function MessagesPage() {
   const [swipeX, setSwipeX] = useState(0);
   const [swipingBack, setSwipingBack] = useState(false);
   const [exitingBack, setExitingBack] = useState(false);
+  const mountTime = useRef(Date.now());
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (Date.now() - mountTime.current < 500) return;
     const touch = e.touches[0];
     if (touch.clientX < 30) {
       swipeStart.current = { x: touch.clientX, y: touch.clientY };
