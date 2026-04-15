@@ -9,7 +9,6 @@ import { getFriends } from "../../lib/follows";
 import { getBlockedIds } from "../../lib/blocks";
 import Avatar from "../Avatar";
 import { getHomeCache } from "../../lib/homeCache";
-import BottomNav from "../BottomNav";
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -181,18 +180,23 @@ export default function MessagesPage() {
           {(homeCache.activeTab === "challenge" ? homeCache.posts : homeCache.freePosts).slice(0, 3).map((post) => (
             <div key={post.id} style={{ padding: "14px 16px", borderBottom: "1px solid #f0f0f0" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <Avatar name={post.username} size={32} avatarUrl={post.avatarUrl} />
-                <span style={{ fontSize: "14px", fontWeight: 700 }}>@{post.username}</span>
+                <Avatar name={post.user} size={32} avatarUrl={post.avatarUrl} />
+                <span style={{ fontSize: "14px", fontWeight: 700 }}>@{post.user}</span>
               </div>
-              {post.imageUrl && (
+              {post.image && (
                 <div style={{ width: "100%", aspectRatio: "1", borderRadius: "12px", background: "#f0f0f0", overflow: "hidden" }}>
-                  <img src={post.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={post.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
               )}
             </div>
           ))}
         </div>
-        <BottomNav />
+        {/* Static bottom nav preview */}
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: "80px", background: "#fff", borderTop: "1px solid #e5e5e5", display: "flex", alignItems: "center", justifyContent: "space-around", padding: "0 24px" }}>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+        </div>
         <div style={{ position: "fixed", inset: 0, background: `rgba(0,0,0,${Math.max(0, 0.08 - (swipeX / 1000))})`, pointerEvents: "none", transition: exitingBack ? "background 0.2s ease" : undefined }} />
       </div>
     )}
