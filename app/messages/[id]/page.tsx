@@ -179,8 +179,60 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
 
   const groups = groupMessagesByDate(messages);
 
+  // Swipe-right-to-go-back
+  const mainRef = useRef<HTMLElement>(null);
+  const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
+  const [swipeX, setSwipeX] = useState(0);
+  const [swiping, setSwiping] = useState(false);
+  const [exiting, setExiting] = useState(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    // Only trigger from left edge (first 30px)
+    if (touch.clientX < 30) {
+      swipeStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!swipeStart.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - swipeStart.current.x;
+    const dy = Math.abs(touch.clientY - swipeStart.current.y);
+    // Cancel if vertical scroll
+    if (dy > 30 && !swiping) { swipeStart.current = null; return; }
+    if (dx > 10) {
+      setSwiping(true);
+      setSwipeX(Math.max(0, dx));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!swipeStart.current || !swiping) { swipeStart.current = null; return; }
+    if (swipeX > 100) {
+      setExiting(true);
+      setTimeout(() => router.back(), 200);
+    } else {
+      setSwipeX(0);
+      setSwiping(false);
+    }
+    swipeStart.current = null;
+  };
+
   return (
-    <main style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#fff", animation: "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)" }}>
+    <main
+      ref={mainRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        display: "flex", flexDirection: "column", height: "100vh", background: "#fff",
+        animation: exiting ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+        transform: swiping || exiting ? `translateX(${exiting ? "100%" : `${swipeX}px`})` : undefined,
+        transition: swiping ? undefined : "transform 0.2s ease",
+        opacity: swiping ? Math.max(0.6, 1 - swipeX / 500) : undefined,
+      }}
+    >
       <style>{`
         @keyframes slideInRight {
           from { transform: translateX(15%); opacity: 0.6; }
