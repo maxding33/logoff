@@ -2,23 +2,24 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Avatar from "../Avatar";
-import BottomNav from "../BottomNav";
-import UploadModal from "../UploadModal";
-import type { Post } from "../types";
-import { supabase } from "../../lib/supabase";
-import { signOut } from "../../lib/auth";
-import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deleteComment, deletePost } from "../../lib/posts";
-import ReportSheet from "../ReportSheet";
-import type { ReportTarget } from "../../lib/reports";
-import LogReel from "../LogReel";
-import { fetchProfile, updateProfile, uploadAvatar, removeAvatar, updateNotificationPrefs, type NotificationPrefs } from "../../lib/profile";
-import { fetchCalendarPosts, type CalendarPost } from "../../lib/posts";
-import { registerAndSubscribe } from "../../lib/notifications";
-import ProfileCalendar from "../ProfileCalendar";
-import { useChallengeTimer } from "../../lib/useChallengeTimer";
-import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../lib/follows";
-import { getStreak } from "../../lib/streak";
+import Avatar from "../../../Avatar";
+import BottomNav from "../../../BottomNav";
+import UploadModal from "../../../UploadModal";
+import type { Post } from "../../../types";
+import { supabase } from "../../../../lib/supabase";
+import { signOut } from "../../../../lib/auth";
+import { fetchPosts, uploadPhoto, createPost, toggleLike, addComment, deleteComment, deletePost } from "../../../../lib/posts";
+import ReportSheet from "../../../ReportSheet";
+import type { ReportTarget } from "../../../../lib/reports";
+import LogReel from "../../../LogReel";
+import { fetchProfile, updateProfile, uploadAvatar, removeAvatar, updateNotificationPrefs, type NotificationPrefs } from "../../../../lib/profile";
+import { fetchCalendarPosts, type CalendarPost } from "../../../../lib/posts";
+import { registerAndSubscribe } from "../../../../lib/notifications";
+import ProfileCalendar from "../../../ProfileCalendar";
+import { useChallengeTimer } from "../../../../lib/useChallengeTimer";
+import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../../../lib/follows";
+import { getStreak } from "../../../../lib/streak";
+import SwipeOverlay from "../../../SwipeOverlay";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedProfile: { name: string; displayName: string | null; bio: string; joinDate: string; avatarUrl: string | null } | null = null;
@@ -329,7 +330,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "96px", overflowX: "hidden", touchAction: "pan-y" }}>
+    <SwipeOverlay backTo="/" zIndex={50}>
       {/* Header */}
       <header style={{
         padding: "0 16px",
@@ -805,6 +806,6 @@ export default function ProfilePage() {
       {reportTarget && currentUserId && (
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
-    </main>
+    </SwipeOverlay>
   );
 }

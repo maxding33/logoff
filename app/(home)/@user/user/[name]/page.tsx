@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Avatar from "../../Avatar";
-import { supabase } from "../../../lib/supabase";
-import { followUser, unfollowUser, getFollowStatus, getFriendsCount } from "../../../lib/follows";
-import { fetchPosts } from "../../../lib/posts";
-import type { Post } from "../../types";
-import ReportSheet from "../../ReportSheet";
-import type { ReportTarget } from "../../../lib/reports";
-import { blockUser, unblockUser, checkIsBlocked } from "../../../lib/blocks";
+import Avatar from "../../../../Avatar";
+import { supabase } from "../../../../../lib/supabase";
+import { followUser, unfollowUser, getFollowStatus, getFriendsCount } from "../../../../../lib/follows";
+import { fetchPosts } from "../../../../../lib/posts";
+import type { Post } from "../../../../types";
+import ReportSheet from "../../../../ReportSheet";
+import type { ReportTarget } from "../../../../../lib/reports";
+import { blockUser, unblockUser, checkIsBlocked } from "../../../../../lib/blocks";
+import SwipeOverlay from "../../../../SwipeOverlay";
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -99,7 +100,7 @@ export default function UserProfilePage() {
   };
 
   const isFriends = following && followedBy;
-  const buttonLabel = followLoading ? "..." : isFriends ? "friends ✓" : pendingThem ? "requested" : "follow";
+  const buttonLabel = followLoading ? "..." : isFriends ? "friends \u2713" : pendingThem ? "requested" : "follow";
   const buttonStyle: React.CSSProperties = {
     border: isFriends ? "1px solid #4a7c59" : pendingThem ? "1px solid #ccc" : "none",
     background: isFriends ? "transparent" : pendingThem ? "transparent" : "#000",
@@ -112,7 +113,7 @@ export default function UserProfilePage() {
   if (redirecting) return null;
 
   return (
-    <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
+    <SwipeOverlay backTo="/" zIndex={50}>
       {/* Header */}
       <header style={{
         padding: "0 16px", height: "53px",
@@ -256,6 +257,6 @@ export default function UserProfilePage() {
       {reportTarget && currentUserId && (
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
-    </main>
+    </SwipeOverlay>
   );
 }

@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Avatar from "../Avatar";
-import { supabase } from "../../lib/supabase";
-import { getBlockedIds } from "../../lib/blocks";
+import Avatar from "../../../Avatar";
+import { supabase } from "../../../../lib/supabase";
+import { getBlockedIds } from "../../../../lib/blocks";
+import SwipeOverlay from "../../../SwipeOverlay";
 
 type UserResult = { id: string; username: string; display_name: string | null; avatar_url: string | null };
 
@@ -46,7 +47,7 @@ export default function SearchPage() {
   }, [query, currentUserId, blockedIds]);
 
   return (
-    <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
+    <SwipeOverlay backTo="/" zIndex={50}>
       {/* Header */}
       <header style={{
         padding: "0 16px",
@@ -126,6 +127,6 @@ export default function SearchPage() {
           ))
         )}
       </ul>
-    </main>
+    </SwipeOverlay>
   );
 }
