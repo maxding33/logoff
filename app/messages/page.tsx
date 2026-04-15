@@ -8,6 +8,8 @@ import { getConversations, getOrCreateDM, createGroupChat, isOnline, setCachedCo
 import { getFriends } from "../../lib/follows";
 import { getBlockedIds } from "../../lib/blocks";
 import Avatar from "../Avatar";
+import { getHomeCache } from "../../lib/homeCache";
+import BottomNav from "../BottomNav";
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -146,26 +148,66 @@ export default function MessagesPage() {
     swipeStart.current = null;
   };
 
+  const homeCache = (swipingBack || exitingBack) ? getHomeCache() : null;
+
   return (
+    <>
+    {(swipingBack || exitingBack) && homeCache && (
+      <div style={{ position: "fixed", inset: 0, zIndex: -1, background: "#fff", overflow: "hidden" }}>
+        {/* Home header */}
+        <header style={{ padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+          <span style={{ position: "absolute", left: "8px", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "52px", minHeight: "53px" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
+          <p style={{ margin: 0, fontSize: "18px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#000", marginRight: "-0.12em" }}>
+            LOG<span style={{ color: "#4a7c59" }}>OFF</span>
+          </p>
+          <span style={{ position: "absolute", right: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "#000" }}>{homeCache.streak} 🔥</span>
+          </span>
+        </header>
+        {/* Tabs */}
+        <div style={{ display: "flex", borderBottom: "1px solid #e5e5e5" }}>
+          {(["challenge", "free"] as const).map((tab) => (
+            <div key={tab} style={{ flex: 1, textAlign: "center", padding: "10px 0", fontSize: "13px", fontWeight: 700, letterSpacing: "0.04em", color: homeCache.activeTab === tab ? "#000" : "#bbb", borderBottom: homeCache.activeTab === tab ? "2px solid #000" : "2px solid transparent" }}>
+              {tab}
+            </div>
+          ))}
+        </div>
+        {/* Post previews */}
+        <div style={{ padding: "0 0 96px" }}>
+          {(homeCache.activeTab === "challenge" ? homeCache.posts : homeCache.freePosts).slice(0, 3).map((post) => (
+            <div key={post.id} style={{ padding: "14px 16px", borderBottom: "1px solid #f0f0f0" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <Avatar name={post.username} size={32} avatarUrl={post.avatarUrl} />
+                <span style={{ fontSize: "14px", fontWeight: 700 }}>@{post.username}</span>
+              </div>
+              {post.imageUrl && (
+                <div style={{ width: "100%", aspectRatio: "1", borderRadius: "12px", background: "#f0f0f0", overflow: "hidden" }}>
+                  <img src={post.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <BottomNav />
+        <div style={{ position: "fixed", inset: 0, background: `rgba(0,0,0,${Math.max(0, 0.08 - (swipeX / 1000))})`, pointerEvents: "none", transition: exitingBack ? "background 0.2s ease" : undefined }} />
+      </div>
+    )}
     <main
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{
         minHeight: "100vh", background: "#fff", paddingBottom: "80px",
-        animation: undefined,
         transform: swipingBack || exitingBack ? `translateX(${exitingBack ? "100%" : `${swipeX}px`})` : undefined,
         transition: swipingBack ? undefined : "transform 0.2s ease",
         opacity: swipingBack ? Math.max(0.6, 1 - swipeX / 500) : undefined,
         boxShadow: swipingBack || exitingBack ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
       }}
     >
-      <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(15%); opacity: 0.6; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
       <header style={{
         padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
         display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
@@ -344,5 +386,6 @@ export default function MessagesPage() {
         </div>
       )}
     </main>
+    </>
   );
 }

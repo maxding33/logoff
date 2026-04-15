@@ -20,6 +20,7 @@ import { getStreak } from "../lib/streak";
 import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChallengeActive } from "../lib/useChallengeTimer";
 import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
 import { getUnreadCount, updateLastSeen } from "../lib/messages";
+import { setHomeCache } from "../lib/homeCache";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
@@ -60,6 +61,9 @@ function HomeInner() {
   const { failed: challengeFailedReal, failedDate } = useChallengeFailed(currentUserId);
   const [testFail, setTestFail] = useState(false);
   const [testEod, setTestEod] = useState(false);
+
+  // Sync home cache for swipe previews
+  useEffect(() => { setHomeCache(posts, freePosts, activeTab, streak); }, [posts, freePosts, activeTab, streak]);
 
   // Debounce the fail overlay — only show if failed stays true for 100ms
   // This eliminates any millisecond-level flash from intermediate states during startup
