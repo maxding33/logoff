@@ -37,10 +37,12 @@ function groupMessagesByDate(messages: Message[]): { date: string; messages: Mes
   return groups;
 }
 
+let cachedUserId: string | null = null;
+
 export default function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: conversationId } = use(params);
   const router = useRouter();
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(cachedUserId);
   const [messages, setMessages] = useState<Message[]>(getCachedMessages(conversationId));
   const [members, setMembers] = useState<ConversationMember[]>(getCachedMembers(conversationId));
   const [text, setText] = useState("");
@@ -58,6 +60,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     if (!supabase) return;
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
+      cachedUserId = user.id;
       setCurrentUserId(user.id);
       try {
         const [msgs, mems] = await Promise.all([
