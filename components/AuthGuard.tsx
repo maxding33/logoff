@@ -7,14 +7,17 @@ import { checkOnboardingCompleted } from "../lib/profile";
 
 const PUBLIC_PATHS = ["/auth", "/onboarding"];
 
+let globalChecked = false;
+
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [checked, setChecked] = useState(false);
+  const [checked, setChecked] = useState(globalChecked);
 
   useEffect(() => {
-    if (!supabase) {
+    if (globalChecked || !supabase) {
       setChecked(true);
+      globalChecked = true;
       return;
     }
 
@@ -37,6 +40,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           return;
         }
       }
+      globalChecked = true;
       setChecked(true);
       // Safety fallback to dismiss splash after 4s in case page doesn't do it
       setTimeout(() => (window as any).__dismissSplash?.(), 4000);
@@ -44,6 +48,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session && !PUBLIC_PATHS.includes(pathname)) {
+        globalChecked = false;
         router.replace("/auth");
       }
     });
