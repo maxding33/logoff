@@ -56,7 +56,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [pathname, router]);
 
-  if (!checked && !PUBLIC_PATHS.includes(pathname)) {
+  if (!checked && !globalChecked && !PUBLIC_PATHS.includes(pathname)) {
     return (
       <div style={{
         minHeight: "100vh",
