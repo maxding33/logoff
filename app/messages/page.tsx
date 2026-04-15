@@ -105,8 +105,57 @@ export default function MessagesPage() {
     setSelectedFriends((prev) => prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]);
   };
 
+  // Swipe-right-to-go-back
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const [swipeX, setSwipeX] = useState(0);
+  const [swipingBack, setSwipingBack] = useState(false);
+  const [exitingBack, setExitingBack] = useState(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (touch.clientX < 30) {
+      swipeStart.current = { x: touch.clientX, y: touch.clientY };
+    }
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!swipeStart.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - swipeStart.current.x;
+    const dy = Math.abs(touch.clientY - swipeStart.current.y);
+    if (dy > 30 && !swipingBack) { swipeStart.current = null; return; }
+    if (dx > 10) { setSwipingBack(true); setSwipeX(Math.max(0, dx)); }
+  };
+  const handleTouchEnd = () => {
+    if (!swipeStart.current || !swipingBack) { swipeStart.current = null; return; }
+    if (swipeX > 100) {
+      setExitingBack(true);
+      setTimeout(() => router.back(), 200);
+    } else {
+      setSwipeX(0); setSwipingBack(false);
+    }
+    swipeStart.current = null;
+  };
+
   return (
-    <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
+    <main
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        minHeight: "100vh", background: "#fff", paddingBottom: "80px",
+        animation: exitingBack ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+        transform: swipingBack || exitingBack ? `translateX(${exitingBack ? "100%" : `${swipeX}px`})` : undefined,
+        transition: swipingBack ? undefined : "transform 0.2s ease",
+        opacity: swipingBack ? Math.max(0.6, 1 - swipeX / 500) : undefined,
+        boxShadow: swipingBack || exitingBack ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
+      }}
+    >
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateX(15%); opacity: 0.6; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
       <header style={{
         padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
         display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
