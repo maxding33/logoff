@@ -220,6 +220,14 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   };
 
   return (
+    <>
+    {(swiping || exiting) && (
+      <div style={{
+        position: "fixed", inset: 0, zIndex: -1,
+        background: `rgba(0,0,0,${Math.max(0, 0.15 - (swipeX / 800))})`,
+        transition: exiting ? "background 0.2s ease" : undefined,
+      }} />
+    )}
     <main
       ref={mainRef}
       onTouchStart={handleTouchStart}
@@ -227,6 +235,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       onTouchEnd={handleTouchEnd}
       style={{
         display: "flex", flexDirection: "column", height: "100vh", background: "#fff",
+        boxShadow: swiping || exiting ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
         animation: exiting ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
         transform: swiping || exiting ? `translateX(${exiting ? "100%" : `${swipeX}px`})` : undefined,
         transition: swiping ? undefined : "transform 0.2s ease",
@@ -424,5 +433,6 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
     </main>
+    </>
   );
 }
