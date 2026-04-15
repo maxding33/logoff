@@ -186,12 +186,12 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const [swiping, setSwiping] = useState(false);
   const [exiting, setExiting] = useState(false);
 
+  const directionLocked = useRef<"horizontal" | "vertical" | null>(null);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    // Only trigger from left edge (first 30px)
-    if (touch.clientX < 30) {
-      swipeStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-    }
+    swipeStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    directionLocked.current = null;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -199,9 +199,11 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     const touch = e.touches[0];
     const dx = touch.clientX - swipeStart.current.x;
     const dy = Math.abs(touch.clientY - swipeStart.current.y);
-    // Cancel if vertical scroll
-    if (dy > 30 && !swiping) { swipeStart.current = null; return; }
-    if (dx > 10) {
+    if (!directionLocked.current && (dx > 10 || dy > 10)) {
+      directionLocked.current = dx > dy ? "horizontal" : "vertical";
+    }
+    if (directionLocked.current === "vertical") { swipeStart.current = null; return; }
+    if (directionLocked.current === "horizontal" && dx > 10) {
       setSwiping(true);
       setSwipeX(Math.max(0, dx));
     }

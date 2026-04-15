@@ -112,20 +112,28 @@ export default function MessagesPage() {
   const [exitingBack, setExitingBack] = useState(false);
   const mountTime = useRef(Date.now());
 
+  const directionLocked = useRef<"horizontal" | "vertical" | null>(null);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     if (Date.now() - mountTime.current < 500) return;
     const touch = e.touches[0];
-    if (touch.clientX < 30) {
-      swipeStart.current = { x: touch.clientX, y: touch.clientY };
-    }
+    swipeStart.current = { x: touch.clientX, y: touch.clientY };
+    directionLocked.current = null;
   };
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!swipeStart.current) return;
     const touch = e.touches[0];
     const dx = touch.clientX - swipeStart.current.x;
     const dy = Math.abs(touch.clientY - swipeStart.current.y);
-    if (dy > 30 && !swipingBack) { swipeStart.current = null; return; }
-    if (dx > 10) { setSwipingBack(true); setSwipeX(Math.max(0, dx)); }
+    // Lock direction after 10px of movement
+    if (!directionLocked.current && (dx > 10 || dy > 10)) {
+      directionLocked.current = dx > dy ? "horizontal" : "vertical";
+    }
+    if (directionLocked.current === "vertical") { swipeStart.current = null; return; }
+    if (directionLocked.current === "horizontal" && dx > 10) {
+      setSwipingBack(true);
+      setSwipeX(Math.max(0, dx));
+    }
   };
   const handleTouchEnd = () => {
     if (!swipeStart.current || !swipingBack) { swipeStart.current = null; return; }
