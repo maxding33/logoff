@@ -109,15 +109,15 @@ export default function MessagesPage() {
     <main style={{ minHeight: "100vh", background: "#fff", paddingBottom: "80px" }}>
       <header style={{
         padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
+        display: "flex", alignItems: "center", justifyContent: "center", position: "relative",
       }}>
-        <Link href="/" style={{ color: "#000", display: "flex", alignItems: "center", minWidth: "44px", minHeight: "44px", justifyContent: "center" }}>
+        <Link href="/" style={{ position: "absolute", left: "8px", color: "#000", display: "flex", alignItems: "center", minWidth: "44px", minHeight: "44px", justifyContent: "center" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </Link>
         <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, letterSpacing: "0.06em" }}>messages</p>
-        <div style={{ display: "flex", gap: "4px" }}>
+        <div style={{ position: "absolute", right: "8px", display: "flex", gap: "4px" }}>
           <button
             onClick={() => { setShowNewDM(true); setShowNewGroup(false); }}
             style={{ background: "none", border: "none", cursor: "pointer", minWidth: "44px", minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center", color: "#000" }}
