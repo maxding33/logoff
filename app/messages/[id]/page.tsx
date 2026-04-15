@@ -180,7 +180,13 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const groups = groupMessagesByDate(messages);
 
   return (
-    <main style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#fff" }}>
+    <main style={{ display: "flex", flexDirection: "column", height: "100vh", background: "#fff", animation: "slideInRight 0.25s ease-out" }}>
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateX(30%); opacity: 0.5; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
       {/* Header */}
       <header style={{
         padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
