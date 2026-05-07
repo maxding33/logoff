@@ -4,7 +4,7 @@ import { createContext, useContext, MutableRefObject } from "react";
 
 type PageContextType = {
   pageIndex: number;
-  setPageIndex: (index: number, animate?: boolean) => void;
+  setPageIndex: (index: number) => void;
   gestureClaimedBy: MutableRefObject<string | null>;
 };
 
