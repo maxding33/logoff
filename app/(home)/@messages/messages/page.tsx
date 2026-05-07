@@ -152,7 +152,6 @@ export default function MessagesPage() {
       style={{
         position: "fixed", inset: 0, zIndex: 50,
         background: "#fff", overflowY: "auto",
-        animation: exitingBack ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
         transform: swipingBack || exitingBack ? `translateX(${exitingBack ? "100%" : `${swipeX}px`})` : undefined,
         transition: swipingBack ? undefined : "transform 0.2s ease",
         boxShadow: swipingBack || exitingBack ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
