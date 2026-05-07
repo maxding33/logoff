@@ -179,7 +179,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const [swipeX, setSwipeX] = useState(0);
   const [swiping, setSwiping] = useState(false);
-  const [exiting, setExiting] = useState(false);
+  const exiting = false;
   const directionLocked = useRef<"horizontal" | "vertical" | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -206,8 +206,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   const handleTouchEnd = () => {
     if (!swipeStart.current || !swiping) { swipeStart.current = null; return; }
     if (swipeX > 100) {
-      setExiting(true);
-      setTimeout(() => router.push("/messages"), 200);
+      router.push("/messages");
     } else {
       setSwipeX(0);
       setSwiping(false);
