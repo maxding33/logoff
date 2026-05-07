@@ -97,6 +97,7 @@ export default function LogReel({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation(); // Prevent global page swipe from interfering
     if (showComments) return;
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;

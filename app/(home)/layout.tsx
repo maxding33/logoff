@@ -1,6 +1,9 @@
 "use client";
 
+import { useRef, useState, useEffect } from "react";
 import HomeContent from "../HomeContent";
+import ProfileContent from "../ProfileContent";
+import { PageContext } from "../PageContext";
 
 export default function HomeLayout({
   children,
@@ -15,13 +18,110 @@ export default function HomeLayout({
   search: React.ReactNode;
   user: React.ReactNode;
 }) {
+  const [pageIndex, setPageIndexState] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const gestureClaimedBy = useRef<string | null>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const direction = useRef<"horiz" | "vert" | null>(null);
+  const dragging = useRef(false);
+
+  // Keep slider in sync with pageIndex (for programmatic changes like BottomNav taps)
+  useEffect(() => {
+    if (!sliderRef.current) return;
+    sliderRef.current.style.transition = "none";
+    sliderRef.current.style.transform = `translateX(${-pageIndex * window.innerWidth}px)`;
+  }, [pageIndex]);
+
+  // Handle window resize (e.g. orientation change)
+  useEffect(() => {
+    const onResize = () => {
+      if (!sliderRef.current) return;
+      sliderRef.current.style.transition = "none";
+      sliderRef.current.style.transform = `translateX(${-pageIndex * window.innerWidth}px)`;
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [pageIndex]);
+
+  const setPageIndex = (index: number, animate = false) => {
+    setPageIndexState(index);
+    if (sliderRef.current) {
+      sliderRef.current.style.transition = animate
+        ? "transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+        : "none";
+      sliderRef.current.style.transform = `translateX(${-index * window.innerWidth}px)`;
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    gestureClaimedBy.current = null;
+    direction.current = null;
+    dragging.current = false;
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    if (sliderRef.current) sliderRef.current.style.transition = "none";
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart.current || gestureClaimedBy.current) return;
+    const dx = e.touches[0].clientX - touchStart.current.x;
+    const dy = e.touches[0].clientY - touchStart.current.y;
+
+    if (!direction.current && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+      direction.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert";
+    }
+
+    if (direction.current !== "horiz") return;
+
+    dragging.current = true;
+    const base = -pageIndex * window.innerWidth;
+    const raw = base + dx;
+    // Clamp — can't go past edges
+    const offset = Math.max(-window.innerWidth, Math.min(0, raw));
+    if (sliderRef.current) sliderRef.current.style.transform = `translateX(${offset}px)`;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart.current || !dragging.current || gestureClaimedBy.current) {
+      touchStart.current = null;
+      dragging.current = false;
+      return;
+    }
+
+    const dx = e.changedTouches[0].clientX - touchStart.current.x;
+    const threshold = window.innerWidth * 0.18;
+    let newIndex = pageIndex;
+
+    if (dx < -threshold && pageIndex === 0) newIndex = 1;
+    else if (dx > threshold && pageIndex === 1) newIndex = 0;
+
+    setPageIndex(newIndex, true);
+    touchStart.current = null;
+    dragging.current = false;
+  };
+
   return (
-    <>
-      <HomeContent />
+    <PageContext.Provider value={{ pageIndex, setPageIndex: (i) => setPageIndex(i, false), gestureClaimedBy }}>
+      <div
+        style={{ height: "100vh", overflow: "hidden", position: "relative" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div
+          ref={sliderRef}
+          style={{ display: "flex", width: "200%", height: "100%", willChange: "transform" }}
+        >
+          <div style={{ width: "50%", height: "100%" }}>
+            <HomeContent />
+          </div>
+          <div style={{ width: "50%", height: "100%", overflowY: "auto", WebkitOverflowScrolling: "touch" }}>
+            <ProfileContent />
+          </div>
+        </div>
+      </div>
       {messages}
-      {profile}
       {search}
       {user}
-    </>
+    </PageContext.Provider>
   );
 }

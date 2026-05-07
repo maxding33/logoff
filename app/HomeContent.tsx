@@ -21,6 +21,7 @@ import { useChallengeTimer, useChallengeFailed, recheckChallengeStatus, isChalle
 import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
 import { getUnreadCount, updateLastSeen } from "../lib/messages";
 import { setHomeCache } from "../lib/homeCache";
+import { usePageContext } from "./PageContext";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
@@ -29,6 +30,7 @@ let cachedUserId: string | null = null;
 let cachedUsername = "You";
 
 export default function HomeContent() {
+  const { pageIndex, gestureClaimedBy } = usePageContext();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileObjectRef = useRef<File | null>(null);
   const preparedBlobRef = useRef<Blob | null>(null);
@@ -261,6 +263,17 @@ export default function HomeContent() {
     }
 
     if (dragDirection.current === "horiz" && reelIndex === null && !(challengeTimer && activeTab === "free")) {
+      // Check if this is a local tab swipe or should yield to global page swipe
+      const atLeftEdge = activeTab === "challenge" && dx > 0;
+      const atRightEdge = activeTab === "free" && dx < 0;
+
+      if (atLeftEdge || atRightEdge) {
+        // At edge — don't claim, let global page swipe handle it
+        return;
+      }
+
+      // Claim gesture for local tab swipe
+      gestureClaimedBy.current = "feedTabs";
       pulling.current = false;
       setPullDistance(0);
       const base = activeTab === "challenge" ? 0 : -window.innerWidth;
@@ -490,7 +503,7 @@ export default function HomeContent() {
   return (
     <main
       ref={mainRef}
-      style={{ height: "100vh", background: "#ffffff", display: "flex", flexDirection: "column", overflow: "hidden", touchAction: "pan-y" }}
+      style={{ height: "100%", background: "#ffffff", display: "flex", flexDirection: "column", overflow: "hidden", touchAction: "pan-y" }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -673,12 +686,12 @@ export default function HomeContent() {
         imageReady={imageReady}
       />
 
-      <BottomNav
+      {pageIndex === 0 && <BottomNav
         fileInputRef={fileInputRef}
         handlePhotoChange={handlePhotoChange}
         cameraOnly={!!challengeTimer}
         onGamePress={!challengeTimer && activeTab === "challenge" ? () => setShowGamePicker(true) : undefined}
-      />
+      />}
 
       {showGamePicker && <GamePicker onClose={() => setShowGamePicker(false)} />}
 

@@ -1,8 +1,7 @@
 "use client";
 
 import { ChangeEvent, RefObject, useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePageContext } from "./PageContext";
 
 type BottomNavProps = {
   fileInputRef: RefObject<HTMLInputElement | null>;
@@ -12,7 +11,7 @@ type BottomNavProps = {
 };
 
 export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly, onGamePress }: BottomNavProps) {
-  const pathname = usePathname();
+  const { pageIndex, setPageIndex } = usePageContext();
   const [tapped, setTapped] = useState<"home" | "profile" | null>(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
@@ -33,6 +32,9 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
 
   if (keyboardOpen) return null;
 
+  // Only show this BottomNav instance when its page is active
+  const isHome = pageIndex === 0;
+
   return (
     <nav
       style={{
@@ -50,11 +52,12 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
       }}
     >
       {/* Home */}
-      <Link
-        href="/"
-        onClick={() => handleTap("home")}
+      <button
+        onClick={() => { handleTap("home"); setPageIndex(0); }}
         style={{
-          color: tapped === "home" ? "#4a7c59" : pathname === "/" ? "#000" : "#aaa",
+          background: "none",
+          border: "none",
+          color: tapped === "home" ? "#4a7c59" : isHome ? "#000" : "#aaa",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -62,20 +65,22 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
           minHeight: "56px",
           touchAction: "manipulation",
           transition: "color 0.15s ease",
+          cursor: "pointer",
+          padding: 0,
         }}
       >
         <svg
           width="30" height="30" viewBox="0 0 24 24"
-          fill={pathname === "/" ? "currentColor" : "none"}
+          fill={isHome ? "currentColor" : "none"}
           stroke="currentColor" strokeWidth="1.75"
           strokeLinecap="round" strokeLinejoin="round"
           className={tapped === "home" ? "nav-tap" : ""}
         >
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
           <polyline points="9 22 9 12 15 12 15 22" fill="none" />
-          {pathname === "/" && <rect x="9" y="12" width="6" height="10" fill="#4a7c59" stroke="none" />}
+          {isHome && <rect x="9" y="12" width="6" height="10" fill="#4a7c59" stroke="none" />}
         </svg>
-      </Link>
+      </button>
 
       {/* Center button — game icon or upload */}
       {onGamePress ? (
@@ -123,11 +128,12 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
       )}
 
       {/* Profile */}
-      <Link
-        href="/profile"
-        onClick={() => handleTap("profile")}
+      <button
+        onClick={() => { handleTap("profile"); setPageIndex(1); }}
         style={{
-          color: tapped === "profile" ? "#4a7c59" : pathname === "/profile" ? "#000" : "#aaa",
+          background: "none",
+          border: "none",
+          color: tapped === "profile" ? "#4a7c59" : !isHome ? "#000" : "#aaa",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -135,11 +141,13 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
           minHeight: "56px",
           touchAction: "manipulation",
           transition: "color 0.15s ease",
+          cursor: "pointer",
+          padding: 0,
         }}
       >
         <svg
           width="30" height="30" viewBox="0 0 24 24"
-          fill={pathname === "/profile" ? "currentColor" : "none"}
+          fill={!isHome ? "currentColor" : "none"}
           stroke="currentColor" strokeWidth="1.75"
           strokeLinecap="round" strokeLinejoin="round"
           className={tapped === "profile" ? "nav-tap" : ""}
@@ -147,7 +155,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
-      </Link>
+      </button>
     </nav>
   );
 }
