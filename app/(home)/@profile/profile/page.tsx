@@ -330,7 +330,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <SwipeOverlay backTo="/" zIndex={50}>
+    <SwipeOverlay backTo="/" zIndex={50} slideIn={false}>
       {/* Header */}
       <header style={{
         padding: "0 16px",
