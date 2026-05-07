@@ -124,6 +124,10 @@ export default function HomeLayout({
 
     if (direction.current !== "horiz") return;
 
+    // No valid destination in this direction — ignore entirely
+    if (pageIndex === 0 && dx > 0) return; // Home, swiping right — nowhere to go
+    if (pageIndex === 1 && dx < 0) return; // Profile, swiping left — nowhere to go
+
     dragging.current = true;
 
     // Keep last 4 samples for velocity calculation
@@ -133,9 +137,7 @@ export default function HomeLayout({
 
     const base = -pageIndex * window.innerWidth;
     const raw = base + dx;
-    // Hard clamp — no movement past edges
     const offset = Math.max(-window.innerWidth, Math.min(0, raw));
-    if (offset === base) return; // at edge, nothing to move
     if (sliderRef.current) sliderRef.current.style.transform = `translateX(${offset}px)`;
   };
 
