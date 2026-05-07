@@ -133,16 +133,9 @@ export default function HomeLayout({
 
     const base = -pageIndex * window.innerWidth;
     const raw = base + dx;
-    // Rubber-band at edges — resist instead of hard clamp
-    let offset: number;
-    if (raw > 0) {
-      offset = raw * 0.2; // resist past left edge
-    } else if (raw < -window.innerWidth) {
-      const over = raw + window.innerWidth;
-      offset = -window.innerWidth + over * 0.2; // resist past right edge
-    } else {
-      offset = raw;
-    }
+    // Hard clamp — no movement past edges
+    const offset = Math.max(-window.innerWidth, Math.min(0, raw));
+    if (offset === base) return; // at edge, nothing to move
     if (sliderRef.current) sliderRef.current.style.transform = `translateX(${offset}px)`;
   };
 
