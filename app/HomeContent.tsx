@@ -265,8 +265,8 @@ export default function HomeContent() {
       setPullDistance(0);
       const base = activeTab === "challenge" ? 0 : -window.innerWidth;
       const raw = base + dx;
-      // Rubber-band at edges
-      const offset = raw > 0 ? raw * 0.2 : raw < -window.innerWidth ? -window.innerWidth + (raw + window.innerWidth) * 0.2 : raw;
+      // Clamp at edges — no rubber-band past boundaries
+      const offset = Math.max(-window.innerWidth, Math.min(0, raw));
       if (sliderRef.current) sliderRef.current.style.transform = `translateX(${offset}px)`;
     } else if (dragDirection.current === "vert" && pulling.current) {
       const dist = Math.max(0, Math.min(80, dy));
