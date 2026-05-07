@@ -19,7 +19,7 @@ import ProfileCalendar from "../../../ProfileCalendar";
 import { useChallengeTimer } from "../../../../lib/useChallengeTimer";
 import { getFriendsCount, getPendingRequests, acceptFollow, denyFollow } from "../../../../lib/follows";
 import { getStreak } from "../../../../lib/streak";
-import SwipeOverlay from "../../../SwipeOverlay";
+
 
 // Module-level cache to avoid white flash on tab switch
 let cachedProfile: { name: string; displayName: string | null; bio: string; joinDate: string; avatarUrl: string | null } | null = null;
@@ -330,7 +330,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <SwipeOverlay backTo="/" zIndex={50} slideIn={false}>
+    <main style={{ position: "fixed", inset: 0, zIndex: 50, background: "#fff", overflowY: "auto" }}>
       {/* Header */}
       <header style={{
         padding: "0 16px",
@@ -806,6 +806,6 @@ export default function ProfilePage() {
       {reportTarget && currentUserId && (
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
-    </SwipeOverlay>
+    </main>
   );
 }
