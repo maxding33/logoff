@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, RefObject, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePageContext } from "./PageContext";
 
 type BottomNavProps = {
@@ -35,7 +36,8 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
   // Only show this BottomNav instance when its page is active
   const isHome = pageIndex === 0;
 
-  return (
+  // Portal to document.body so position:fixed escapes any transform ancestor
+  return createPortal(
     <nav
       style={{
         position: "fixed",
@@ -156,6 +158,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
           <circle cx="12" cy="7" r="4" />
         </svg>
       </button>
-    </nav>
+    </nav>,
+    document.body
   );
 }
