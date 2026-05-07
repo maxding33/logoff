@@ -215,27 +215,72 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     swipeStart.current = null;
   };
 
+  const cachedConvs = getCachedConversationList();
+
   return (
-    <main
-      ref={mainRef}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      style={{
-        position: "fixed", inset: 0, zIndex: 60,
-        display: "flex", flexDirection: "column", background: "#fff",
-        boxShadow: swiping || exiting ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
-        animation: exiting ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
-        transform: swiping || exiting ? `translateX(${exiting ? "100%" : `${swipeX}px`})` : undefined,
-        transition: swiping ? undefined : "transform 0.2s ease",
-      }}
-    >
-      <style>{`
-        @keyframes slideInRight {
-          from { transform: translateX(15%); opacity: 0.6; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-      `}</style>
+    <>
+      {/* Cached messages list preview behind the chat */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 55, background: "#fff", overflowY: "auto", pointerEvents: "none" }}>
+        <header style={{
+          padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, letterSpacing: "0.06em" }}>messages</p>
+        </header>
+        <div>
+          {cachedConvs.map((conv) => {
+            const convName = conv.isGroup && conv.name ? conv.name : conv.members[0] ? `@${conv.members[0].username}` : "unknown";
+            const avatarMember = conv.members[0];
+            return (
+              <div key={conv.id} style={{
+                display: "flex", alignItems: "center", gap: "12px",
+                padding: "12px 16px", borderBottom: "1px solid #f0f0f0",
+              }}>
+                <div style={{ flexShrink: 0 }}>
+                  {conv.isGroup ? (
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#e5e5e5", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <Avatar name={avatarMember?.username ?? "?"} size={48} avatarUrl={avatarMember?.avatarUrl ?? null} />
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#000" }}>{convName}</span>
+                  <p style={{ margin: "2px 0 0", fontSize: "13px", color: "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {conv.lastMessage ? conv.lastMessage.text : "no messages yet"}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Chat overlay */}
+      <main
+        ref={mainRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          position: "fixed", inset: 0, zIndex: 60,
+          display: "flex", flexDirection: "column", background: "#fff",
+          boxShadow: swiping || exiting ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
+          animation: exiting ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+          transform: swiping || exiting ? `translateX(${exiting ? "100%" : `${swipeX}px`})` : undefined,
+          transition: swiping ? undefined : "transform 0.2s ease",
+        }}
+      >
+        <style>{`
+          @keyframes slideInRight {
+            from { transform: translateX(15%); opacity: 0.6; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+        `}</style>
       {/* Header */}
       <header style={{
         padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
@@ -420,6 +465,7 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       {reportTarget && currentUserId && (
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />
       )}
-    </main>
+      </main>
+    </>
   );
 }
