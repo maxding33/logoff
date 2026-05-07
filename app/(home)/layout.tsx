@@ -21,7 +21,7 @@ export default function HomeLayout({
   const [pageIndex, setPageIndexState] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
   const gestureClaimedBy = useRef<string | null>(null);
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const touchStart = useRef<{ x: number; y: number; t: number } | null>(null);
   const direction = useRef<"horiz" | "vert" | null>(null);
   const dragging = useRef(false);
 
@@ -43,11 +43,12 @@ export default function HomeLayout({
     return () => window.removeEventListener("resize", onResize);
   }, [pageIndex]);
 
-  const setPageIndex = (index: number, animate = false) => {
+  const setPageIndex = (index: number, animate = false, durationMs?: number) => {
     setPageIndexState(index);
     if (sliderRef.current) {
+      const dur = durationMs ?? 420;
       sliderRef.current.style.transition = animate
-        ? "transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+        ? `transform ${dur}ms cubic-bezier(0.16, 1, 0.3, 1)`
         : "none";
       sliderRef.current.style.transform = `translateX(${-index * window.innerWidth}px)`;
     }
@@ -57,7 +58,7 @@ export default function HomeLayout({
     gestureClaimedBy.current = null;
     direction.current = null;
     dragging.current = false;
-    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() };
     if (sliderRef.current) sliderRef.current.style.transition = "none";
   };
 
@@ -88,13 +89,21 @@ export default function HomeLayout({
     }
 
     const dx = e.changedTouches[0].clientX - touchStart.current.x;
+    const dt = Date.now() - touchStart.current.t;
+    const velocity = Math.abs(dx) / Math.max(dt, 1); // px/ms
     const threshold = window.innerWidth * 0.18;
     let newIndex = pageIndex;
 
-    if (dx < -threshold && pageIndex === 0) newIndex = 1;
-    else if (dx > threshold && pageIndex === 1) newIndex = 0;
+    // Fast flick (>0.4 px/ms) or past distance threshold
+    if ((dx < -threshold || (dx < -30 && velocity > 0.4)) && pageIndex === 0) newIndex = 1;
+    else if ((dx > threshold || (dx > 30 && velocity > 0.4)) && pageIndex === 1) newIndex = 0;
 
-    setPageIndex(newIndex, true);
+    // Velocity-aware duration: fast flick → short; slow release → longer glide
+    const remaining = Math.abs(-newIndex * window.innerWidth - (-pageIndex * window.innerWidth + dx));
+    const baseDur = velocity > 0.6 ? 260 : velocity > 0.3 ? 340 : 420;
+    const dur = Math.max(200, Math.min(baseDur, remaining / Math.max(velocity, 0.3)));
+
+    setPageIndex(newIndex, true, dur);
     touchStart.current = null;
     dragging.current = false;
   };
