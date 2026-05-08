@@ -252,25 +252,23 @@ export default function HomeContent() {
     dragDirection.current = null;
     if (window.scrollY === 0) pulling.current = true;
     if (sliderRef.current) sliderRef.current.style.transition = "none";
-    // Pre-claim gesture for feed tabs — the global page swipe will yield.
-    // Released in handleTouchMove if we're at an edge that should hand off to global.
-    if (pageIndex === 0) gestureClaimedBy.current = "feedTabs";
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  // Native touchmove listener — fires before layout's listener during bubbling
+  // (child element → parent element), so we can claim the gesture before the
+  // global page swipe handler sees it.
+  const handleTouchMoveNative = (e: TouchEvent) => {
     const dx = e.touches[0].clientX - touchStartX.current;
     const dy = e.touches[0].clientY - touchStartY.current;
 
     // Lock drag direction after 5px
     if (dragDirection.current === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
       dragDirection.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert";
-      // Vertical gesture — release claim so global/browser can handle scroll
-      if (dragDirection.current === "vert") gestureClaimedBy.current = null;
     }
 
     if (dragDirection.current === "horiz" && reelIndex === null && !(challengeTimer && activeTab === "free")) {
-      // Feed tabs always own horizontal gestures — never yield to global page swipe.
-      // At edges, just clamp (no movement) instead of handing off to Profile navigation.
+      // Claim gesture — this fires before the layout's handler, blocking global swipe
+      gestureClaimedBy.current = "feedTabs";
       pulling.current = false;
       setPullDistance(0);
       const base = activeTab === "challenge" ? 0 : -window.innerWidth;
@@ -283,6 +281,14 @@ export default function HomeContent() {
       setPullDistance(dist);
     }
   };
+
+  // Attach native touchmove so it fires before layout's native listener (child before parent)
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    el.addEventListener("touchmove", handleTouchMoveNative, { passive: false });
+    return () => el.removeEventListener("touchmove", handleTouchMoveNative);
+  });
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (dragDirection.current === "horiz" && reelIndex === null && !(challengeTimer && activeTab === "free")) {
@@ -502,7 +508,6 @@ export default function HomeContent() {
       ref={mainRef}
       style={{ height: "100%", background: "#ffffff", display: "flex", flexDirection: "column", overflow: "hidden", touchAction: "pan-y" }}
       onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       <style>{`
