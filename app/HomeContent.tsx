@@ -252,6 +252,9 @@ export default function HomeContent() {
     dragDirection.current = null;
     if (window.scrollY === 0) pulling.current = true;
     if (sliderRef.current) sliderRef.current.style.transition = "none";
+    // Pre-claim gesture for feed tabs — the global page swipe will yield.
+    // Released in handleTouchMove if we're at an edge that should hand off to global.
+    if (pageIndex === 0) gestureClaimedBy.current = "feedTabs";
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -261,6 +264,8 @@ export default function HomeContent() {
     // Lock drag direction after 5px
     if (dragDirection.current === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
       dragDirection.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert";
+      // Vertical gesture — release claim so global/browser can handle scroll
+      if (dragDirection.current === "vert") gestureClaimedBy.current = null;
     }
 
     if (dragDirection.current === "horiz" && reelIndex === null && !(challengeTimer && activeTab === "free")) {
@@ -269,12 +274,10 @@ export default function HomeContent() {
       const atRightEdge = activeTab === "free" && dx < 0;
 
       if (atLeftEdge || atRightEdge) {
-        // At edge — don't claim, let global page swipe handle it
+        // At edge — release claim so global page swipe can take over
+        gestureClaimedBy.current = null;
         return;
       }
-
-      // Claim gesture for local tab swipe
-      gestureClaimedBy.current = "feedTabs";
       pulling.current = false;
       setPullDistance(0);
       const base = activeTab === "challenge" ? 0 : -window.innerWidth;
