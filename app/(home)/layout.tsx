@@ -193,12 +193,12 @@ export default function HomeLayout({
       if (sdt > 0) releaseVelocity = (last.x - prev.x) / sdt;
     }
 
-    const threshold = window.innerWidth * 0.14;
+    const threshold = window.innerWidth * 0.10;
     let newIndex = pageIndex;
 
-    // Fast flick (>0.28 px/ms) or past distance threshold
-    if ((dx < -threshold || (dx < -15 && releaseVelocity < -0.28)) && pageIndex === 0) newIndex = 1;
-    else if ((dx > threshold || (dx > 15 && releaseVelocity > 0.28)) && pageIndex === 1) newIndex = 0;
+    // Fast flick (>0.2 px/ms) or past distance threshold
+    if ((dx < -threshold || (dx < -10 && releaseVelocity < -0.2)) && pageIndex === 0) newIndex = 1;
+    else if ((dx > threshold || (dx > 10 && releaseVelocity > 0.2)) && pageIndex === 1) newIndex = 0;
 
     // Current position of the slider
     const currentOffset = -pageIndex * window.innerWidth + dx;
