@@ -1,9 +1,14 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import HomeContent from "../HomeContent";
 import ProfileContent from "../ProfileContent";
 import { PageContext } from "../PageContext";
+
+const lightTap = () => {
+  Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
+};
 
 export default function HomeLayout({
   children,
@@ -206,6 +211,7 @@ export default function HomeLayout({
 
     // Spring animate from current position with finger's release velocity
     animateSpring(currentOffset, targetOffset, releaseVelocity);
+    if (newIndex !== pageIndex) lightTap();
     setPageIndex(newIndex);
     touchStart.current = null;
     dragging.current = false;

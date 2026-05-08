@@ -2,6 +2,7 @@
 
 import { ChangeEvent, RefObject, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { usePageContext } from "./PageContext";
 
 type BottomNavProps = {
@@ -55,7 +56,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
     >
       {/* Home */}
       <button
-        onClick={() => { handleTap("home"); setPageIndex(0); }}
+        onClick={() => { handleTap("home"); setPageIndex(0); Haptics.impact({ style: ImpactStyle.Light }).catch(() => {}); }}
         style={{
           background: "none",
           border: "none",
@@ -131,7 +132,7 @@ export default function BottomNav({ fileInputRef, handlePhotoChange, cameraOnly,
 
       {/* Profile */}
       <button
-        onClick={() => { handleTap("profile"); setPageIndex(1); }}
+        onClick={() => { handleTap("profile"); setPageIndex(1); Haptics.impact({ style: ImpactStyle.Light }).catch(() => {}); }}
         style={{
           background: "none",
           border: "none",
