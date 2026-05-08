@@ -9,6 +9,59 @@ import ReportSheet from "../../../../ReportSheet";
 import type { ReportTarget } from "../../../../../lib/reports";
 import { blockUser, unblockUser, checkIsBlocked } from "../../../../../lib/blocks";
 
+// Sketchy hand-drawn tree/nature pattern for chat background
+const NATURE_PATTERN_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'>
+  <g stroke='%234a7c59' fill='none' stroke-linecap='round' stroke-linejoin='round'>
+    <!-- pine tree 1 -->
+    <g opacity='0.055' stroke-width='1.2'>
+      <line x1='40' y1='70' x2='40' y2='52'/>
+      <polyline points='28,58 40,36 52,58'/>
+      <polyline points='31,52 40,32 49,52'/>
+    </g>
+    <!-- small leaf cluster -->
+    <g opacity='0.04' stroke-width='1'>
+      <path d='M180,35 Q188,22 182,12 Q172,22 180,35'/>
+      <line x1='180' y1='35' x2='182' y2='44'/>
+      <path d='M190,30 Q196,20 191,13 Q184,20 190,30'/>
+      <line x1='190' y1='30' x2='191' y2='37'/>
+    </g>
+    <!-- pine tree 2 -->
+    <g opacity='0.045' stroke-width='1.1'>
+      <line x1='130' y1='155' x2='130' y2='135'/>
+      <polyline points='118,145 130,122 142,145'/>
+      <polyline points='121,139 130,118 139,139'/>
+      <polyline points='124,133 130,115 136,133'/>
+    </g>
+    <!-- fern frond -->
+    <g opacity='0.035' stroke-width='0.9'>
+      <path d='M60,190 Q55,175 65,160'/>
+      <path d='M58,182 Q50,178 48,172'/>
+      <path d='M60,175 Q52,172 50,166'/>
+      <path d='M62,168 Q56,166 55,161'/>
+    </g>
+    <!-- small branch -->
+    <g opacity='0.04' stroke-width='0.9'>
+      <path d='M200,100 Q210,90 215,95'/>
+      <path d='M207,94 Q212,85 218,87'/>
+      <path d='M203,97 Q195,90 197,84'/>
+    </g>
+    <!-- tiny tree 3 -->
+    <g opacity='0.04' stroke-width='1'>
+      <line x1='28' y1='230' x2='28' y2='218'/>
+      <polyline points='20,224 28,210 36,224'/>
+    </g>
+    <!-- scattered dots (seeds/berries) -->
+    <g opacity='0.03' stroke-width='0' fill='%234a7c59'>
+      <circle cx='95' cy='85' r='1.2'/>
+      <circle cx='175' cy='200' r='1'/>
+      <circle cx='220' cy='160' r='1.1'/>
+      <circle cx='15' cy='130' r='1'/>
+    </g>
+  </g>
+</svg>`;
+
+const CHAT_BG = `url("data:image/svg+xml,${encodeURIComponent(NATURE_PATTERN_SVG.replace(/\n\s*/g, ''))}")`;
+
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
@@ -283,8 +336,9 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         `}</style>
       {/* Header */}
       <header style={{
-        padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
+        padding: "0 16px", height: "53px", borderBottom: "1px solid #dce8e0",
         display: "flex", alignItems: "center", gap: "10px", flexShrink: 0,
+        background: "#fff",
       }}>
         <button onClick={() => router.push("/messages")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "44px", minHeight: "44px", color: "#000" }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -350,16 +404,21 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       </header>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "12px 0", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+      <div style={{
+        flex: 1, overflowY: "auto", padding: "12px 0",
+        display: "flex", flexDirection: "column", justifyContent: "flex-end",
+        background: `#f7faf8 ${CHAT_BG}`,
+        backgroundSize: "240px 240px",
+      }}>
         {loading || !currentUserId ? (
-          <p style={{ textAlign: "center", color: "#999", fontSize: "14px", padding: "48px 0" }}>loading...</p>
+          <p style={{ textAlign: "center", color: "#8aaa96", fontSize: "14px", padding: "48px 0" }}>loading...</p>
         ) : messages.length === 0 ? (
-          <p style={{ textAlign: "center", color: "#999", fontSize: "13px", padding: "48px 16px" }}>no messages yet. say hi</p>
+          <p style={{ textAlign: "center", color: "#8aaa96", fontSize: "13px", padding: "48px 16px" }}>no messages yet. say hi</p>
         ) : (
           groups.map((group) => (
             <div key={group.date}>
               <div style={{ display: "flex", justifyContent: "center", margin: "12px 0 8px" }}>
-                <span style={{ fontSize: "11px", color: "#aaa", background: "#f5f5f5", padding: "3px 10px", borderRadius: "999px" }}>{group.date}</span>
+                <span style={{ fontSize: "11px", color: "#6b9b7a", background: "rgba(74,124,89,0.08)", padding: "3px 10px", borderRadius: "999px", fontWeight: 500 }}>{group.date}</span>
               </div>
               {group.messages.map((msg, i) => {
                 const isMine = msg.senderId === currentUserId;
@@ -389,20 +448,21 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
                         onTouchMove={() => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } }}
                         style={{
                           maxWidth: "70vw", padding: "9px 13px",
-                          background: isMine ? "#000" : "#f0f0f0",
-                          color: isMine ? "#fff" : "#000",
+                          background: isMine ? "#2d5a3d" : "rgba(255,255,255,0.85)",
+                          color: isMine ? "#fff" : "#1a1a1a",
                           borderRadius: isMine ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
                           fontSize: "14px", lineHeight: 1.4,
                           wordBreak: "break-word",
                           userSelect: "none",
                           WebkitUserSelect: "none",
+                          boxShadow: isMine ? undefined : "0 1px 2px rgba(74,124,89,0.06)",
                         }}
                       >
                         {msg.text}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "2px", paddingRight: isMine ? 0 : undefined, paddingLeft: isMine ? undefined : "34px" }}>
-                      <span style={{ fontSize: "10px", color: "#bbb" }}>{formatTime(msg.createdAt)}</span>
+                      <span style={{ fontSize: "10px", color: "#9bbba8" }}>{formatTime(msg.createdAt)}</span>
                       {isMine && isRead && <span style={{ fontSize: "10px", color: "#4a7c59" }}>seen</span>}
                     </div>
                   </div>
@@ -428,8 +488,8 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       ) : (
       <div style={{
         padding: "10px 16px calc(10px + env(safe-area-inset-bottom))",
-        borderTop: "1px solid #e5e5e5",
-        display: "flex", gap: "8px", alignItems: "center", flexShrink: 0, background: "#fff",
+        borderTop: "1px solid #dce8e0",
+        display: "flex", gap: "8px", alignItems: "center", flexShrink: 0, background: "#f7faf8",
       }}>
         <input
           ref={inputRef}
@@ -439,9 +499,9 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSend(); } }}
           placeholder="message..."
           style={{
-            flex: 1, border: "1px solid #e5e5e5", borderRadius: "999px",
+            flex: 1, border: "1px solid #d5e5da", borderRadius: "999px",
             padding: "10px 16px", fontSize: "16px", outline: "none",
-            background: "#f9f9f9",
+            background: "#f5faf7",
           }}
         />
         <button
@@ -449,13 +509,13 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           disabled={!text.trim() || sending}
           style={{
             width: "38px", height: "38px", borderRadius: "50%",
-            background: text.trim() ? "#000" : "#e5e5e5",
+            background: text.trim() ? "#4a7c59" : "#d5e5da",
             border: "none", cursor: text.trim() ? "pointer" : "default",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0, transition: "background 0.15s ease",
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={text.trim() ? "#fff" : "#aaa"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={text.trim() ? "#fff" : "#8aaa96"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="22" y1="2" x2="11" y2="13" />
             <polygon points="22 2 15 22 11 13 2 9 22 2" />
           </svg>
