@@ -106,13 +106,14 @@ export default function HomeLayout({
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    cancelSpring();
+    // Don't cancel spring here — only cancel when a drag actually begins.
+    // This prevents stranding the slider at a mid-position if the touch
+    // turns out to be a tap or vertical scroll.
     gestureClaimedBy.current = null;
     direction.current = null;
     dragging.current = false;
     touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     touchSamples.current = [{ x: e.touches[0].clientX, t: Date.now() }];
-    if (sliderRef.current) sliderRef.current.style.transition = "none";
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -131,6 +132,11 @@ export default function HomeLayout({
     if (pageIndex === 0 && dx > 0) return; // Home, swiping right — nowhere to go
     if (pageIndex === 1 && dx < 0) return; // Profile, swiping left — nowhere to go
 
+    // First horizontal movement — cancel any running spring and take over
+    if (!dragging.current) {
+      cancelSpring();
+      if (sliderRef.current) sliderRef.current.style.transition = "none";
+    }
     dragging.current = true;
 
     // Keep last 4 samples for velocity calculation
@@ -146,6 +152,12 @@ export default function HomeLayout({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!touchStart.current || !dragging.current || gestureClaimedBy.current) {
+      // Safety: if we didn't drag, ensure slider is at exact page position
+      // (covers case where a tap/scroll interrupted a running spring)
+      if (sliderRef.current && springRaf.current === null) {
+        sliderRef.current.style.transition = "none";
+        sliderRef.current.style.transform = `translateX(${-pageIndex * window.innerWidth}px)`;
+      }
       touchStart.current = null;
       dragging.current = false;
       return;
