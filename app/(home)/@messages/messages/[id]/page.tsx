@@ -242,20 +242,32 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     directionLocked.current = null;
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  // Native (non-passive) touchmove so e.preventDefault() blocks vertical scroll
+  const handleTouchMove = (e: TouchEvent) => {
     if (!swipeStart.current) return;
     const touch = e.touches[0];
     const dx = touch.clientX - swipeStart.current.x;
     const dy = Math.abs(touch.clientY - swipeStart.current.y);
-    if (!directionLocked.current && (dx > 10 || dy > 10)) {
-      directionLocked.current = dx > dy ? "horizontal" : "vertical";
+    if (!directionLocked.current && (Math.abs(dx) > 10 || dy > 10)) {
+      directionLocked.current = Math.abs(dx) > dy ? "horizontal" : "vertical";
     }
     if (directionLocked.current === "vertical") { swipeStart.current = null; return; }
-    if (directionLocked.current === "horizontal" && dx > 10) {
-      setSwiping(true);
-      setSwipeX(Math.max(0, dx));
+    if (directionLocked.current === "horizontal") {
+      e.preventDefault(); // lock out vertical scrolling
+      if (dx > 10) {
+        setSwiping(true);
+        setSwipeX(Math.max(0, dx));
+      }
     }
   };
+
+  // Attach as non-passive so e.preventDefault() works on mobile
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", handleTouchMove);
+  });
 
   const handleTouchEnd = () => {
     if (!swipeStart.current || !swiping) { swipeStart.current = null; return; }
@@ -317,7 +329,6 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       <main
         ref={mainRef}
         onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         style={{
           position: "fixed", inset: 0, zIndex: 60,
