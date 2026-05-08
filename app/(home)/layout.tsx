@@ -37,15 +37,23 @@ export default function HomeLayout({
   };
 
   // Spring-physics animation: carries finger momentum, decelerates naturally
-  const animateSpring = (from: number, to: number, initialVelocity: number, onDone: () => void) => {
+  const animateSpring = (from: number, to: number, initialVelocity: number) => {
     cancelSpring();
     const stiffness = 260;
     const damping = 28;
     const mass = 1;
     let pos = from;
-    let vel = initialVelocity; // px/ms → convert to px/s
-    vel *= 1000;
+    let vel = initialVelocity * 1000; // px/ms → px/s
     let lastT = performance.now();
+    const startT = lastT;
+
+    const snap = () => {
+      if (sliderRef.current) {
+        sliderRef.current.style.transition = "none";
+        sliderRef.current.style.transform = `translateX(${to}px)`;
+      }
+      springRaf.current = null;
+    };
 
     const step = (now: number) => {
       const dt = Math.min((now - lastT) / 1000, 0.032);
@@ -57,14 +65,9 @@ export default function HomeLayout({
       vel += ((springForce + dampingForce) / mass) * dt;
       pos += vel * dt;
 
-      // Settle check
-      if (Math.abs(vel) < 0.4 && Math.abs(pos - to) < 0.5) {
-        if (sliderRef.current) {
-          sliderRef.current.style.transition = "none";
-          sliderRef.current.style.transform = `translateX(${to}px)`;
-        }
-        springRaf.current = null;
-        onDone();
+      // Settle: close enough or max 600ms safety
+      if ((Math.abs(vel) < 0.5 && Math.abs(pos - to) < 0.3) || (now - startT > 600)) {
+        snap();
         return;
       }
 
@@ -78,10 +81,10 @@ export default function HomeLayout({
     springRaf.current = requestAnimationFrame(step);
   };
 
-  // Keep slider in sync with pageIndex (for programmatic changes like BottomNav taps)
+  // Keep slider in sync with pageIndex (for programmatic taps like BottomNav)
+  // Skip if a spring animation is running — it handles positioning itself
   useEffect(() => {
-    if (!sliderRef.current) return;
-    // Use a smooth CSS transition for programmatic taps (BottomNav)
+    if (!sliderRef.current || springRaf.current !== null) return;
     sliderRef.current.style.transition = "transform 0.48s cubic-bezier(0.16, 1, 0.3, 1)";
     sliderRef.current.style.transform = `translateX(${-pageIndex * window.innerWidth}px)`;
   }, [pageIndex]);
@@ -172,7 +175,7 @@ export default function HomeLayout({
     const targetOffset = -newIndex * window.innerWidth;
 
     // Spring animate from current position with finger's release velocity
-    animateSpring(currentOffset, targetOffset, releaseVelocity, () => {});
+    animateSpring(currentOffset, targetOffset, releaseVelocity);
     setPageIndex(newIndex);
     touchStart.current = null;
     dragging.current = false;
