@@ -269,15 +269,8 @@ export default function HomeContent() {
     }
 
     if (dragDirection.current === "horiz" && reelIndex === null && !(challengeTimer && activeTab === "free")) {
-      // Check if this is a local tab swipe or should yield to global page swipe
-      const atLeftEdge = activeTab === "challenge" && dx > 0;
-      const atRightEdge = activeTab === "free" && dx < 0;
-
-      if (atLeftEdge || atRightEdge) {
-        // At edge — release claim so global page swipe can take over
-        gestureClaimedBy.current = null;
-        return;
-      }
+      // Feed tabs always own horizontal gestures — never yield to global page swipe.
+      // At edges, just clamp (no movement) instead of handing off to Profile navigation.
       pulling.current = false;
       setPullDistance(0);
       const base = activeTab === "challenge" ? 0 : -window.innerWidth;
