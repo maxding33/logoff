@@ -159,12 +159,13 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     }
   };
 
-  const isGroup = members.length > 1;
+  const otherMembers = members.filter((m) => m.userId !== currentUserId);
+  const isGroup = otherMembers.length > 1;
   const title = isGroup
-    ? (members.map((m) => `@${m.username}`).join(", "))
-    : members[0] ? `@${members[0].username}` : "...";
+    ? (otherMembers.map((m) => `@${m.username}`).join(", "))
+    : otherMembers[0] ? `@${otherMembers[0].username}` : "...";
 
-  const other = !isGroup ? members[0] : null;
+  const other = !isGroup ? otherMembers[0] : null;
   const otherOnline = other ? isOnline(other.lastSeen) : false;
 
   const getReadState = (msg: Message): boolean => {
