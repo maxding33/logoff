@@ -118,7 +118,7 @@ export default function HomeLayout({
     // Don't cancel spring here — only cancel when a drag actually begins.
     // This prevents stranding the slider at a mid-position if the touch
     // turns out to be a tap or vertical scroll.
-    gestureClaimedBy.current = null;
+    // Don't reset gestureClaimedBy — a child (e.g. feed tabs) may have already claimed it.
     direction.current = null;
     dragging.current = false;
     touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
