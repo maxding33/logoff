@@ -267,15 +267,22 @@ export default function HomeContent() {
     }
 
     if (dragDirection.current === "horiz" && reelIndex === null && !(challengeTimer && activeTab === "free")) {
-      // Claim gesture — this fires before the layout's handler, blocking global swipe
-      gestureClaimedBy.current = "feedTabs";
-      pulling.current = false;
-      setPullDistance(0);
-      const base = activeTab === "challenge" ? 0 : -window.innerWidth;
-      const raw = base + dx;
-      // Clamp at edges — no rubber-band past boundaries
-      const offset = Math.max(-window.innerWidth, Math.min(0, raw));
-      if (sliderRef.current) sliderRef.current.style.transform = `translateX(${offset}px)`;
+      // Determine if the feed tabs have a valid local destination in this direction
+      const canGoLeft = activeTab === "challenge" && dx < 0;   // Challenge → Log
+      const canGoRight = activeTab === "free" && dx > 0;       // Log → Challenge
+
+      if (canGoLeft || canGoRight) {
+        // Local feed swipe — claim gesture to block global page navigation
+        gestureClaimedBy.current = "feedTabs";
+        pulling.current = false;
+        setPullDistance(0);
+        const base = activeTab === "challenge" ? 0 : -window.innerWidth;
+        const raw = base + dx;
+        const offset = Math.max(-window.innerWidth, Math.min(0, raw));
+        if (sliderRef.current) sliderRef.current.style.transform = `translateX(${offset}px)`;
+      }
+      // Otherwise (e.g. Log feed swiping left, Challenge swiping right):
+      // don't claim — let global page swipe handle it
     } else if (dragDirection.current === "vert" && pulling.current) {
       const dist = Math.max(0, Math.min(80, dy));
       setPullDistance(dist);

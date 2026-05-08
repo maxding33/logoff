@@ -121,7 +121,13 @@ export default function HomeLayout({
     gestureClaimedBy.current = null;
     direction.current = null;
     dragging.current = false;
-    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    // Ignore touches in the bottom nav zone (~90px from bottom)
+    const touchY = e.touches[0].clientY;
+    if (touchY > window.innerHeight - 90) {
+      touchStart.current = null;
+      return;
+    }
+    touchStart.current = { x: e.touches[0].clientX, y: touchY };
     touchSamples.current = [{ x: e.touches[0].clientX, t: Date.now() }];
   };
 
