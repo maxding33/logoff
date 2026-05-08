@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Portal from "./Portal";
 import type { CalendarPost } from "../lib/posts";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -71,6 +72,7 @@ function DayView({ dateStr, posts, onClose, onPrevDay, onNextDay, canGoNext }: D
   };
 
   return (
+    <Portal>
     <div
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -142,6 +144,7 @@ function DayView({ dateStr, posts, onClose, onPrevDay, onNextDay, canGoNext }: D
         </div>
       )}
     </div>
+    </Portal>
   );
 }
 
@@ -195,6 +198,7 @@ export default function ProfileCalendar({ posts, onClose }: Props) {
   }
 
   return (
+    <Portal>
     <div style={{
       position: "fixed", inset: 0, zIndex: 500,
       background: "#fff",
@@ -304,5 +308,6 @@ export default function ProfileCalendar({ posts, onClose }: Props) {
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

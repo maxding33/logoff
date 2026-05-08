@@ -1,5 +1,7 @@
 "use client";
 
+import Portal from "./Portal";
+
 type UploadModalProps = {
   preview: string | null;
   caption: string;
@@ -26,6 +28,7 @@ export default function UploadModal({
   const ready = imageReady && !posting;
 
   return (
+    <Portal>
     <div
       className="slide-up"
       style={{
@@ -159,5 +162,6 @@ export default function UploadModal({
         }}
       />
     </div>
+    </Portal>
   );
 }

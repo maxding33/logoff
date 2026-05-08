@@ -3,6 +3,7 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
+import Portal from "./Portal";
 import BottomNav from "./BottomNav";
 import UploadModal from "./UploadModal";
 import type { Post } from "./types";
@@ -536,6 +537,7 @@ export default function ProfileContent() {
 
       {/* Settings panel */}
       {showSettings && (
+        <Portal>
         <div onClick={() => { setShowSettings(false); setDeleteStep("idle"); }} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)" }}>
           <div onClick={(e) => e.stopPropagation()} style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
@@ -682,10 +684,12 @@ export default function ProfileContent() {
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Updates panel */}
       {showUpdates && (
+        <Portal>
         <div
           onClick={() => setShowUpdates(false)}
           style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)" }}
@@ -743,6 +747,7 @@ export default function ProfileContent() {
             )}
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Post viewer */}
@@ -762,6 +767,7 @@ export default function ProfileContent() {
       )}
       {/* Avatar options sheet */}
       {showAvatarOptions && (
+        <Portal>
         <div onClick={() => setShowAvatarOptions(false)} style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.4)" }}>
           <div onClick={(e) => e.stopPropagation()} style={{
             position: "absolute", bottom: 0, left: 0, right: 0,
@@ -798,6 +804,7 @@ export default function ProfileContent() {
             </button>
           </div>
         </div>
+        </Portal>
       )}
       {showCalendar && (
         <ProfileCalendar

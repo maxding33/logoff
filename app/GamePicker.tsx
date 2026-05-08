@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Portal from "./Portal";
 import { todayKey } from "../lib/dailyGame";
 
 type GameInfo = {
@@ -33,6 +34,7 @@ export default function GamePicker({ onClose }: { onClose: () => void }) {
   }, []);
 
   return (
+    <Portal>
     <div style={{
       position: "fixed", inset: 0, zIndex: 500,
       background: "#fff",
@@ -136,5 +138,6 @@ export default function GamePicker({ onClose }: { onClose: () => void }) {
         new puzzles every day
       </p>
     </div>
+    </Portal>
   );
 }

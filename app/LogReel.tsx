@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import CommentSheet from "./CommentSheet";
+import Portal from "./Portal";
 import type { Post } from "./types";
 import type { ReportTarget } from "../lib/reports";
 
@@ -175,6 +176,7 @@ export default function LogReel({
   };
 
   return (
+    <Portal>
     <div
       ref={reelRef}
       style={{ position: "fixed", inset: 0, zIndex: 600, background: "#000", overflow: "hidden", touchAction: "none" }}
@@ -312,5 +314,6 @@ export default function LogReel({
         />
       )}
     </div>
+    </Portal>
   );
 }

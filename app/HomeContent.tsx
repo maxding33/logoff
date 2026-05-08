@@ -22,6 +22,7 @@ import { useEndOfDaySummary } from "../lib/useEndOfDaySummary";
 import { getUnreadCount, updateLastSeen } from "../lib/messages";
 import { setHomeCache } from "../lib/homeCache";
 import { usePageContext } from "./PageContext";
+import Portal from "./Portal";
 
 // Module-level cache to avoid white flash on tab switch
 let cachedPosts: Post[] = [];
@@ -525,6 +526,7 @@ export default function HomeContent() {
 
       {/* Map live toast */}
       {showMapToast && (
+        <Portal>
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 900,
           display: "flex", justifyContent: "center", padding: "12px 16px",
@@ -541,6 +543,7 @@ export default function HomeContent() {
             outdoor hour started. map is live
           </div>
         </div>
+        </Portal>
       )}
 
       {/* Pull-to-refresh indicator */}
@@ -697,6 +700,7 @@ export default function HomeContent() {
 
       {/* Challenge fail overlay — only show after initial load to avoid flash during auth/data settling */}
       {!loading && challengeFailed && !failDismissed && (
+        <Portal>
         <div style={{
           position: "fixed", inset: 0, zIndex: 1000,
           background: "rgba(0,0,0,0.88)",
@@ -749,10 +753,12 @@ export default function HomeContent() {
             ok
           </button>
         </div>
+        </Portal>
       )}
 
       {/* End-of-day summary overlay */}
       {showEod && eodData && (
+        <Portal>
         <div style={{
           position: "fixed", inset: 0, zIndex: 999,
           background: "rgba(0,0,0,0.92)",
@@ -814,6 +820,7 @@ export default function HomeContent() {
             ok
           </button>
         </div>
+        </Portal>
       )}
 
       {/* Log reel viewer */}
@@ -834,6 +841,7 @@ export default function HomeContent() {
 
       {/* Challenge completion overlay */}
       {showCompletion && (
+        <Portal>
         <div style={{
           position: "fixed", inset: 0, zIndex: 1000,
           background: "rgba(74, 124, 89, 0.92)",
@@ -864,6 +872,7 @@ export default function HomeContent() {
             logged off
           </p>
         </div>
+        </Portal>
       )}
       {reportTarget && currentUserId && (
         <ReportSheet target={reportTarget} currentUserId={currentUserId} onClose={() => setReportTarget(null)} />

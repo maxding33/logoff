@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Portal from "./Portal";
 import { REPORT_REASONS, submitReport, type ReportTarget, type ReportReason } from "../lib/reports";
 
 interface ReportSheetProps {
@@ -48,6 +49,7 @@ export default function ReportSheet({ target, currentUserId, onClose }: ReportSh
   };
 
   return (
+    <Portal>
     <div
       onClick={handleClose}
       style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.4)" }}
@@ -127,5 +129,6 @@ export default function ReportSheet({ target, currentUserId, onClose }: ReportSh
         )}
       </div>
     </div>
+    </Portal>
   );
 }

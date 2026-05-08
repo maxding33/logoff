@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Avatar from "./Avatar";
+import Portal from "./Portal";
 import type { Comment } from "./types";
 import type { ReportTarget } from "../lib/reports";
 
@@ -53,16 +54,19 @@ export default function CommentSheet({
   // During mounting phase, render only an invisible backdrop — no sheet yet
   if (phase === "mounting") {
     return (
+      <Portal>
       <div style={{
         position: "fixed",
         inset: 0,
         zIndex: 100,
         background: "transparent",
       }} />
+      </Portal>
     );
   }
 
   return (
+    <Portal>
     <div
       ref={backdropRef}
       onClick={(e) => { if (e.target === backdropRef.current) handleClose(); }}
@@ -188,5 +192,6 @@ export default function CommentSheet({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
