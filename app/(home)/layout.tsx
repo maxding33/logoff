@@ -20,6 +20,7 @@ export default function HomeLayout({
 }) {
   const [pageIndex, setPageIndexState] = useState(0);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const gestureClaimedBy = useRef<string | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const direction = useRef<"horiz" | "vert" | null>(null);
@@ -101,6 +102,14 @@ export default function HomeLayout({
     return () => window.removeEventListener("resize", onResize);
   }, [pageIndex]);
 
+  // Attach touchmove as non-passive so e.preventDefault() works to block vertical scroll
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener("touchmove", handleTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", handleTouchMove);
+  });
+
   const setPageIndex = (index: number) => {
     setPageIndexState(index);
   };
@@ -116,7 +125,7 @@ export default function HomeLayout({
     touchSamples.current = [{ x: e.touches[0].clientX, t: Date.now() }];
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: TouchEvent) => {
     if (!touchStart.current || gestureClaimedBy.current) return;
     const cx = e.touches[0].clientX;
     const dx = cx - touchStart.current.x;
@@ -131,6 +140,9 @@ export default function HomeLayout({
     // No valid destination — ignore entirely so page stays locked
     if (pageIndex === 0 && dx > 0) return; // Home, swiping right — nowhere to go
     if (pageIndex === 1 && dx < 0) return; // Profile, swiping left — nowhere to go
+
+    // Lock out vertical scrolling for the duration of this horizontal gesture
+    e.preventDefault();
 
     // First horizontal movement — cancel any running spring and take over
     if (!dragging.current) {
@@ -196,9 +208,9 @@ export default function HomeLayout({
   return (
     <PageContext.Provider value={{ pageIndex, setPageIndex, gestureClaimedBy }}>
       <div
+        ref={containerRef}
         style={{ height: "100vh", overflow: "hidden", position: "relative" }}
         onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         <div
