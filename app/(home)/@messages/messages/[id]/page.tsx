@@ -228,18 +228,84 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
 
   const groups = groupMessagesByDate(messages);
 
-  // Swipe-right-to-go-back
+  // Swipe-right-to-go-back with spring physics
   const mainRef = useRef<HTMLElement>(null);
+  const backLayerRef = useRef<HTMLDivElement>(null);
+  const dimRef = useRef<HTMLDivElement>(null);
   const swipeStart = useRef<{ x: number; y: number; time: number } | null>(null);
   const [swipeX, setSwipeX] = useState(0);
   const [swiping, setSwiping] = useState(false);
-  const exiting = false;
   const directionLocked = useRef<"horizontal" | "vertical" | null>(null);
+  const dragging = useRef(false);
+  const springRaf = useRef<number | null>(null);
+  const touchSamples = useRef<{ x: number; t: number }[]>([]);
+  const screenW = useRef(typeof window !== "undefined" ? window.innerWidth : 390);
+
+  // Apply position to all three layers directly (no React re-render)
+  const applyPosition = (chatX: number) => {
+    const backX = -80 + chatX * 0.22;
+    const dim = Math.max(0, 0.12 - (chatX / screenW.current) * 0.12);
+    if (mainRef.current) {
+      mainRef.current.style.transform = `translateX(${chatX}px)`;
+    }
+    if (backLayerRef.current) {
+      backLayerRef.current.style.transform = `translateX(${backX}px)`;
+    }
+    if (dimRef.current) {
+      dimRef.current.style.opacity = `${dim}`;
+    }
+  };
+
+  const cancelSpring = () => {
+    if (springRaf.current !== null) {
+      cancelAnimationFrame(springRaf.current);
+      springRaf.current = null;
+    }
+  };
+
+  // Spring-physics animation: carries finger momentum, decelerates naturally
+  const animateSpring = (from: number, to: number, initialVelocity: number, onDone?: () => void) => {
+    cancelSpring();
+    const stiffness = 240;
+    const damping = 26;
+    const mass = 1;
+    let pos = from;
+    let vel = initialVelocity * 1000; // px/ms → px/s
+    let lastT = performance.now();
+    const startT = lastT;
+
+    const step = (now: number) => {
+      const dt = Math.min((now - lastT) / 1000, 0.032);
+      lastT = now;
+
+      const displacement = pos - to;
+      const springForce = -stiffness * displacement;
+      const dampingForce = -damping * vel;
+      vel += ((springForce + dampingForce) / mass) * dt;
+      pos += vel * dt;
+
+      // Settle check or 600ms safety
+      if ((Math.abs(vel) < 0.5 && Math.abs(pos - to) < 0.3) || (now - startT > 600)) {
+        applyPosition(to);
+        springRaf.current = null;
+        onDone?.();
+        return;
+      }
+
+      applyPosition(pos);
+      springRaf.current = requestAnimationFrame(step);
+    };
+
+    springRaf.current = requestAnimationFrame(step);
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     swipeStart.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
     directionLocked.current = null;
+    dragging.current = false;
+    touchSamples.current = [{ x: touch.clientX, t: Date.now() }];
+    screenW.current = window.innerWidth;
   };
 
   // Native (non-passive) touchmove so e.preventDefault() blocks vertical scroll
@@ -254,10 +320,19 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     if (directionLocked.current === "vertical") { swipeStart.current = null; return; }
     if (directionLocked.current === "horizontal") {
       e.preventDefault(); // lock out vertical scrolling
-      if (dx > 10) {
+      if (!dragging.current) {
+        cancelSpring();
+        dragging.current = true;
         setSwiping(true);
-        setSwipeX(Math.max(0, dx));
       }
+      // Track velocity samples
+      const now = Date.now();
+      touchSamples.current.push({ x: touch.clientX, t: now });
+      if (touchSamples.current.length > 4) touchSamples.current.shift();
+
+      const pos = Math.max(0, dx);
+      setSwipeX(pos);
+      applyPosition(pos);
     }
   };
 
@@ -270,32 +345,58 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
   });
 
   const handleTouchEnd = () => {
-    if (!swipeStart.current || !swiping) { swipeStart.current = null; return; }
-    if (swipeX > 100) {
-      router.push("/messages");
-    } else {
-      setSwipeX(0);
-      setSwiping(false);
+    if (!swipeStart.current || !dragging.current) {
+      swipeStart.current = null;
+      dragging.current = false;
+      return;
     }
+
+    const dx = Math.max(0, swipeX);
+
+    // Calculate release velocity from recent samples
+    const samples = touchSamples.current;
+    let releaseVelocity = 0; // px/ms, positive = rightward
+    if (samples.length >= 2) {
+      const last = samples[samples.length - 1];
+      const prev = samples[Math.max(0, samples.length - 3)];
+      const sdt = last.t - prev.t;
+      if (sdt > 0) releaseVelocity = (last.x - prev.x) / sdt;
+    }
+
+    const threshold = screenW.current * 0.25;
+    // Fast flick (>0.3 px/ms) or past distance threshold → exit
+    const shouldExit = dx > threshold || (dx > 20 && releaseVelocity > 0.3);
+
+    if (shouldExit) {
+      // Spring to off-screen, then navigate
+      animateSpring(dx, screenW.current, releaseVelocity, () => {
+        router.push("/messages");
+      });
+    } else {
+      // Spring back to resting position
+      animateSpring(dx, 0, releaseVelocity, () => {
+        setSwiping(false);
+        setSwipeX(0);
+      });
+    }
+
     swipeStart.current = null;
+    dragging.current = false;
   };
 
   const cachedConvs = getCachedConversationList();
 
   // --- Spatial transition: back layer parallax + dim overlay ---
-  // Back layer starts offset left, slides into place at ~1/3 front speed (iOS-style)
   const backTranslateX = -80 + swipeX * 0.22;
-  // Dim overlay fades as the chat slides away
-  const backDimOpacity = Math.max(0, 0.12 - swipeX * 0.00032);
+  const backDimOpacity = Math.max(0, 0.12 - (swipeX / screenW.current) * 0.12);
 
   return (
     <>
       {/* Cached messages list preview behind the chat */}
-      <div style={{
+      <div ref={backLayerRef} style={{
         position: "fixed", inset: 0, zIndex: 55,
         background: "#fff", overflowY: "auto", pointerEvents: "none",
         transform: `translateX(${backTranslateX}px)`,
-        transition: swiping ? "none" : "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
         willChange: swiping ? "transform" : undefined,
       }}>
         <header style={{
@@ -338,12 +439,11 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Dim scrim between messages list and chat — fades out as chat slides away */}
-      <div style={{
+      <div ref={dimRef} style={{
         position: "fixed", inset: 0, zIndex: 56,
         background: "#000",
         opacity: backDimOpacity,
         pointerEvents: "none",
-        transition: swiping ? "none" : "opacity 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
       }} />
 
       {/* Chat overlay */}
@@ -357,9 +457,8 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
           boxShadow: swiping ? "-6px 0 24px rgba(0,0,0,0.12)" : undefined,
           borderRadius: swiping ? "10px 0 0 10px" : undefined,
           overflow: swiping ? "hidden" : undefined,
-          animation: exiting ? undefined : "chatSlideIn 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
-          transform: swiping || exiting ? `translateX(${exiting ? "100%" : `${swipeX}px`})` : undefined,
-          transition: swiping ? "none" : "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.2s ease, box-shadow 0.2s ease",
+          animation: "chatSlideIn 0.32s cubic-bezier(0.32, 0.72, 0, 1)",
+          transform: swiping ? `translateX(${swipeX}px)` : undefined,
           willChange: swiping ? "transform" : undefined,
         }}
       >
