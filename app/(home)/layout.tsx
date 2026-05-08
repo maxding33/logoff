@@ -137,7 +137,7 @@ export default function HomeLayout({
     const dx = cx - touchStart.current.x;
     const dy = e.touches[0].clientY - touchStart.current.y;
 
-    if (!direction.current && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+    if (!direction.current && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
       direction.current = Math.abs(dx) > Math.abs(dy) ? "horiz" : "vert";
     }
 
@@ -193,12 +193,12 @@ export default function HomeLayout({
       if (sdt > 0) releaseVelocity = (last.x - prev.x) / sdt;
     }
 
-    const threshold = window.innerWidth * 0.18;
+    const threshold = window.innerWidth * 0.14;
     let newIndex = pageIndex;
 
-    // Fast flick (>0.35 px/ms) or past distance threshold
-    if ((dx < -threshold || (dx < -20 && releaseVelocity < -0.35)) && pageIndex === 0) newIndex = 1;
-    else if ((dx > threshold || (dx > 20 && releaseVelocity > 0.35)) && pageIndex === 1) newIndex = 0;
+    // Fast flick (>0.28 px/ms) or past distance threshold
+    if ((dx < -threshold || (dx < -15 && releaseVelocity < -0.28)) && pageIndex === 0) newIndex = 1;
+    else if ((dx > threshold || (dx > 15 && releaseVelocity > 0.28)) && pageIndex === 1) newIndex = 0;
 
     // Current position of the slider
     const currentOffset = -pageIndex * window.innerWidth + dx;
