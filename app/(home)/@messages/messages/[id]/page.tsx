@@ -282,10 +282,22 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
 
   const cachedConvs = getCachedConversationList();
 
+  // --- Spatial transition: back layer parallax + dim overlay ---
+  // Back layer starts offset left, slides into place at ~1/3 front speed (iOS-style)
+  const backTranslateX = -80 + swipeX * 0.22;
+  // Dim overlay fades as the chat slides away
+  const backDimOpacity = Math.max(0, 0.12 - swipeX * 0.00032);
+
   return (
     <>
       {/* Cached messages list preview behind the chat */}
-      <div style={{ position: "fixed", inset: 0, zIndex: 55, background: "#fff", overflowY: "auto", pointerEvents: "none" }}>
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 55,
+        background: "#fff", overflowY: "auto", pointerEvents: "none",
+        transform: `translateX(${backTranslateX}px)`,
+        transition: swiping ? "none" : "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
+        willChange: swiping ? "transform" : undefined,
+      }}>
         <header style={{
           padding: "0 16px", height: "53px", borderBottom: "1px solid #e5e5e5",
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -325,6 +337,15 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
+      {/* Dim scrim between messages list and chat — fades out as chat slides away */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 56,
+        background: "#000",
+        opacity: backDimOpacity,
+        pointerEvents: "none",
+        transition: swiping ? "none" : "opacity 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
+      }} />
+
       {/* Chat overlay */}
       <main
         ref={mainRef}
@@ -333,16 +354,19 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
         style={{
           position: "fixed", inset: 0, zIndex: 60,
           display: "flex", flexDirection: "column", background: "#fff",
-          boxShadow: swiping || exiting ? "-4px 0 16px rgba(0,0,0,0.1)" : undefined,
-          animation: exiting ? undefined : "slideInRight 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)",
+          boxShadow: swiping ? "-6px 0 24px rgba(0,0,0,0.12)" : undefined,
+          borderRadius: swiping ? "10px 0 0 10px" : undefined,
+          overflow: swiping ? "hidden" : undefined,
+          animation: exiting ? undefined : "chatSlideIn 0.28s cubic-bezier(0.32, 0.72, 0, 1)",
           transform: swiping || exiting ? `translateX(${exiting ? "100%" : `${swipeX}px`})` : undefined,
-          transition: swiping ? undefined : "transform 0.2s ease",
+          transition: swiping ? "none" : "transform 0.28s cubic-bezier(0.32, 0.72, 0, 1), border-radius 0.2s ease, box-shadow 0.2s ease",
+          willChange: swiping ? "transform" : undefined,
         }}
       >
         <style>{`
-          @keyframes slideInRight {
-            from { transform: translateX(15%); opacity: 0.6; }
-            to { transform: translateX(0); opacity: 1; }
+          @keyframes chatSlideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
           }
         `}</style>
       {/* Header */}
