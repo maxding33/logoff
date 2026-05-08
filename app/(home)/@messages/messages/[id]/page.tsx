@@ -392,6 +392,9 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
 
   return (
     <>
+      {/* Opaque backdrop — blocks homepage from showing through during parallax */}
+      <div style={{ position: "fixed", inset: 0, zIndex: 54, background: "#fff" }} />
+
       {/* Cached messages list preview behind the chat */}
       <div ref={backLayerRef} style={{
         position: "fixed", inset: 0, zIndex: 55,
